@@ -454,31 +454,15 @@ async function generatePDF(data, photos) {
       } else {
         // ── Photo card ────────────────────────────────
         // Calculate proportional height to fit full image in CW width
-        let drawH = CARD_IMG_H;
-        if (ph.dataUrl) {
-          // Try to get natural aspect ratio from dataUrl
-          try {
-            const imgEl = new Image();
-            // We compute height from base64 dimensions stored or use fixed
-            drawH = CARD_IMG_H;
-          } catch(e) {}
-        }
-
-        // Calculate real aspect ratio from image data
+        // Use stored pixel dimensions for correct aspect ratio
         let drawW = CW;
         let drawH = CARD_IMG_H;
-        try {
-          const tmpImg = new Image();
-          await new Promise(res => { tmpImg.onload = res; tmpImg.onerror = res; tmpImg.src = ph.dataUrl; });
-          if (tmpImg.naturalWidth > 0 && tmpImg.naturalHeight > 0) {
-            const ratio = tmpImg.naturalWidth / tmpImg.naturalHeight;
-            drawH = Math.round(CW / ratio);
-            // Cap height so it doesn't take a full page
-            if (drawH > 130) { drawH = 130; drawW = Math.round(drawH * ratio); }
-            // Center horizontally if narrower than CW
-            if (drawW < CW) { /* keep drawW as-is */ } else { drawW = CW; }
-          }
-        } catch(e) { drawH = CARD_IMG_H; drawW = CW; }
+        if (ph.imgW > 0 && ph.imgH > 0) {
+          const ratio = ph.imgW / ph.imgH;
+          drawH = Math.round(CW / ratio);
+          if (drawH > 130) { drawH = 130; drawW = Math.round(drawH * ratio); }
+          if (drawW > CW) drawW = CW;
+        }
 
         checkNewPage(drawH + 20);
         doc.setDrawColor(220,220,220);
@@ -1040,7 +1024,17 @@ function PhotoSection({ photos, setPhotos }) {
         mediaType = "image/jpeg";
       }
       const id = Date.now() + Math.random();
-      setPhotos(prev => [...prev, { id, dataUrl, base64, mediaType, name: file.name, isVideo, description: "", arrows: [], videoUrl: "" }]);
+      // Store pixel dimensions for PDF aspect ratio
+      let imgW = 0, imgH = 0;
+      if (!isVideo && dataUrl && dataUrl.startsWith("data:")) {
+        try {
+          const tmpI = new Image();
+          await new Promise(res => { tmpI.onload = res; tmpI.onerror = res; tmpI.src = dataUrl; });
+          imgW = tmpI.naturalWidth || 0;
+          imgH = tmpI.naturalHeight || 0;
+        } catch(e) {}
+      }
+      setPhotos(prev => [...prev, { id, dataUrl, base64, mediaType, name: file.name, isVideo, description: "", arrows: [], videoUrl: "", imgW, imgH }]);
       if (!isVideo) analyzeImage(id, base64);
     }
   };
