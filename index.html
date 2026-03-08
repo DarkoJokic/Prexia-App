@@ -464,13 +464,30 @@ async function generatePDF(data, photos) {
           } catch(e) {}
         }
 
+        // Calculate real aspect ratio from image data
+        let drawW = CW;
+        let drawH = CARD_IMG_H;
+        try {
+          const tmpImg = new Image();
+          await new Promise(res => { tmpImg.onload = res; tmpImg.onerror = res; tmpImg.src = ph.dataUrl; });
+          if (tmpImg.naturalWidth > 0 && tmpImg.naturalHeight > 0) {
+            const ratio = tmpImg.naturalWidth / tmpImg.naturalHeight;
+            drawH = Math.round(CW / ratio);
+            // Cap height so it doesn't take a full page
+            if (drawH > 130) { drawH = 130; drawW = Math.round(drawH * ratio); }
+            // Center horizontally if narrower than CW
+            if (drawW < CW) { /* keep drawW as-is */ } else { drawW = CW; }
+          }
+        } catch(e) { drawH = CARD_IMG_H; drawW = CW; }
+
+        checkNewPage(drawH + 20);
         doc.setDrawColor(220,220,220);
         doc.setFillColor(245,245,245);
-        doc.roundedRect(ML, y, CW, drawH, 2, 2, "FD");
+        const imgX = ML + (CW - drawW) / 2;
+        doc.roundedRect(imgX, y, drawW, drawH, 2, 2, "FD");
 
         try {
-          // addImage with "NONE" compression to preserve quality, fit full width
-          doc.addImage(ph.dataUrl, "JPEG", ML, y, CW, drawH, undefined, "FAST");
+          doc.addImage(ph.dataUrl, "JPEG", imgX, y, drawW, drawH, undefined, "FAST");
         } catch(e) {
           doc.setTextColor(150,150,150); doc.setFontSize(8);
           doc.text("[Bild konnte nicht eingebettet werden]", ML+CW/2, y+drawH/2, {align:"center"});
@@ -501,18 +518,48 @@ async function generatePDF(data, photos) {
   doc.addPage(); pageHeader();
   blueHeader("Unterschrift & Bestätigung");
 
-  // Signature box
+  // Signature + Logo row
+  const sigW = CW * 0.52;
+  const logoBoxW = CW * 0.44;
+  const sigH = 42;
+
+  // Left: Signature box
   doc.setFillColor(252,252,252);
   doc.setDrawColor(200,200,200);
-  doc.roundedRect(ML, y, CW/2-3, 40, 2,2,"FD");
-  doc.roundedRect(ML+CW/2+3, y, CW/2-3, 40, 2,2,"FD");
-  doc.setTextColor(150,150,150); doc.setFontSize(8); doc.setFont("helvetica","normal");
-  doc.text("Unterschrift Messprüfer", ML+CW/4, y+37, {align:"center"});
-  doc.text("Unterschrift Auftraggeber / VN", ML+CW*3/4+3, y+37, {align:"center"});
+  doc.roundedRect(ML, y, sigW, sigH, 2, 2, "FD");
   doc.setDrawColor(180,180,180);
-  doc.line(ML+5, y+32, ML+CW/2-8, y+32);
-  doc.line(ML+CW/2+8, y+32, ML+CW-5, y+32);
-  y += 48;
+  doc.line(ML+6, y+sigH-10, ML+sigW-6, y+sigH-10);
+  doc.setTextColor(150,150,150); doc.setFontSize(8); doc.setFont("helvetica","normal");
+  doc.text("Unterschrift Messprüfer", ML+sigW/2, y+sigH-4, {align:"center"});
+
+  // Right: Logo box
+  const logoX = ML + sigW + CW*0.04;
+  doc.setFillColor(248,248,248);
+  doc.setDrawColor(220,220,220);
+  doc.roundedRect(logoX, y, logoBoxW, sigH, 2, 2, "FD");
+
+  // Embed logo image
+  try {
+    const logoResp = await fetch("https://vincentprena.github.io/prexia-app/prexia_logo_hires.png");
+    const logoBlob = await logoResp.blob();
+    const logoB64 = await new Promise(res => {
+      const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(logoBlob);
+    });
+    // Fit logo centered in box, preserve aspect ratio
+    const logoAspect = 1022 / 270; // known dimensions
+    const maxLH = sigH - 12;
+    const maxLW = logoBoxW - 10;
+    let lw = maxLW, lh = lw / logoAspect;
+    if (lh > maxLH) { lh = maxLH; lw = lh * logoAspect; }
+    const lx = logoX + (logoBoxW - lw) / 2;
+    const ly = y + (sigH - lh) / 2;
+    doc.addImage(logoB64, "PNG", lx, ly, lw, lh);
+  } catch(e) {
+    doc.setTextColor(150,150,150); doc.setFontSize(8); doc.setFont("helvetica","normal");
+    doc.text("PREXIA", logoX+logoBoxW/2, y+sigH/2+2, {align:"center"});
+  }
+
+  y += sigH + 6;
 
   // Digital signature note
   doc.setFillColor(...LB);
