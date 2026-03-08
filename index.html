@@ -77,8 +77,8 @@ async function generatePDF(data, photos) {
   const GR = [245,245,245];
   let y = MT;
 
-  const chk = (val) => val ? "☑" : "☐";
-  const jn  = (val) => val===true ? "☑ Ja  ☐ Nein" : val===false ? "☐ Ja  ☑ Nein" : "☐ Ja  ☐ Nein";
+  const chk = (val) => val ? "[X]" : "[ ]";
+  const jn  = (val) => val===true ? "[X] Ja   [ ] Nein" : val===false ? "[ ] Ja   [X] Nein" : "[ ] Ja   [ ] Nein";
   const safe = (v) => String(v||"");
 
   // ── helpers ──
@@ -154,18 +154,6 @@ async function generatePDF(data, photos) {
   doc.text(new Date().toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}), PW-MR, y+8, {align:"right"});
   y += 14;
 
-  // Projekt-Nummern
-  doc.autoTable({
-    startY:y, margin:{left:ML,right:MR},
-    head:[["Projektnummer","Versicherungsscheinnummer","Schadennummer"]],
-    body:[["","",""]],
-    headStyles:{fillColor:B,textColor:W,fontStyle:"bold",fontSize:8},
-    bodyStyles:{minCellHeight:8,fontSize:8},
-    columnStyles:{0:{cellWidth:CW/3},1:{cellWidth:CW/3},2:{cellWidth:CW/3}},
-    theme:"grid"
-  });
-  y = doc.lastAutoTable.finalY + 4;
-
   // Messprüfer
   doc.autoTable({
     startY:y, margin:{left:ML,right:MR},
@@ -178,18 +166,30 @@ async function generatePDF(data, photos) {
   });
   y = doc.lastAutoTable.finalY + 4;
 
+  // Projektnummern (filled from form)
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["Projektnummer","Versicherungsscheinnummer","Schadennummer"]],
+    body:[[safe(data.projektnummer), safe(data.versicherungsscheinnummer), safe(data.schadennummer)]],
+    headStyles:{fillColor:B,textColor:W,fontStyle:"bold",fontSize:8},
+    bodyStyles:{minCellHeight:8,fontSize:9,textColor:BK},
+    columnStyles:{0:{cellWidth:CW/3},1:{cellWidth:CW/3},2:{cellWidth:CW/3}},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 4;
+
   // Auftraggeber
   doc.autoTable({
     startY:y, margin:{left:ML,right:MR},
     head:[["Versicherungsnehmer / Auftraggeber","Objekt / Schadenort","Einsatz am"]],
     body:[[
       `Name: ${safe(data.name)}\nStraße: ${safe(data.strasse)}\nPLZ / Ort: ${safe(data.plzOrt)}`,
-      "",
-      new Date().toLocaleDateString("de-DE")
+      safe(data.objektSchadenort),
+      `${new Date().toLocaleDateString("de-DE")}\n\nEinsatz-Nr.: ${safe(data.einsatzNr)}\nFremd-Nr.: ${safe(data.fremdAuftragsnummer)}`
     ]],
     headStyles:{fillColor:B,textColor:W,fontStyle:"bold",fontSize:8},
-    bodyStyles:{fontSize:8.5,textColor:BK,minCellHeight:18},
-    columnStyles:{0:{cellWidth:CW*0.45},1:{cellWidth:CW*0.35},2:{cellWidth:CW*0.2}},
+    bodyStyles:{fontSize:8.5,textColor:BK,minCellHeight:22},
+    columnStyles:{0:{cellWidth:CW*0.42},1:{cellWidth:CW*0.35},2:{cellWidth:CW*0.23}},
     theme:"grid"
   });
   y = doc.lastAutoTable.finalY + 4;
@@ -319,23 +319,27 @@ async function generatePDF(data, photos) {
 
   // Protokollierung Messtechnik
   blueHeader("Protokollierung Messtechnik — Druckprobe");
+  const dpRows = (data.druckprobeRows||[]).map(r=>[safe(r.system),safe(r.dauer),safe(r.anfang),safe(r.ende),safe(r.diff),safe(r.gasAnfang),safe(r.gasEnde),safe(r.volumen)]);
+  while(dpRows.length<3) dpRows.push(["","","","","","","",""]);
   doc.autoTable({
     startY:y, margin:{left:ML,right:MR},
-    head:[["System","Dauer (Min)","Anfangsdruck (bar)","Enddruck (bar)","Differenz (bar)","Gasdetektion Anfang","Gasdetektion Ende","Volumen"]],
-    body:[["","","","","","","",""],["","","","","","","",""],["","","","","","","",""]],
+    head:[["System","Dauer (Min)","Anfangsdruck (bar)","Enddruck (bar)","Differenz (bar)","Gasdet. Anfang","Gasdet. Ende","Volumen"]],
+    body:dpRows,
     headStyles:{fillColor:LB,textColor:B,fontStyle:"bold",fontSize:7},
-    bodyStyles:{fontSize:8,minCellHeight:7},
+    bodyStyles:{fontSize:8,minCellHeight:8},
     theme:"grid"
   });
   y = doc.lastAutoTable.finalY + 5;
 
   blueHeader("Sonstige Messverfahren");
+  const smRows = (data.sonstigeMessRows||[]).map(r=>[safe(r.system),safe(r.thermo),safe(r.akustik),safe(r.leitung),safe(r.endoskop),safe(r.kanal),safe(r.sonstige)]);
+  while(smRows.length<3) smRows.push(["","","","","","",""]);
   doc.autoTable({
     startY:y, margin:{left:ML,right:MR},
     head:[["System","Thermographie","Elektro-Akustik","Leitungsortung","Endoskopie","Kanal TV","Sonstige"]],
-    body:[["","","","","","",""],["","","","","","",""],["","","","","","",""]],
+    body:smRows,
     headStyles:{fillColor:LB,textColor:B,fontStyle:"bold",fontSize:7.5},
-    bodyStyles:{fontSize:8,minCellHeight:7},
+    bodyStyles:{fontSize:8,minCellHeight:8},
     theme:"grid"
   });
   y = doc.lastAutoTable.finalY + 5;
@@ -604,15 +608,41 @@ function PhotoSection({ photos, setPhotos }) {
   };
 
   const isDng=(f)=>/\.(dng|raw|arw|cr2|nef|orf|rw2)$/i.test(f.name);
-  const toJpeg=(file)=>new Promise(resolve=>{
+  // Converts any image to JPEG and ensures base64 < 5MB for Claude API
+  const toJpeg=(file, forApi=false)=>new Promise(resolve=>{
     const url=URL.createObjectURL(file);
     const img=new Image();
     img.onload=()=>{
-      const c=document.createElement("canvas");
-      let w=img.width,h=img.height,m=2000;
-      if(w>m||h>m){if(w>h){h=Math.round(h*m/w);w=m;}else{w=Math.round(w*m/h);h=m;}}
-      c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
-      URL.revokeObjectURL(url);resolve(c.toDataURL("image/jpeg",0.85));
+      const canvas=document.createElement("canvas");
+      // For API: max 1200px, quality 0.65 → keeps under 5MB even for large RAW/DNG
+      // For PDF display: max 2000px, quality 0.82
+      const maxDim = forApi ? 1200 : 2000;
+      const quality = forApi ? 0.65 : 0.82;
+      let w=img.width, h=img.height;
+      if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}}
+      canvas.width=w; canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      // Double-compress if still too large for API
+      if(forApi){
+        let result = canvas.toDataURL("image/jpeg", quality);
+        // If still > 4.5MB base64 (~6MB raw), reduce further
+        let q = quality;
+        while(result.length > 6000000 && q > 0.2){
+          q -= 0.1;
+          result = canvas.toDataURL("image/jpeg", q);
+        }
+        // If STILL too large, scale down canvas
+        if(result.length > 6000000){
+          const c2=document.createElement("canvas");
+          c2.width=Math.round(w*0.6); c2.height=Math.round(h*0.6);
+          c2.getContext("2d").drawImage(canvas,0,0,c2.width,c2.height);
+          result = c2.toDataURL("image/jpeg", 0.6);
+        }
+        resolve(result);
+      } else {
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      }
     };
     img.onerror=()=>{URL.revokeObjectURL(url);resolve(null);};
     img.src=url;
@@ -629,9 +659,13 @@ function PhotoSection({ photos, setPhotos }) {
         dataUrl=await new Promise(res=>{reader.onload=()=>res(reader.result);});
         base64=dataUrl.split(",")[1];mediaType=file.type;
       } else {
-        const conv=await toJpeg(file);
-        if(conv){dataUrl=conv;base64=conv.split(",")[1];mediaType="image/jpeg";}
-        else{
+        const convDisplay=await toJpeg(file, false); // for PDF/display
+        const convApi=await toJpeg(file, true);       // smaller for Claude API
+        if(convDisplay){
+          dataUrl=convDisplay;
+          base64=(convApi||convDisplay).split(",")[1];
+          mediaType="image/jpeg";
+        } else {
           const reader=new FileReader();reader.readAsDataURL(file);
           dataUrl=await new Promise(res=>{reader.onload=()=>res(reader.result);});
           base64=dataUrl.split(",")[1];mediaType="image/jpeg";
@@ -707,7 +741,9 @@ function App() {
   const [hasKey,setHasKey]=useState(!!getApiKey());
 
   const [form,setFormState]=useState({
-    name:"",strasse:"",plzOrt:"",kurzbeschreibung:"",ergebnis:"",
+    name:"",strasse:"",plzOrt:"",objektSchadenort:"",
+    projektnummer:"",versicherungsscheinnummer:"",schadennummer:"",
+    einsatzNr:"",fremdAuftragsnummer:"",kurzbeschreibung:"",ergebnis:"",
     sys_kalt:false,sys_warm:false,sys_heiz:false,sys_abw:false,sys_regen:false,sys_feuchte:false,sys_spritz:false,sys_sonst:false,
     bauteil_rohr:false,bauteil_verb:false,bauteil_armatur:false,bauteil_fuge:false,bauteil_sonst:false,
     mat_stahl:false,mat_kupfer:false,mat_kunst:false,mat_guss:false,mat_blei:false,mat_stein:false,mat_sonst:false,
@@ -720,6 +756,8 @@ function App() {
     weit_zweitleck:null,weit_maler:null,weit_schreiner:null,weit_bodenleger:null,weit_fliesen:null,weit_fussbodenheiz:null,
     kapRows:[{raum:"",kapWMin:"",kapWMax:"",kapBMin:"",kapBMax:"",kapDMin:"",kapDMax:"",fliesen:""}],
     widRows:[{raum:"",wWMin:"",wWMax:"",wBMin:"",wBMax:"",wDMin:"",wDMax:""}],
+    druckprobeRows:[{system:"",dauer:"",anfang:"",ende:"",diff:"",gasAnfang:"",gasEnde:"",volumen:""}],
+    sonstigeMessRows:[{system:"",thermo:"",akustik:"",leitung:"",endoskop:"",kanal:"",sonstige:""}],
   });
 
   const set=(k,v)=>setFormState(f=>({...f,[k]:v}));
@@ -728,6 +766,8 @@ function App() {
   const addKap=()=>setFormState(f=>({...f,kapRows:[...f.kapRows,{raum:"",kapWMin:"",kapWMax:"",kapBMin:"",kapBMax:"",kapDMin:"",kapDMax:"",fliesen:""}]}));
   const updWid=(i,field,val)=>setFormState(f=>{const r=[...f.widRows];r[i]={...r[i],[field]:val};return{...f,widRows:r}});
   const addWid=()=>setFormState(f=>({...f,widRows:[...f.widRows,{raum:"",wWMin:"",wWMax:"",wBMin:"",wBMax:"",wDMin:"",wDMax:""}]}));
+  const updRow=(key,i,field,val)=>setFormState(f=>{const r=[...f[key]];r[i]={...r[i],[field]:val};return{...f,[key]:r}});
+  const addRow=(key,empty)=>setFormState(f=>({...f,[key]:[...f[key],empty]}));
 
   const steps=["Kundendaten","Schadenart","Messungen","Fotos","Ergebnis","Maßnahmen"];
   const card={background:"white",borderRadius:12,padding:20,marginBottom:16,boxShadow:"0 1px 6px rgba(0,0,0,.07)"};
@@ -741,11 +781,22 @@ function App() {
     if(step===0) return (
       <div>
         <div style={card}>
+          <SecHdr>Auftragsdaten</SecHdr>
+          <div style={{marginTop:16,display:"flex",flexDirection:"column",gap:14}}>
+            <TxtInput label="Projektnummer" value={form.projektnummer} onChange={v=>set("projektnummer",v)} placeholder="z.B. 2026-001"/>
+            <TxtInput label="Versicherungsscheinnummer" value={form.versicherungsscheinnummer} onChange={v=>set("versicherungsscheinnummer",v)} placeholder=""/>
+            <TxtInput label="Schadennummer" value={form.schadennummer} onChange={v=>set("schadennummer",v)} placeholder=""/>
+            <TxtInput label="Einsatz-Nr." value={form.einsatzNr} onChange={v=>set("einsatzNr",v)} placeholder=""/>
+            <TxtInput label="Fremde Auftragsnummer" value={form.fremdAuftragsnummer} onChange={v=>set("fremdAuftragsnummer",v)} placeholder=""/>
+          </div>
+        </div>
+        <div style={card}>
           <SecHdr>Kundendaten</SecHdr>
           <div style={{marginTop:16,display:"flex",flexDirection:"column",gap:14}}>
             <TxtInput label="Name / Firma" value={form.name} onChange={v=>set("name",v)} placeholder="Max Mustermann"/>
             <TxtInput label="Straße & Hausnummer" value={form.strasse} onChange={v=>set("strasse",v)} placeholder="Musterstraße 12"/>
             <TxtInput label="PLZ & Ort" value={form.plzOrt} onChange={v=>set("plzOrt",v)} placeholder="12345 Musterstadt"/>
+            <TxtInput label="Objekt / Schadenort (Adresse falls abweichend)" value={form.objektSchadenort} onChange={v=>set("objektSchadenort",v)} placeholder="Schadenort-Adresse oder leer lassen"/>
           </div>
         </div>
         <div style={card}>
@@ -829,6 +880,49 @@ function App() {
               </div>
             ))}
             <button onClick={addWid} style={{...btnS,fontSize:13,padding:"8px 16px"}}>+ Raum hinzufügen</button>
+          </div>
+        </div>
+
+        <div style={card}>
+          <SecHdr>Druckprobe</SecHdr>
+          <div style={{marginTop:14}}>
+            {form.druckprobeRows.map((r,i)=>(
+              <div key={i} style={{marginBottom:16,paddingBottom:16,borderBottom:"1px solid #f0f0f0"}}>
+                <div style={{fontSize:12,fontWeight:700,color:BLUE,marginBottom:8}}>Messung {i+1}</div>
+                <TxtInput label="System" value={r.system} onChange={v=>updRow("druckprobeRows",i,"system",v)} placeholder="z.B. Kaltwasser"/>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+                  <NumInput label="Dauer (Min)" value={r.dauer} onChange={v=>updRow("druckprobeRows",i,"dauer",v)}/>
+                  <NumInput label="Anfangsdruck (bar)" value={r.anfang} onChange={v=>updRow("druckprobeRows",i,"anfang",v)}/>
+                  <NumInput label="Enddruck (bar)" value={r.ende} onChange={v=>updRow("druckprobeRows",i,"ende",v)}/>
+                  <NumInput label="Differenz (bar)" value={r.diff} onChange={v=>updRow("druckprobeRows",i,"diff",v)}/>
+                  <NumInput label="Gasdetektion Anfang" value={r.gasAnfang} onChange={v=>updRow("druckprobeRows",i,"gasAnfang",v)}/>
+                  <NumInput label="Gasdetektion Ende" value={r.gasEnde} onChange={v=>updRow("druckprobeRows",i,"gasEnde",v)}/>
+                  <NumInput label="Volumen" value={r.volumen} onChange={v=>updRow("druckprobeRows",i,"volumen",v)}/>
+                </div>
+              </div>
+            ))}
+            <button onClick={()=>addRow("druckprobeRows",{system:"",dauer:"",anfang:"",ende:"",diff:"",gasAnfang:"",gasEnde:"",volumen:""})} style={{...btnS,fontSize:13,padding:"8px 16px"}}>+ Messung hinzufügen</button>
+          </div>
+        </div>
+
+        <div style={card}>
+          <SecHdr>Sonstige Messverfahren</SecHdr>
+          <div style={{marginTop:14}}>
+            {form.sonstigeMessRows.map((r,i)=>(
+              <div key={i} style={{marginBottom:16,paddingBottom:16,borderBottom:"1px solid #f0f0f0"}}>
+                <div style={{fontSize:12,fontWeight:700,color:BLUE,marginBottom:8}}>Messung {i+1}</div>
+                <TxtInput label="System" value={r.system} onChange={v=>updRow("sonstigeMessRows",i,"system",v)} placeholder="z.B. Heizungsanlage"/>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+                  <TxtInput label="Thermographie" value={r.thermo} onChange={v=>updRow("sonstigeMessRows",i,"thermo",v)} placeholder=""/>
+                  <TxtInput label="Elektro-Akustik" value={r.akustik} onChange={v=>updRow("sonstigeMessRows",i,"akustik",v)} placeholder=""/>
+                  <TxtInput label="Leitungsortung" value={r.leitung} onChange={v=>updRow("sonstigeMessRows",i,"leitung",v)} placeholder=""/>
+                  <TxtInput label="Endoskopie" value={r.endoskop} onChange={v=>updRow("sonstigeMessRows",i,"endoskop",v)} placeholder=""/>
+                  <TxtInput label="Kanal TV" value={r.kanal} onChange={v=>updRow("sonstigeMessRows",i,"kanal",v)} placeholder=""/>
+                  <TxtInput label="Sonstige" value={r.sonstige} onChange={v=>updRow("sonstigeMessRows",i,"sonstige",v)} placeholder=""/>
+                </div>
+              </div>
+            ))}
+            <button onClick={()=>addRow("sonstigeMessRows",{system:"",thermo:"",akustik:"",leitung:"",endoskop:"",kanal:"",sonstige:""})} style={{...btnS,fontSize:13,padding:"8px 16px"}}>+ Messverfahren hinzufügen</button>
           </div>
         </div>
       </div>
