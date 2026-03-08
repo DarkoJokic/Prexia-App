@@ -588,73 +588,173 @@ function AudioRecorder({ label, onTranscript, value }) {
 }
 
 // ─── PHOTO SECTION ────────────────────────────────────────────────────────────
+// Arrow editor component
+function ArrowEditor({ photo, onSave, onClose }) {
+  const canvasRef = useRef(null);
+  const [arrows, setArrows] = useState(photo.arrows || []);
+  const [placing, setPlacing] = useState(false);
+  const imgRef = useRef(new Image());
+
+  useEffect(() => {
+    imgRef.current.onload = () => drawAll(arrows);
+    imgRef.current.src = photo.dataUrl;
+  }, []);
+
+  const drawAll = (arrs) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const img = imgRef.current;
+    if (!img.complete) return;
+    const ctx = canvas.getContext("2d");
+    // Fit to screen width
+    const maxW = Math.min(window.innerWidth - 32, 600);
+    const scale = maxW / img.width;
+    canvas.width = maxW;
+    canvas.height = img.height * scale;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    arrs.forEach(a => {
+      const x = a.x * canvas.width;
+      const y = a.y * canvas.height;
+      drawArrow(ctx, x - 50, y - 50, x, y, "#e53935", 4);
+    });
+  };
+
+  const drawArrow = (ctx, fx, fy, tx, ty, color, lw) => {
+    const headlen = 18, angle = Math.atan2(ty - fy, tx - fx);
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx - headlen * Math.cos(angle - Math.PI/6), ty - headlen * Math.sin(angle - Math.PI/6));
+    ctx.lineTo(tx - headlen * Math.cos(angle + Math.PI/6), ty - headlen * Math.sin(angle + Math.PI/6));
+    ctx.closePath(); ctx.fill();
+    // White border for visibility
+    ctx.strokeStyle = "white"; ctx.lineWidth = 1;
+    ctx.stroke();
+  };
+
+  const handleCanvasTap = (e) => {
+    if (!placing) return;
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const x = (clientX - rect.left) / canvas.width;
+    const y = (clientY - rect.top) / canvas.height;
+    const newArrows = [...arrows, {x, y}];
+    setArrows(newArrows);
+    drawAll(newArrows);
+    setPlacing(false);
+  };
+
+  const undoLast = () => {
+    const newArrows = arrows.slice(0, -1);
+    setArrows(newArrows);
+    drawAll(newArrows);
+  };
+
+  const handleSave = () => {
+    // Render final image with arrows baked in
+    const canvas = canvasRef.current;
+    const finalDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    onSave(finalDataUrl, arrows);
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.9)",zIndex:2000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{color:"white",fontWeight:700,fontSize:15,marginBottom:10}}>
+        {placing ? "👆 Tippe auf das Bild um einen Pfeil zu platzieren" : "Roter Pfeil setzen"}
+      </div>
+      <canvas ref={canvasRef}
+        style={{maxWidth:"100%",borderRadius:8,cursor:placing?"crosshair":"default",border:placing?"3px solid #e53935":"3px solid #333"}}
+        onClick={handleCanvasTap}
+        onTouchStart={handleCanvasTap}
+      />
+      <div style={{display:"flex",gap:10,marginTop:14,flexWrap:"wrap",justifyContent:"center"}}>
+        <button onClick={()=>setPlacing(true)}
+          style={{padding:"10px 18px",background:"#e53935",color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>
+          ➕ Pfeil setzen
+        </button>
+        {arrows.length > 0 && <button onClick={undoLast}
+          style={{padding:"10px 18px",background:"#555",color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>
+          ↩ Rückgängig
+        </button>}
+        <button onClick={handleSave}
+          style={{padding:"10px 18px",background:"#2e7d32",color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>
+          ✅ Speichern
+        </button>
+        <button onClick={onClose}
+          style={{padding:"10px 18px",background:"#333",color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>
+          Abbrechen
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PhotoSection({ photos, setPhotos }) {
   const galleryRef = useRef(null);
   const cameraRef  = useRef(null);
   const [analyzingIds, setAnalyzingIds] = useState(new Set());
+  const [arrowEditId, setArrowEditId] = useState(null);
+  const [dictatingId, setDictatingId] = useState(null);
+  const [dictProcessing, setDictProcessing] = useState(null);
+  const dictRecRef = useRef(null);
+  const dictFinalRef = useRef("");
+  const [dictLive, setDictLive] = useState("");
 
-  const analyzeImage = async (id, base64, mediaType) => {
+  // ── guarantee base64 is under 4MB for API ──
+  const compressForApi = (base64) => new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      // Start at 800px max — guaranteed tiny
+      let maxD = 800;
+      const loop = () => {
+        let w = img.width, h = img.height;
+        if (w > maxD || h > maxD) { if(w>h){h=Math.round(h*maxD/w);w=maxD;}else{w=Math.round(w*maxD/h);h=maxD;} }
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        let q = 0.7;
+        let result = c.toDataURL("image/jpeg", q);
+        while (result.length > 4500000 && q > 0.2) { q -= 0.1; result = c.toDataURL("image/jpeg", q); }
+        if (result.length > 4500000 && maxD > 400) { maxD = Math.round(maxD * 0.7); loop(); return; }
+        resolve(result.split(",")[1]);
+      };
+      loop();
+    };
+    img.onerror = () => resolve(base64);
+    img.src = "data:image/jpeg;base64," + base64;
+  });
+
+  const analyzeImage = async (id, base64) => {
     setAnalyzingIds(prev=>new Set([...prev,id]));
-    // Retry logic: try up to 2 times with increasing delay
-    let lastError = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        if (attempt > 0) await new Promise(r => setTimeout(r, 1500));
-        // Further compress for API if needed
-        let apiBase64 = base64;
-        if (base64.length > 5000000) {
-          const img = new Image();
-          await new Promise(r => { img.onload = r; img.src = "data:image/jpeg;base64," + base64; });
-          const c = document.createElement("canvas");
-          const scale = Math.sqrt(3000000 / base64.length);
-          c.width = Math.round(img.width * scale);
-          c.height = Math.round(img.height * scale);
-          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-          apiBase64 = c.toDataURL("image/jpeg", 0.6).split(",")[1];
-        }
-        const desc = await claudeApi([{role:"user",content:[
-          {type:"image",source:{type:"base64",media_type:"image/jpeg",data:apiBase64}},
-          {type:"text",text:"Du bist Sachverständiger für Wasserschäden bei PREXIA. Beschreibe dieses Schadensfoto in 1-2 präzisen deutschen Sätzen für ein professionelles Messprotokoll. Was ist konkret zu sehen? Nur die Beschreibung, keine Einleitung."}
-        ]}],300);
-        setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:desc}:p));
-        setAnalyzingIds(prev=>{const s=new Set(prev);s.delete(id);return s;});
-        return;
-      } catch(e) {
-        lastError = e;
-      }
+    try {
+      const smallB64 = await compressForApi(base64);
+      const desc = await claudeApi([{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:"image/jpeg",data:smallB64}},
+        {type:"text",text:"Du bist Sachverständiger für Wasserschäden bei PREXIA. Beschreibe dieses Schadensfoto in 1-2 präzisen deutschen Sätzen für ein professionelles Messprotokoll. Was ist konkret zu sehen? Nur die Beschreibung, keine Einleitung."}
+      ]}],300);
+      setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:desc}:p));
+    } catch(e) {
+      setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:"Analyse fehlgeschlagen — bitte 🔄 drücken"}:p));
     }
-    setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:"Analyse fehlgeschlagen — bitte 🔄 drücken"}:p));
     setAnalyzingIds(prev=>{const s=new Set(prev);s.delete(id);return s;});
   };
 
   const isDng=(f)=>/\.(dng|raw|arw|cr2|nef|orf|rw2)$/i.test(f.name);
 
-  // Single-pass conversion: returns {display, api} base64 strings
   const processImage=(file)=>new Promise(resolve=>{
     const url=URL.createObjectURL(file);
     const img=new Image();
     img.onload=()=>{
-      // Display canvas: max 1800px
-      const dMax=1800; let dw=img.width,dh=img.height;
+      const dMax=1600; let dw=img.width,dh=img.height;
       if(dw>dMax||dh>dMax){if(dw>dh){dh=Math.round(dh*dMax/dw);dw=dMax;}else{dw=Math.round(dw*dMax/dh);dh=dMax;}}
       const dc=document.createElement("canvas"); dc.width=dw; dc.height=dh;
       dc.getContext("2d").drawImage(img,0,0,dw,dh);
       const display=dc.toDataURL("image/jpeg",0.82);
-
-      // API canvas: max 1000px, keep compressing until < 4MB base64
-      const aMax=1000; let aw=img.width,ah=img.height;
-      if(aw>aMax||ah>aMax){if(aw>ah){ah=Math.round(ah*aMax/aw);aw=aMax;}else{aw=Math.round(aw*aMax/ah);ah=aMax;}}
-      const ac=document.createElement("canvas"); ac.width=aw; ac.height=ah;
-      ac.getContext("2d").drawImage(img,0,0,aw,ah);
-      let q=0.7, api=ac.toDataURL("image/jpeg",q);
-      while(api.length>5000000 && q>0.2){ q-=0.1; api=ac.toDataURL("image/jpeg",q); }
-      if(api.length>5000000){
-        const sc=document.createElement("canvas"); sc.width=Math.round(aw*0.6); sc.height=Math.round(ah*0.6);
-        sc.getContext("2d").drawImage(ac,0,0,sc.width,sc.height);
-        api=sc.toDataURL("image/jpeg",0.6);
-      }
       URL.revokeObjectURL(url);
-      resolve({display, api:api.split(",")[1]});
+      resolve({display, displayBase64: display.split(",")[1]});
     };
     img.onerror=()=>{URL.revokeObjectURL(url);resolve(null);};
     img.src=url;
@@ -672,27 +772,77 @@ function PhotoSection({ photos, setPhotos }) {
         base64=dataUrl.split(",")[1]; mediaType=file.type;
       } else {
         const result = await processImage(file);
-        if(result){ dataUrl=result.display; base64=result.api; mediaType="image/jpeg"; }
-        else {
-          const reader=new FileReader(); reader.readAsDataURL(file);
-          dataUrl=await new Promise(res=>{reader.onload=()=>res(reader.result);});
-          base64=dataUrl.split(",")[1]; mediaType="image/jpeg";
-        }
+        if(result){ dataUrl=result.display; base64=result.displayBase64; mediaType="image/jpeg"; }
+        else { continue; }
       }
       const id=Date.now()+Math.random();
-      setPhotos(prev=>[...prev,{id,dataUrl,base64,mediaType,name:file.name,isVideo,description:""}]);
-      if(!isVideo) setTimeout(()=>analyzeImage(id,base64,mediaType),100);
+      setPhotos(prev=>[...prev,{id,dataUrl,base64,mediaType,name:file.name,isVideo,description:"",arrows:[]}]);
+      if(!isVideo) analyzeImage(id, base64);
     }
   };
 
+  // ── Diktieren für Foto-Beschreibung ──
+  const startDictPhoto = (id) => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ alert("Spracherkennung nicht verfügbar"); return; }
+    const r = new SR();
+    r.lang="de-DE"; r.continuous=true; r.interimResults=true;
+    dictFinalRef.current = "";
+    r.onresult = (e) => {
+      let interim="", final="";
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const t=e.results[i][0].transcript;
+        if(e.results[i].isFinal) final+=t+" "; else interim+=t;
+      }
+      if(final) dictFinalRef.current+=final;
+      setDictLive(dictFinalRef.current+interim);
+    };
+    r.onerror = () => { setDictatingId(null); };
+    dictRecRef.current = r; r.start(); setDictatingId(id); setDictLive("");
+  };
+
+  const stopDictPhoto = async (id) => {
+    if(dictRecRef.current){dictRecRef.current.stop();dictRecRef.current=null;}
+    setDictatingId(null);
+    const spoken=(dictFinalRef.current+dictLive).trim();
+    if(!spoken) return;
+    setDictProcessing(id);
+    try {
+      const result = await claudeApi([{role:"user",content:
+        `Du bist Sachverständiger für Wasserschäden bei PREXIA. Ich habe Folgendes eingesprochen: "${spoken}". Formuliere daraus eine präzise 1-2 Satz Beschreibung für ein Messprotokoll. Nur der fertige Text, keine Einleitung.`
+      }]);
+      setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:result}:p));
+    } catch(e) {
+      setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:spoken}:p));
+    }
+    setDictProcessing(null);
+    setDictLive("");
+  };
+
+  const arrowPhoto = photos.find(p=>p.id===arrowEditId);
+
   return (
     <div>
+      {arrowPhoto && (
+        <ArrowEditor
+          photo={arrowPhoto}
+          onSave={(newDataUrl, arrows) => {
+            const newBase64 = newDataUrl.split(",")[1];
+            setPhotos(prev=>prev.map(p=>p.id===arrowEditId
+              ? {...p, dataUrl:newDataUrl, base64:newBase64, arrows}
+              : p));
+            setArrowEditId(null);
+          }}
+          onClose={()=>setArrowEditId(null)}
+        />
+      )}
+
       <SecHdr>📷 Fotodokumentation</SecHdr>
       <div style={{display:"flex",gap:10,marginTop:14}}>
         <div onClick={()=>galleryRef.current?.click()} style={{flex:1,border:`2px dashed ${BLUE}`,borderRadius:12,padding:"20px 10px",textAlign:"center",cursor:"pointer",background:"#f0f8ff"}}>
           <div style={{fontSize:28}}>🖼️</div>
           <div style={{fontWeight:700,fontSize:14,color:BLUE,marginTop:4}}>Galerie</div>
-          <div style={{fontSize:11,color:"#888",marginTop:2}}>Fotos & Videos</div>
+          <div style={{fontSize:11,color:"#888",marginTop:2}}>Alle Formate</div>
         </div>
         <div onClick={()=>cameraRef.current?.click()} style={{flex:1,border:"2px dashed #43a047",borderRadius:12,padding:"20px 10px",textAlign:"center",cursor:"pointer",background:"#f1f8f1"}}>
           <div style={{fontSize:28}}>📷</div>
@@ -715,22 +865,47 @@ function PhotoSection({ photos, setPhotos }) {
               <div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,.5)",color:"white",fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20}}>
                 {photo.isVideo?"🎬":"📷"} {idx+1}
               </div>
-              <button onClick={()=>setPhotos(prev=>prev.filter(p=>p.id!==photo.id))}
-                style={{position:"absolute",top:8,right:8,background:"rgba(200,0,0,.8)",color:"white",border:"none",borderRadius:20,width:30,height:30,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <div style={{position:"absolute",top:8,right:8,display:"flex",gap:6}}>
+                {!photo.isVideo && <button onClick={()=>setArrowEditId(photo.id)}
+                  style={{background:"#e53935",color:"white",border:"none",borderRadius:20,width:32,height:32,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}
+                  title="Roten Pfeil setzen">➤</button>}
+                <button onClick={()=>setPhotos(prev=>prev.filter(p=>p.id!==photo.id))}
+                  style={{background:"rgba(80,80,80,.85)",color:"white",border:"none",borderRadius:20,width:32,height:32,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
             </div>
             <div style={{padding:12}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                <span style={{fontSize:12,fontWeight:700,color:BLUE}}>KI-Beschreibung</span>
+              {/* KI Analyse row */}
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,flexWrap:"wrap"}}>
+                <span style={{fontSize:12,fontWeight:700,color:BLUE}}>Beschreibung</span>
                 {analyzingIds.has(photo.id)&&<span style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:BLUE}}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Analysiere…
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> KI analysiert…
                 </span>}
                 {!photo.isVideo&&!analyzingIds.has(photo.id)&&
-                  <button onClick={()=>analyzeImage(photo.id,photo.base64,photo.mediaType)}
-                    style={{fontSize:11,color:"#888",background:"none",border:"1px solid #ddd",borderRadius:5,padding:"2px 8px"}}>🔄 Neu</button>
+                  <button onClick={()=>analyzeImage(photo.id,photo.base64)}
+                    style={{fontSize:11,color:"#888",background:"none",border:"1px solid #ddd",borderRadius:5,padding:"2px 8px"}}>🔄 KI neu</button>
+                }
+                {/* Diktat Button */}
+                {dictatingId!==photo.id && dictProcessing!==photo.id &&
+                  <button onClick={()=>startDictPhoto(photo.id)}
+                    style={{fontSize:11,background:BLUE,color:"white",border:"none",borderRadius:5,padding:"3px 10px",fontWeight:600}}>🎙️ Diktieren</button>
+                }
+                {dictatingId===photo.id &&
+                  <button onClick={()=>stopDictPhoto(photo.id)} className="pulse"
+                    style={{fontSize:11,background:"#e53935",color:"white",border:"none",borderRadius:5,padding:"3px 10px",fontWeight:600}}>⏹ Stopp</button>
+                }
+                {dictProcessing===photo.id &&
+                  <span style={{fontSize:11,color:BLUE,display:"flex",alignItems:"center",gap:4}}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Claude schreibt…
+                  </span>
                 }
               </div>
+              {dictatingId===photo.id && dictLive &&
+                <div style={{fontSize:12,color:"#555",background:"#f8f9ff",border:"1px solid #dde3ff",borderRadius:6,padding:"6px 8px",marginBottom:8,lineHeight:1.4}}>
+                  🎙️ <i>{dictLive}</i>
+                </div>
+              }
               <textarea value={photo.description} onChange={e=>setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,description:e.target.value}:p))}
-                placeholder={photo.isVideo?"Beschreibung eingeben…":analyzingIds.has(photo.id)?"Wird analysiert…":"Beschreibung…"}
+                placeholder={analyzingIds.has(photo.id)?"Wird analysiert…":"Beschreibung eingeben oder diktieren…"}
                 rows={2} style={{width:"100%",padding:8,border:"1px solid #e0e0e0",borderRadius:7,fontSize:13,resize:"vertical"}}/>
             </div>
           </div>
