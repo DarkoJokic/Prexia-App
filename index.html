@@ -595,54 +595,66 @@ function PhotoSection({ photos, setPhotos }) {
 
   const analyzeImage = async (id, base64, mediaType) => {
     setAnalyzingIds(prev=>new Set([...prev,id]));
-    try {
-      const desc = await claudeApi([{role:"user",content:[
-        {type:"image",source:{type:"base64",media_type:"image/jpeg",data:base64}},
-        {type:"text",text:"Du bist Sachverständiger für Wasserschäden bei PREXIA. Beschreibe dieses Schadensfoto in 1-2 präzisen deutschen Sätzen für ein professionelles Messprotokoll. Was ist konkret zu sehen? Nur die Beschreibung, keine Einleitung."}
-      ]}],300);
-      setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:desc}:p));
-    } catch(e) {
-      setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:"Fehler: "+e.message}:p));
+    // Retry logic: try up to 2 times with increasing delay
+    let lastError = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) await new Promise(r => setTimeout(r, 1500));
+        // Further compress for API if needed
+        let apiBase64 = base64;
+        if (base64.length > 5000000) {
+          const img = new Image();
+          await new Promise(r => { img.onload = r; img.src = "data:image/jpeg;base64," + base64; });
+          const c = document.createElement("canvas");
+          const scale = Math.sqrt(3000000 / base64.length);
+          c.width = Math.round(img.width * scale);
+          c.height = Math.round(img.height * scale);
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          apiBase64 = c.toDataURL("image/jpeg", 0.6).split(",")[1];
+        }
+        const desc = await claudeApi([{role:"user",content:[
+          {type:"image",source:{type:"base64",media_type:"image/jpeg",data:apiBase64}},
+          {type:"text",text:"Du bist Sachverständiger für Wasserschäden bei PREXIA. Beschreibe dieses Schadensfoto in 1-2 präzisen deutschen Sätzen für ein professionelles Messprotokoll. Was ist konkret zu sehen? Nur die Beschreibung, keine Einleitung."}
+        ]}],300);
+        setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:desc}:p));
+        setAnalyzingIds(prev=>{const s=new Set(prev);s.delete(id);return s;});
+        return;
+      } catch(e) {
+        lastError = e;
+      }
     }
+    setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:"Analyse fehlgeschlagen — bitte 🔄 drücken"}:p));
     setAnalyzingIds(prev=>{const s=new Set(prev);s.delete(id);return s;});
   };
 
   const isDng=(f)=>/\.(dng|raw|arw|cr2|nef|orf|rw2)$/i.test(f.name);
-  // Converts any image to JPEG and ensures base64 < 5MB for Claude API
-  const toJpeg=(file, forApi=false)=>new Promise(resolve=>{
+
+  // Single-pass conversion: returns {display, api} base64 strings
+  const processImage=(file)=>new Promise(resolve=>{
     const url=URL.createObjectURL(file);
     const img=new Image();
     img.onload=()=>{
-      const canvas=document.createElement("canvas");
-      // For API: max 1200px, quality 0.65 → keeps under 5MB even for large RAW/DNG
-      // For PDF display: max 2000px, quality 0.82
-      const maxDim = forApi ? 1200 : 2000;
-      const quality = forApi ? 0.65 : 0.82;
-      let w=img.width, h=img.height;
-      if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}}
-      canvas.width=w; canvas.height=h;
-      canvas.getContext("2d").drawImage(img,0,0,w,h);
-      URL.revokeObjectURL(url);
-      // Double-compress if still too large for API
-      if(forApi){
-        let result = canvas.toDataURL("image/jpeg", quality);
-        // If still > 4.5MB base64 (~6MB raw), reduce further
-        let q = quality;
-        while(result.length > 6000000 && q > 0.2){
-          q -= 0.1;
-          result = canvas.toDataURL("image/jpeg", q);
-        }
-        // If STILL too large, scale down canvas
-        if(result.length > 6000000){
-          const c2=document.createElement("canvas");
-          c2.width=Math.round(w*0.6); c2.height=Math.round(h*0.6);
-          c2.getContext("2d").drawImage(canvas,0,0,c2.width,c2.height);
-          result = c2.toDataURL("image/jpeg", 0.6);
-        }
-        resolve(result);
-      } else {
-        resolve(canvas.toDataURL("image/jpeg", quality));
+      // Display canvas: max 1800px
+      const dMax=1800; let dw=img.width,dh=img.height;
+      if(dw>dMax||dh>dMax){if(dw>dh){dh=Math.round(dh*dMax/dw);dw=dMax;}else{dw=Math.round(dw*dMax/dh);dh=dMax;}}
+      const dc=document.createElement("canvas"); dc.width=dw; dc.height=dh;
+      dc.getContext("2d").drawImage(img,0,0,dw,dh);
+      const display=dc.toDataURL("image/jpeg",0.82);
+
+      // API canvas: max 1000px, keep compressing until < 4MB base64
+      const aMax=1000; let aw=img.width,ah=img.height;
+      if(aw>aMax||ah>aMax){if(aw>ah){ah=Math.round(ah*aMax/aw);aw=aMax;}else{aw=Math.round(aw*aMax/ah);ah=aMax;}}
+      const ac=document.createElement("canvas"); ac.width=aw; ac.height=ah;
+      ac.getContext("2d").drawImage(img,0,0,aw,ah);
+      let q=0.7, api=ac.toDataURL("image/jpeg",q);
+      while(api.length>5000000 && q>0.2){ q-=0.1; api=ac.toDataURL("image/jpeg",q); }
+      if(api.length>5000000){
+        const sc=document.createElement("canvas"); sc.width=Math.round(aw*0.6); sc.height=Math.round(ah*0.6);
+        sc.getContext("2d").drawImage(ac,0,0,sc.width,sc.height);
+        api=sc.toDataURL("image/jpeg",0.6);
       }
+      URL.revokeObjectURL(url);
+      resolve({display, api:api.split(",")[1]});
     };
     img.onerror=()=>{URL.revokeObjectURL(url);resolve(null);};
     img.src=url;
@@ -653,22 +665,18 @@ function PhotoSection({ photos, setPhotos }) {
       const isVideo=file.type.startsWith("video/");
       const isImage=file.type.startsWith("image/")||isDng(file);
       if(!isImage&&!isVideo) continue;
-      let dataUrl,base64,mediaType;
+      let dataUrl, base64, mediaType;
       if(isVideo){
-        const reader=new FileReader();reader.readAsDataURL(file);
+        const reader=new FileReader(); reader.readAsDataURL(file);
         dataUrl=await new Promise(res=>{reader.onload=()=>res(reader.result);});
-        base64=dataUrl.split(",")[1];mediaType=file.type;
+        base64=dataUrl.split(",")[1]; mediaType=file.type;
       } else {
-        const convDisplay=await toJpeg(file, false); // for PDF/display
-        const convApi=await toJpeg(file, true);       // smaller for Claude API
-        if(convDisplay){
-          dataUrl=convDisplay;
-          base64=(convApi||convDisplay).split(",")[1];
-          mediaType="image/jpeg";
-        } else {
-          const reader=new FileReader();reader.readAsDataURL(file);
+        const result = await processImage(file);
+        if(result){ dataUrl=result.display; base64=result.api; mediaType="image/jpeg"; }
+        else {
+          const reader=new FileReader(); reader.readAsDataURL(file);
           dataUrl=await new Promise(res=>{reader.onload=()=>res(reader.result);});
-          base64=dataUrl.split(",")[1];mediaType="image/jpeg";
+          base64=dataUrl.split(",")[1]; mediaType="image/jpeg";
         }
       }
       const id=Date.now()+Math.random();
