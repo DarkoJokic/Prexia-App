@@ -20,41 +20,434 @@
 </head>
 <body>
 <div id="root"></div>
-
-<!-- React + Babel -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
 <script type="text/babel">
-const { useState, useRef, useEffect } = React;
-
+const { useState, useRef } = React;
 const BLUE = "#1B9AD6";
-const BLUE_HEX = "1B9AD6";
 
-// ─── API KEY MANAGEMENT ───────────────────────────────────────────────────────
+// ─── API ──────────────────────────────────────────────────────────────────────
 function getApiKey() { return localStorage.getItem("prexia_api_key") || ""; }
 function saveApiKey(k) { localStorage.setItem("prexia_api_key", k); }
 
-async function claudeApi(messages, maxTokens=1000) {
+async function claudeApi(messages, maxTokens=1200) {
   const key = getApiKey();
-  if (!key) throw new Error("Kein API-Key gesetzt. Bitte oben rechts ⚙️ antippen.");
+  if (!key) throw new Error("Kein API-Key. Bitte ⚙️ antippen.");
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true"
-    },
-    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: maxTokens, messages })
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:maxTokens, messages})
   });
-  if (!resp.ok) {
-    const err = await resp.json().catch(()=>({}));
-    throw new Error(err.error?.message || `API Fehler ${resp.status}`);
+  if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error?.message||`API Fehler ${resp.status}`); }
+  const d = await resp.json();
+  return d.content?.map(c=>c.text||"").join("")||"";
+}
+
+// ─── PDF GENERATOR ────────────────────────────────────────────────────────────
+async function loadJsPDF() {
+  if (window._jspdf) return window._jspdf;
+  await new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    s.onload=res; s.onerror=rej; document.head.appendChild(s);
+  });
+  await new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js";
+    s.onload=res; s.onerror=rej; document.head.appendChild(s);
+  });
+  window._jspdf = window.jspdf;
+  return window._jspdf;
+}
+
+async function generatePDF(data, photos) {
+  const lib = await loadJsPDF();
+  const { jsPDF } = lib;
+  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+
+  const PW = 210, PH = 297;
+  const ML = 14, MR = 14, MT = 14;
+  const CW = PW - ML - MR; // content width = 182mm
+  const B = [27, 154, 214]; // PREXIA blue RGB
+  const W = [255,255,255];
+  const BK = [40,40,40];
+  const LB = [232,244,252]; // light blue
+  const GR = [245,245,245];
+  let y = MT;
+
+  const chk = (val) => val ? "☑" : "☐";
+  const jn  = (val) => val===true ? "☑ Ja  ☐ Nein" : val===false ? "☐ Ja  ☑ Nein" : "☐ Ja  ☐ Nein";
+  const safe = (v) => String(v||"");
+
+  // ── helpers ──
+  function pageHeader() {
+    // Blue bar top
+    doc.setFillColor(...B);
+    doc.rect(0,0,PW,12,"F");
+    doc.setTextColor(...W);
+    doc.setFontSize(10); doc.setFont("helvetica","bold");
+    doc.text("PREXIA Leckortungsbericht", ML, 8);
+    doc.setFontSize(8); doc.setFont("helvetica","normal");
+    doc.text(`${safe(data.name)} | ${safe(data.plzOrt)}`, PW-MR, 8, {align:"right"});
+    y = 18;
   }
-  const data = await resp.json();
-  return data.content?.map(c=>c.text||"").join("") || "";
+
+  function blueHeader(text) {
+    doc.setFillColor(...B);
+    doc.roundedRect(ML, y, CW, 8, 1, 1, "F");
+    doc.setTextColor(...W);
+    doc.setFontSize(9); doc.setFont("helvetica","bold");
+    doc.text(text, ML+CW/2, y+5.5, {align:"center"});
+    y += 10;
+  }
+
+  function checkNewPage(needed=20) {
+    if (y + needed > PH-14) {
+      doc.addPage();
+      pageHeader();
+    }
+  }
+
+  function labelValue(label, value, x=ML, w=CW, rowH=7) {
+    doc.setFillColor(...LB);
+    doc.rect(x, y, w/3, rowH, "F");
+    doc.setDrawColor(200,220,235);
+    doc.rect(x, y, w, rowH, "S");
+    doc.setTextColor(80,80,80); doc.setFontSize(7.5); doc.setFont("helvetica","bold");
+    doc.text(label, x+2, y+4.8);
+    doc.setTextColor(...BK); doc.setFontSize(8); doc.setFont("helvetica","normal");
+    const lines = doc.splitTextToSize(safe(value), w*2/3-4);
+    doc.text(lines[0]||"", x+w/3+2, y+4.8);
+    y += rowH;
+  }
+
+  function textBlock(text, label="") {
+    if (label) {
+      doc.setFillColor(...B);
+      doc.rect(ML, y, CW, 6, "F");
+      doc.setTextColor(...W); doc.setFontSize(8); doc.setFont("helvetica","bold");
+      doc.text(label, ML+2, y+4.2);
+      y += 7;
+    }
+    doc.setFillColor(252,252,252);
+    doc.setDrawColor(200,220,235);
+    const lines = doc.splitTextToSize(safe(text)||" ", CW-6);
+    const bh = Math.max(12, lines.length*5+4);
+    checkNewPage(bh+4);
+    doc.rect(ML, y, CW, bh, "FD");
+    doc.setTextColor(...BK); doc.setFontSize(8.5); doc.setFont("helvetica","normal");
+    doc.text(lines, ML+3, y+5);
+    y += bh+3;
+  }
+
+  // ══════════════════════════════════════════════════
+  // PAGE 1
+  // ══════════════════════════════════════════════════
+  pageHeader();
+
+  // Title
+  doc.setTextColor(...B); doc.setFontSize(22); doc.setFont("helvetica","bold");
+  doc.text("Leckortungsbericht", ML, y+8);
+  doc.setTextColor(100,100,100); doc.setFontSize(9); doc.setFont("helvetica","normal");
+  doc.text(new Date().toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}), PW-MR, y+8, {align:"right"});
+  y += 14;
+
+  // Projekt-Nummern
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["Projektnummer","Versicherungsscheinnummer","Schadennummer"]],
+    body:[["","",""]],
+    headStyles:{fillColor:B,textColor:W,fontStyle:"bold",fontSize:8},
+    bodyStyles:{minCellHeight:8,fontSize:8},
+    columnStyles:{0:{cellWidth:CW/3},1:{cellWidth:CW/3},2:{cellWidth:CW/3}},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 4;
+
+  // Messprüfer
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["Messprüfer","Telefonnummer","E-Mail"]],
+    body:[["Vincent Prena","0151 723 731 88","info@prexia24.de"]],
+    headStyles:{fillColor:LB,textColor:B,fontStyle:"bold",fontSize:8},
+    bodyStyles:{fontSize:8.5,textColor:BK},
+    columnStyles:{0:{cellWidth:CW/3},1:{cellWidth:CW/3},2:{cellWidth:CW/3}},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 4;
+
+  // Auftraggeber
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["Versicherungsnehmer / Auftraggeber","Objekt / Schadenort","Einsatz am"]],
+    body:[[
+      `Name: ${safe(data.name)}\nStraße: ${safe(data.strasse)}\nPLZ / Ort: ${safe(data.plzOrt)}`,
+      "",
+      new Date().toLocaleDateString("de-DE")
+    ]],
+    headStyles:{fillColor:B,textColor:W,fontStyle:"bold",fontSize:8},
+    bodyStyles:{fontSize:8.5,textColor:BK,minCellHeight:18},
+    columnStyles:{0:{cellWidth:CW*0.45},1:{cellWidth:CW*0.35},2:{cellWidth:CW*0.2}},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 4;
+
+  // Kurzbeschreibung
+  blueHeader("Kurzbeschreibung Schadensereignis");
+  textBlock(data.kurzbeschreibung);
+
+  // Feuchtigkeitsmessung
+  blueHeader("Feuchtigkeitsmessung — Kapazitiv (Digits)");
+  const kapHead = [["Raum","Wand Min","Wand Max","Boden Min","Boden Max","Decke Min","Decke Max","Fliesen St."]];
+  const kapBody = (data.kapRows||[]).map(r=>[r.raum||"",r.kapWMin||"",r.kapWMax||"",r.kapBMin||"",r.kapBMax||"",r.kapDMin||"",r.kapDMax||"",r.fliesen||""]);
+  while(kapBody.length<3) kapBody.push(["","","","","","","",""]);
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:kapHead, body:kapBody,
+    headStyles:{fillColor:LB,textColor:B,fontStyle:"bold",fontSize:7.5},
+    bodyStyles:{fontSize:8,minCellHeight:7},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 4;
+
+  blueHeader("Feuchtigkeitsmessung — Widerstand");
+  const widHead = [["Raum","Wand Min","Wand Max","Boden Min","Boden Max","Decke Min","Decke Max"]];
+  const widBody = (data.widRows||[]).map(r=>[r.raum||"",r.wWMin||"",r.wWMax||"",r.wBMin||"",r.wBMax||"",r.wDMin||"",r.wDMax||""]);
+  while(widBody.length<3) widBody.push(["","","","","","",""]);
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:widHead, body:widBody,
+    headStyles:{fillColor:LB,textColor:B,fontStyle:"bold",fontSize:7.5},
+    bodyStyles:{fontSize:8,minCellHeight:7},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 4;
+
+  // ══════════════════════════════════════════════════
+  // PAGE 2 — Schadenart
+  // ══════════════════════════════════════════════════
+  doc.addPage(); pageHeader();
+  blueHeader("Zusammenfassung Leckageortung — Schadenart");
+
+  const d = data;
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["Beschädigtes System","Beschädigtes Bauteil","Materialart","Art der Verbindung","Ursache"]],
+    body:[[
+      [["Kaltwasser",d.sys_kalt],["Warmwasser",d.sys_warm],["Heizung",d.sys_heiz],["Abwasser",d.sys_abw],["Regenwasser",d.sys_regen],["Feuchte von außen",d.sys_feuchte],["Spritzwasser",d.sys_spritz],["Sonstiges",d.sys_sonst]].map(([l,v])=>`${chk(v)} ${l}`).join("\n"),
+      [["Rohrleitung",d.bauteil_rohr],["Verbindungselement",d.bauteil_verb],["Armatur/Schlauch",d.bauteil_armatur],["Fuge/Abdichtung",d.bauteil_fuge],["Sonstiges",d.bauteil_sonst]].map(([l,v])=>`${chk(v)} ${l}`).join("\n"),
+      [["Stahlrohr",d.mat_stahl],["Kupfer",d.mat_kupfer],["Kunststoff",d.mat_kunst],["Guss",d.mat_guss],["Blei",d.mat_blei],["Steinzeug",d.mat_stein],["Sonstiges",d.mat_sonst]].map(([l,v])=>`${chk(v)} ${l}`).join("\n"),
+      [["Gewindeverb.",d.verb_gewinde],["Klemmverb.",d.verb_klemm],["Pressverb.",d.verb_press],["Lötverb.",d.verb_loet],["Steckverb.",d.verb_steck],["Schweißverb.",d.verb_schweiss],["kaltgeschweißt",d.verb_kalt],["Sonstiges",d.verb_sonst]].map(([l,v])=>`${chk(v)} ${l}`).join("\n"),
+      [["Rohrbruch",d.urs_rohrbruch],["Rohrbruch/Korrosion",d.urs_korros],["Rohrbruch/Verarbeitung",d.urs_verarb],["Rohrbruch/Frost",d.urs_frost],["Rohrbruch/Beschädigung",d.urs_beschaed],["Undichtigkeit",d.urs_undicht],["undichte Fuge",d.urs_fuge],["Muffenversatz",d.urs_muffe],["Wurzeleinwuchs",d.urs_wurzel],["Sonstiges",d.urs_sonst]].map(([l,v])=>`${chk(v)} ${l}`).join("\n"),
+    ]],
+    headStyles:{fillColor:B,textColor:W,fontStyle:"bold",fontSize:7.5},
+    bodyStyles:{fontSize:7.5,textColor:BK,valign:"top"},
+    columnStyles:{0:{cellWidth:35},1:{cellWidth:34},2:{cellWidth:32},3:{cellWidth:35},4:{cellWidth:CW-136}},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 5;
+
+  // Weitere Angaben + Fremdverschulden
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["Weitere Angaben","Fremdverschulden"]],
+    body:[[
+      `Schadensort:\n${chk(d.schadSort_innen)} innerhalb Gebäude\n${chk(d.schadSort_aussen)} außerhalb Gebäude\n\nGesamtschaden > 5.000 €: ${jn(d.schaden5k)}\nRäume bewohnt: ${jn(d.raeumeBeWohnt)}`,
+      `${chk(d.fremd_nachbar)} Wasser vom Nachbargebäude\n${chk(d.fremd_anwend)} Anwendungsfehler VN/Mieter\n${chk(d.fremd_handwerk)} Handwerkerfehler\n${chk(d.fremd_gewahr)} Gewährleistung`
+    ]],
+    headStyles:{fillColor:B,textColor:W,fontStyle:"bold",fontSize:8},
+    bodyStyles:{fontSize:8.5,textColor:BK,valign:"top",minCellHeight:22},
+    columnStyles:{0:{cellWidth:CW/2},1:{cellWidth:CW/2}},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 5;
+
+  // Ergebnis
+  blueHeader("Ergebnis der Leckortung");
+  textBlock(data.ergebnis);
+
+  // Leckstelle + Maßnahmenhinweis
+  checkNewPage(20);
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    body:[[
+      `Leckstelle freigelegt: ${jn(d.leckFreigelegt)}`,
+      `Heizung entleert: ${chk(d.heizEntleert)} Ja`
+    ]],
+    bodyStyles:{fontSize:8.5,fillColor:GR},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 3;
+
+  // Hinweis
+  doc.setFillColor(255,248,220);
+  doc.setDrawColor(200,180,100);
+  doc.roundedRect(ML, y, CW, 10, 1,1,"FD");
+  doc.setTextColor(100,80,0); doc.setFontSize(7); doc.setFont("helvetica","bold");
+  const hinweis = "Hinweis: Nach Reparaturen an druckwasserführenden Leitungen ist durch das reparierende Fachunternehmen eine Druckprobe durchzuführen.";
+  doc.text(hinweis, ML+2, y+4);
+  y += 13;
+
+  // ══════════════════════════════════════════════════
+  // PAGE 3 — Maßnahmen
+  // ══════════════════════════════════════════════════
+  doc.addPage(); pageHeader();
+  blueHeader("Erforderliche Maßnahmen");
+
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["Weitere Leckortung","Reparatur / Installateur","Trocknung","Wiederherstellung"]],
+    body:[[jn(d.erf_leck), jn(d.erf_rep), jn(d.erf_trock), jn(d.erf_wieder)]],
+    headStyles:{fillColor:B,textColor:W,fontStyle:"bold",fontSize:8},
+    bodyStyles:{fontSize:9,minCellHeight:10},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 5;
+
+  blueHeader("Weitere erforderliche Leistungen");
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["Zweite Leckortung","Maler/Putzer/Trockenbauer","Schreiner","Bodenleger","Fliesenleger","Fußbodenheizung"]],
+    body:[[jn(d.weit_zweitleck),jn(d.weit_maler),jn(d.weit_schreiner),jn(d.weit_bodenleger),jn(d.weit_fliesen),jn(d.weit_fussbodenheiz)]],
+    headStyles:{fillColor:B,textColor:W,fontStyle:"bold",fontSize:7},
+    bodyStyles:{fontSize:8.5,minCellHeight:10},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 5;
+
+  // Protokollierung Messtechnik
+  blueHeader("Protokollierung Messtechnik — Druckprobe");
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["System","Dauer (Min)","Anfangsdruck (bar)","Enddruck (bar)","Differenz (bar)","Gasdetektion Anfang","Gasdetektion Ende","Volumen"]],
+    body:[["","","","","","","",""],["","","","","","","",""],["","","","","","","",""]],
+    headStyles:{fillColor:LB,textColor:B,fontStyle:"bold",fontSize:7},
+    bodyStyles:{fontSize:8,minCellHeight:7},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 5;
+
+  blueHeader("Sonstige Messverfahren");
+  doc.autoTable({
+    startY:y, margin:{left:ML,right:MR},
+    head:[["System","Thermographie","Elektro-Akustik","Leitungsortung","Endoskopie","Kanal TV","Sonstige"]],
+    body:[["","","","","","",""],["","","","","","",""],["","","","","","",""]],
+    headStyles:{fillColor:LB,textColor:B,fontStyle:"bold",fontSize:7.5},
+    bodyStyles:{fontSize:8,minCellHeight:7},
+    theme:"grid"
+  });
+  y = doc.lastAutoTable.finalY + 5;
+
+  if (data.massnahmenNotiz) {
+    blueHeader("Notizen / Sonstige Hinweise");
+    textBlock(data.massnahmenNotiz);
+  }
+
+  // ══════════════════════════════════════════════════
+  // PAGE 4+ — Fotodokumentation
+  // ══════════════════════════════════════════════════
+  const imgPhotos = photos.filter(p=>!p.isVideo);
+  if (imgPhotos.length > 0) {
+    doc.addPage(); pageHeader();
+    blueHeader("Fotodokumentation");
+
+    for (let i=0; i<imgPhotos.length; i++) {
+      const ph = imgPhotos[i];
+      const imgW = CW; // full width
+      const imgH = 80; // mm
+
+      checkNewPage(imgH + 16);
+
+      // Photo number badge
+      doc.setFillColor(...LB);
+      doc.roundedRect(ML, y, CW, 6, 1,1,"F");
+      doc.setTextColor(...B); doc.setFontSize(8); doc.setFont("helvetica","bold");
+      doc.text(`Foto ${i+1}${ph.name ? " — "+ph.name : ""}`, ML+3, y+4.2);
+      y += 7;
+
+      // Image
+      try {
+        doc.addImage(ph.dataUrl, "JPEG", ML, y, imgW, imgH, undefined, "MEDIUM");
+        y += imgH + 2;
+      } catch(e) {
+        doc.setFillColor(240,240,240);
+        doc.rect(ML, y, imgW, 20, "F");
+        doc.setTextColor(150,150,150); doc.setFontSize(8);
+        doc.text("[Bild konnte nicht eingebettet werden]", ML+CW/2, y+11, {align:"center"});
+        y += 22;
+      }
+
+      // Description
+      if (ph.description) {
+        doc.setFillColor(248,252,255);
+        doc.setDrawColor(200,220,235);
+        const descLines = doc.splitTextToSize(ph.description, CW-6);
+        const dh = descLines.length*4.5+5;
+        doc.roundedRect(ML, y, CW, dh, 1,1,"FD");
+        doc.setTextColor(...BK); doc.setFontSize(8); doc.setFont("helvetica","normal");
+        doc.text(descLines, ML+3, y+4);
+        y += dh + 5;
+      } else {
+        y += 3;
+      }
+
+      // Page break between photos (but not after last)
+      if (i < imgPhotos.length-1) {
+        checkNewPage(imgH + 30);
+      }
+    }
+  }
+
+  // ══════════════════════════════════════════════════
+  // LAST PAGE — Unterschrift
+  // ══════════════════════════════════════════════════
+  doc.addPage(); pageHeader();
+  blueHeader("Unterschrift & Bestätigung");
+
+  // Signature box
+  doc.setFillColor(252,252,252);
+  doc.setDrawColor(200,200,200);
+  doc.roundedRect(ML, y, CW/2-3, 40, 2,2,"FD");
+  doc.roundedRect(ML+CW/2+3, y, CW/2-3, 40, 2,2,"FD");
+  doc.setTextColor(150,150,150); doc.setFontSize(8); doc.setFont("helvetica","normal");
+  doc.text("Unterschrift Messprüfer", ML+CW/4, y+37, {align:"center"});
+  doc.text("Unterschrift Auftraggeber / VN", ML+CW*3/4+3, y+37, {align:"center"});
+  doc.setDrawColor(180,180,180);
+  doc.line(ML+5, y+32, ML+CW/2-8, y+32);
+  doc.line(ML+CW/2+8, y+32, ML+CW-5, y+32);
+  y += 48;
+
+  // Digital signature note
+  doc.setFillColor(...LB);
+  doc.roundedRect(ML, y, CW, 10, 1,1,"F");
+  doc.setTextColor(...B); doc.setFontSize(8); doc.setFont("helvetica","bold");
+  doc.text("Digital erstellt und unterschrieben — PREXIA Leckortung", ML+3, y+4);
+  doc.setFont("helvetica","normal"); doc.setTextColor(...BK);
+  doc.text(`Erstellt am: ${new Date().toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})} Uhr`, ML+3, y+8.5);
+  y += 14;
+
+  // Contact
+  doc.setFillColor(...B);
+  doc.roundedRect(ML, y, CW, 14, 2,2,"F");
+  doc.setTextColor(...W); doc.setFontSize(9); doc.setFont("helvetica","bold");
+  doc.text("PREXIA Leckortung · Trocknung · Sanierung", ML+CW/2, y+5, {align:"center"});
+  doc.setFontSize(8); doc.setFont("helvetica","normal");
+  doc.text("Inhaber: Vincent Prena  |  Tel: 0151 723 731 88  |  info@prexia24.de", ML+CW/2, y+10.5, {align:"center"});
+
+  // Page numbers
+  const totalPages = doc.getNumberOfPages();
+  for (let i=1; i<=totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7); doc.setTextColor(160,160,160); doc.setFont("helvetica","normal");
+    doc.text(`Seite ${i} von ${totalPages}`, PW-MR, PH-6, {align:"right"});
+    doc.text("PREXIA Messprotokoll", ML, PH-6);
+  }
+
+  // Save
+  const fname = `PREXIA_Leckortungsbericht_${safe(data.name).replace(/\s+/g,"_")||"Protokoll"}_${new Date().toLocaleDateString("de-DE").replace(/\./g,"-")}.pdf`;
+  doc.save(fname);
 }
 
 // ─── API KEY MODAL ────────────────────────────────────────────────────────────
@@ -64,19 +457,13 @@ function ApiKeyModal({ onClose }) {
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
       <div style={{background:"white",borderRadius:16,padding:24,width:"100%",maxWidth:440}}>
-        <div style={{fontSize:18,fontWeight:700,marginBottom:8}}>⚙️ API-Key einrichten</div>
-        <p style={{fontSize:14,color:"#666",marginBottom:16,lineHeight:1.5}}>
-          Du brauchst einen <b>Anthropic API-Key</b> damit Audio, Bildanalyse und Word-Export funktionieren.<br/><br/>
-          Hol dir einen auf <a href="https://console.anthropic.com" target="_blank" style={{color:BLUE}}>console.anthropic.com</a> (kostenloser Test verfügbar).<br/><br/>
-          Der Key wird nur lokal auf deinem Gerät gespeichert.
+        <div style={{fontSize:18,fontWeight:700,marginBottom:8}}>⚙️ API-Key</div>
+        <p style={{fontSize:13,color:"#666",marginBottom:14,lineHeight:1.5}}>
+          Hol dir einen Key auf <a href="https://console.anthropic.com" target="_blank" style={{color:BLUE}}>console.anthropic.com</a>.<br/>
+          Wird nur lokal auf deinem Gerät gespeichert.
         </p>
-        <input
-          value={key}
-          onChange={e=>setKey(e.target.value)}
-          placeholder="sk-ant-api03-..."
-          type="password"
-          style={{width:"100%",padding:"10px 12px",border:"1px solid #ddd",borderRadius:8,fontSize:14,marginBottom:12}}
-        />
+        <input value={key} onChange={e=>setKey(e.target.value)} placeholder="sk-ant-api03-..."
+          type="password" style={{width:"100%",padding:"10px 12px",border:"1px solid #ddd",borderRadius:8,fontSize:14,marginBottom:12}}/>
         <div style={{display:"flex",gap:10}}>
           <button onClick={onClose} style={{flex:1,padding:"11px",border:"2px solid #ddd",borderRadius:8,background:"white",fontWeight:600,fontSize:14}}>Abbrechen</button>
           <button onClick={save} style={{flex:2,padding:"11px",background:BLUE,color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>Speichern</button>
@@ -86,12 +473,12 @@ function ApiKeyModal({ onClose }) {
   );
 }
 
-// ─── CHECKBOX ─────────────────────────────────────────────────────────────────
+// ─── UI COMPONENTS ────────────────────────────────────────────────────────────
 function CB({ label, checked, onChange }) {
   return (
     <label style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",cursor:"pointer",userSelect:"none"}}>
       <div onClick={onChange} style={{width:22,height:22,borderRadius:5,border:`2px solid ${checked?BLUE:"#ccc"}`,background:checked?BLUE:"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s",color:"white"}}>
-        {checked && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20,6 9,17 4,12"/></svg>}
+        {checked && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20,6 9,17 4,12"/></svg>}
       </div>
       <span style={{fontSize:14,color:"#333",lineHeight:1.3}}>{label}</span>
     </label>
@@ -122,58 +509,49 @@ function TxtInput({ label, value, onChange, placeholder="" }) {
   );
 }
 
-// ─── AUDIO RECORDER ───────────────────────────────────────────────────────────
+// ─── AUDIO RECORDER (Web Speech API) ─────────────────────────────────────────
 function AudioRecorder({ label, onTranscript, value }) {
   const [recording, setRecording] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [liveText, setLiveText] = useState("");
   const [error, setError] = useState("");
-  const recognitionRef = useRef(null);
-  const finalTextRef = useRef("");
+  const recRef = useRef(null);
+  const finalRef = useRef("");
 
   const startRec = () => {
     setError("");
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { setError("Spracherkennung nicht verfügbar. Bitte Safari auf iPhone nutzen oder Text manuell eingeben."); return; }
-    const recognition = new SR();
-    recognition.lang = "de-DE";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    finalTextRef.current = "";
-    recognition.onresult = (e) => {
-      let interim = "", final = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript;
-        if (e.results[i].isFinal) final += t + " "; else interim += t;
+    const r = new SR();
+    r.lang="de-DE"; r.continuous=true; r.interimResults=true;
+    finalRef.current = "";
+    r.onresult = (e) => {
+      let interim="", final="";
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const t=e.results[i][0].transcript;
+        if(e.results[i].isFinal) final+=t+" "; else interim+=t;
       }
-      if (final) finalTextRef.current += final;
-      setLiveText(finalTextRef.current + interim);
+      if(final) finalRef.current+=final;
+      setLiveText(finalRef.current+interim);
     };
-    recognition.onerror = (e) => {
-      if (e.error !== "aborted") setError("Mikrofon-Fehler: " + e.error + ". Bitte Mikrofon in Safari-Einstellungen erlauben.");
-      setRecording(false);
-    };
-    recognitionRef.current = recognition;
-    recognition.start();
-    setRecording(true);
-    setLiveText("");
+    r.onerror = (e) => { if(e.error!=="aborted") setError("Mikrofon-Fehler: "+e.error); setRecording(false); };
+    recRef.current=r; r.start(); setRecording(true); setLiveText("");
   };
 
   const stopRec = async () => {
-    if (recognitionRef.current) { recognitionRef.current.stop(); recognitionRef.current = null; }
+    if(recRef.current){recRef.current.stop();recRef.current=null;}
     setRecording(false);
-    const spokenText = (finalTextRef.current + liveText).trim();
-    if (!spokenText) { setError("Kein Text erkannt. Bitte nochmal versuchen."); return; }
+    const spoken=(finalRef.current+liveText).trim();
+    if(!spoken){setError("Kein Text erkannt. Bitte nochmal versuchen.");return;}
     setProcessing(true);
     try {
-      const result = await claudeApi([{ role:"user", content:
-        `Du bist ein professioneller Assistent für Leckageortungsberichte der Firma PREXIA. Ich habe folgendes eingesprochen:\n\n"${spokenText}"\n\nSchreibe daraus einen professionellen, ausführlichen deutschen Text für ein Messprotokoll. Fachlich korrekt, vollständig strukturiert. Nur den fertigen Text, keine Einleitung. Kontext: ${label}`
+      const result = await claudeApi([{role:"user",content:
+        `Du bist ein professioneller Assistent für Leckageortungsberichte der Firma PREXIA. Ich habe Folgendes eingesprochen:\n\n"${spoken}"\n\nSchreibe daraus einen professionellen, fachlich korrekten deutschen Text für ein Messprotokoll. Vollständig strukturiert, keine Einleitung, nur den fertigen Text. Kontext: ${label}`
       }]);
-      onTranscript(result);
-      setLiveText("");
+      onTranscript(result); setLiveText("");
     } catch(e) {
-      setError("Fehler: " + e.message);
-      onTranscript(spokenText);
+      setError("Fehler: "+e.message);
+      onTranscript(spoken);
     }
     setProcessing(false);
   };
@@ -193,8 +571,7 @@ function AudioRecorder({ label, onTranscript, value }) {
             </button>
         }
         {processing && <span style={{display:"flex",alignItems:"center",gap:6,color:BLUE,fontSize:13}}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-          Claude schreibt…
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Claude schreibt…
         </span>}
       </div>
       {recording && liveText && <div style={{fontSize:13,color:"#444",background:"white",border:"1px solid #dde3ff",borderRadius:8,padding:"8px 10px",marginBottom:8,lineHeight:1.5}}>🎙️ <i>{liveText}</i></div>}
@@ -213,31 +590,56 @@ function PhotoSection({ photos, setPhotos }) {
   const [analyzingIds, setAnalyzingIds] = useState(new Set());
 
   const analyzeImage = async (id, base64, mediaType) => {
-    setAnalyzingIds(prev => new Set([...prev, id]));
+    setAnalyzingIds(prev=>new Set([...prev,id]));
     try {
-      const desc = await claudeApi([{ role:"user", content:[
-        { type:"image", source:{ type:"base64", media_type: mediaType.includes("png")?"image/png":"image/jpeg", data:base64 } },
-        { type:"text", text:"Du bist Sachverständiger für Wasserschäden bei PREXIA. Beschreibe dieses Schadensfoto in 1-2 präzisen deutschen Sätzen für ein professionelles Messprotokoll. Was ist konkret zu sehen? (Feuchtigkeitsschaden, Leckage, betroffene Bauteile, Ausmaß). Nur die Beschreibung, keine Einleitung." }
-      ]}], 300);
-      setPhotos(prev => prev.map(p => p.id===id ? {...p, description: desc} : p));
+      const desc = await claudeApi([{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:"image/jpeg",data:base64}},
+        {type:"text",text:"Du bist Sachverständiger für Wasserschäden bei PREXIA. Beschreibe dieses Schadensfoto in 1-2 präzisen deutschen Sätzen für ein professionelles Messprotokoll. Was ist konkret zu sehen? Nur die Beschreibung, keine Einleitung."}
+      ]}],300);
+      setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:desc}:p));
     } catch(e) {
-      setPhotos(prev => prev.map(p => p.id===id ? {...p, description: "Fehler bei Analyse: "+e.message} : p));
+      setPhotos(prev=>prev.map(p=>p.id===id?{...p,description:"Fehler: "+e.message}:p));
     }
-    setAnalyzingIds(prev => { const s=new Set(prev); s.delete(id); return s; });
+    setAnalyzingIds(prev=>{const s=new Set(prev);s.delete(id);return s;});
   };
+
+  const isDng=(f)=>/\.(dng|raw|arw|cr2|nef|orf|rw2)$/i.test(f.name);
+  const toJpeg=(file)=>new Promise(resolve=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement("canvas");
+      let w=img.width,h=img.height,m=2000;
+      if(w>m||h>m){if(w>h){h=Math.round(h*m/w);w=m;}else{w=Math.round(w*m/h);h=m;}}
+      c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);resolve(c.toDataURL("image/jpeg",0.85));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);resolve(null);};
+    img.src=url;
+  });
 
   const handleFiles = async (files) => {
     for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) continue;
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      const dataUrl = await new Promise(res => { reader.onload = () => res(reader.result); });
-      const base64 = dataUrl.split(",")[1];
-      const isVideo = file.type.startsWith("video/");
-      const id = Date.now() + Math.random();
-      const newPhoto = { id, dataUrl, base64, mediaType: file.type, name: file.name, isVideo, description: "" };
-      setPhotos(prev => [...prev, newPhoto]);
-      if (!isVideo) setTimeout(() => analyzeImage(id, base64, file.type), 100);
+      const isVideo=file.type.startsWith("video/");
+      const isImage=file.type.startsWith("image/")||isDng(file);
+      if(!isImage&&!isVideo) continue;
+      let dataUrl,base64,mediaType;
+      if(isVideo){
+        const reader=new FileReader();reader.readAsDataURL(file);
+        dataUrl=await new Promise(res=>{reader.onload=()=>res(reader.result);});
+        base64=dataUrl.split(",")[1];mediaType=file.type;
+      } else {
+        const conv=await toJpeg(file);
+        if(conv){dataUrl=conv;base64=conv.split(",")[1];mediaType="image/jpeg";}
+        else{
+          const reader=new FileReader();reader.readAsDataURL(file);
+          dataUrl=await new Promise(res=>{reader.onload=()=>res(reader.result);});
+          base64=dataUrl.split(",")[1];mediaType="image/jpeg";
+        }
+      }
+      const id=Date.now()+Math.random();
+      setPhotos(prev=>[...prev,{id,dataUrl,base64,mediaType,name:file.name,isVideo,description:""}]);
+      if(!isVideo) setTimeout(()=>analyzeImage(id,base64,mediaType),100);
     }
   };
 
@@ -256,21 +658,20 @@ function PhotoSection({ photos, setPhotos }) {
           <div style={{fontSize:11,color:"#888",marginTop:2}}>Direkt aufnehmen</div>
         </div>
       </div>
-      <input ref={galleryRef} type="file" accept="image/*,video/*" multiple onChange={e=>handleFiles(e.target.files)} style={{display:"none"}}/>
+      <input ref={galleryRef} type="file" accept="image/*,video/*,.dng,.raw,.arw,.cr2,.nef,.orf,.rw2" multiple onChange={e=>handleFiles(e.target.files)} style={{display:"none"}}/>
       <input ref={cameraRef} type="file" accept="image/*,video/*" multiple capture="environment" onChange={e=>handleFiles(e.target.files)} style={{display:"none"}}/>
 
-      {photos.length === 0 && <div style={{textAlign:"center",color:"#bbb",fontSize:13,padding:"24px 0"}}>Noch keine Fotos</div>}
-
+      {photos.length===0 && <div style={{textAlign:"center",color:"#bbb",fontSize:13,padding:"24px 0"}}>Noch keine Fotos hinzugefügt</div>}
       <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:14}}>
-        {photos.map((photo, idx) => (
+        {photos.map((photo,idx)=>(
           <div key={photo.id} style={{background:"white",borderRadius:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,.1)"}}>
             <div style={{position:"relative"}}>
               {photo.isVideo
-                ? <video src={photo.dataUrl} controls style={{width:"100%",maxHeight:260,display:"block",background:"#000"}}/>
-                : <img src={photo.dataUrl} style={{width:"100%",maxHeight:260,objectFit:"cover",display:"block"}}/>
+                ?<video src={photo.dataUrl} controls style={{width:"100%",maxHeight:240,display:"block",background:"#000"}}/>
+                :<img src={photo.dataUrl} style={{width:"100%",maxHeight:240,objectFit:"cover",display:"block"}}/>
               }
               <div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,.5)",color:"white",fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20}}>
-                {photo.isVideo ? "🎬" : "📷"} {idx+1}
+                {photo.isVideo?"🎬":"📷"} {idx+1}
               </div>
               <button onClick={()=>setPhotos(prev=>prev.filter(p=>p.id!==photo.id))}
                 style={{position:"absolute",top:8,right:8,background:"rgba(200,0,0,.8)",color:"white",border:"none",borderRadius:20,width:30,height:30,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
@@ -278,17 +679,16 @@ function PhotoSection({ photos, setPhotos }) {
             <div style={{padding:12}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                 <span style={{fontSize:12,fontWeight:700,color:BLUE}}>KI-Beschreibung</span>
-                {analyzingIds.has(photo.id) && <span style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:BLUE}}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                  Analysiere…
+                {analyzingIds.has(photo.id)&&<span style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:BLUE}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Analysiere…
                 </span>}
-                {!photo.isVideo && !analyzingIds.has(photo.id) &&
-                  <button onClick={()=>analyzeImage(photo.id, photo.base64, photo.mediaType)}
+                {!photo.isVideo&&!analyzingIds.has(photo.id)&&
+                  <button onClick={()=>analyzeImage(photo.id,photo.base64,photo.mediaType)}
                     style={{fontSize:11,color:"#888",background:"none",border:"1px solid #ddd",borderRadius:5,padding:"2px 8px"}}>🔄 Neu</button>
                 }
               </div>
               <textarea value={photo.description} onChange={e=>setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,description:e.target.value}:p))}
-                placeholder={photo.isVideo ? "Beschreibung eingeben…" : analyzingIds.has(photo.id) ? "Wird analysiert…" : "Beschreibung…"}
+                placeholder={photo.isVideo?"Beschreibung eingeben…":analyzingIds.has(photo.id)?"Wird analysiert…":"Beschreibung…"}
                 rows={2} style={{width:"100%",padding:8,border:"1px solid #e0e0e0",borderRadius:7,fontSize:13,resize:"vertical"}}/>
             </div>
           </div>
@@ -298,175 +698,15 @@ function PhotoSection({ photos, setPhotos }) {
   );
 }
 
-// ─── DOCX GENERATOR ───────────────────────────────────────────────────────────
-async function generateDocx(data, photos) {
-  // Load docx.js dynamically
-  if (!window._docxLoaded) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = "https://unpkg.com/docx@9.5.3/build/index.js";
-      s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
-    window._docxLoaded = true;
-  }
-
-  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-    AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign,
-    UnderlineType, PageBreak, ImageRun } = window.docx;
-
-  const BLACK="000000", WHITE="FFFFFF";
-  const bs=(sz=4,col="000000")=>({style:BorderStyle.SINGLE,size:sz,color:col});
-  const bn=()=>({style:BorderStyle.NONE,size:0,color:"FFFFFF"});
-  const B={top:bs(),bottom:bs(),left:bs(),right:bs()};
-
-  const p=(text,opts={})=>new Paragraph({
-    alignment:opts.align||AlignmentType.LEFT,
-    spacing:{before:0,after:opts.after||0},
-    children:[new TextRun({text:String(text||""),bold:opts.bold||false,size:opts.size||18,color:opts.color||BLACK,font:"Arial",underline:opts.underline?{type:UnderlineType.SINGLE}:undefined})]
-  });
-  const pEmpty=()=>p("",{size:18});
-  const pSp=(n=1)=>new Paragraph({spacing:{before:0,after:n*60},children:[new TextRun({text:"",size:4})]});
-
-  function C(children,w,opts={}){
-    if(!Array.isArray(children))children=[children];
-    return new TableCell({columnSpan:opts.cs||1,rowSpan:opts.rs||1,width:{size:w,type:WidthType.DXA},borders:opts.borders||B,verticalAlign:opts.va||VerticalAlign.CENTER,shading:opts.shade?{fill:opts.shade,type:ShadingType.CLEAR}:undefined,margins:opts.margins||{top:60,bottom:60,left:100,right:100},children});
-  }
-  function blueHdr(text,w=10200){return new Table({width:{size:w,type:WidthType.DXA},columnWidths:[w],rows:[new TableRow({children:[C([p(text,{bold:true,size:20,color:WHITE,align:AlignmentType.CENTER})],w,{shade:BLUE_HEX})]})]});}
-  function topBar(){const w=[3400,3400,3400];return new Table({width:{size:10200,type:WidthType.DXA},columnWidths:w,rows:[new TableRow({children:[C([p("Projektnummer:",{bold:true,size:17})],w[0]),C([p("Versicherungsscheinnummer:",{bold:true,size:17})],w[1]),C([p("Schadennummer:",{bold:true,size:17})],w[2])]})]});}
-  function chk(items){return items.map(([label,checked])=>new Paragraph({spacing:{before:0,after:30},children:[new TextRun({text:(checked?"☑":"☐")+"  "+label,size:15,font:"Arial",color:BLACK})]}));}
-  function jaN(ja){return new Paragraph({spacing:{before:0,after:0},children:[new TextRun({text:(ja===true?"☑":"☐")+" ja    "+(ja===false?"☑":"☐")+" nein",size:15,font:"Arial"})]});}
-
-  const PW=10200, PB=new Paragraph({children:[new PageBreak()]}), d=data;
-  const mw=Math.floor(PW/3), aW=[1500,1900,2400,2400,2000];
-
-  // PAGE 1
-  const page1=[
-    p("Leckortungsbericht",{bold:true,size:52}),pSp(2),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[3400,3400,3400],rows:[new TableRow({children:[C([p("Projektnummer:",{bold:true,size:17})],3400),C([p("Versicherungsscheinnummer:",{bold:true,size:17})],3400),C([p("Schadennummer:",{bold:true,size:17})],3400)]})] }),pSp(2),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[mw,mw,PW-mw*2],rows:[
-      new TableRow({children:[C([p("Messprüfer:",{bold:true,underline:true,size:18})],mw),C([p("Telefonnummer:",{bold:true,underline:true,size:18})],mw),C([p("E-Mail:",{bold:true,underline:true,size:18})],PW-mw*2)]}),
-      new TableRow({children:[C([p("Vincent Prena",{size:17})],mw),C([p("0151 723 731 88",{size:17})],mw),C([p("info@prexia24.de",{size:17})],PW-mw*2)]})
-    ]}),pSp(2),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:aW,rows:[
-      new TableRow({children:[C([p("Versicherungsnehmer/Auftraggeber",{size:17,align:AlignmentType.CENTER})],aW[0]+aW[1],{cs:2}),C([p("Objekt/Schadenort",{size:17,align:AlignmentType.CENTER})],aW[2],{rs:4,va:VerticalAlign.TOP,margins:{top:80,bottom:60,left:100,right:100}}),C([p("Einsatz am:",{size:17})],aW[3]),C([pEmpty()],aW[4])]}),
-      new TableRow({children:[C([p("Name",{bold:true,size:17})],aW[0]),C([p(d.name,{size:17})],aW[1]),C([p("Einsatz-Nr.:",{size:17})],aW[3]),C([pEmpty()],aW[4])]}),
-      new TableRow({children:[C([p("Straße",{bold:true,size:17})],aW[0]),C([p(d.strasse,{size:17})],aW[1]),C([p("Fremde\nAuftragsnummer",{bold:true,size:17})],aW[3]),C([pEmpty()],aW[4])]}),
-      new TableRow({children:[C([p("PLZ / Ort",{bold:true,size:17})],aW[0]),C([p(d.plzOrt,{size:17})],aW[1]),C([pEmpty()],aW[3]),C([pEmpty()],aW[4])]})
-    ]}),
-    blueHdr("Kurzbeschreibung Schadensereignis"),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[PW],rows:[new TableRow({height:{value:800,rule:"atLeast"},children:[C([p(d.kurzbeschreibung,{size:17})],PW,{margins:{top:80,bottom:80,left:120,right:120}})]})] }),
-    pSp(3),blueHdr("Feuchtigkeitsmessung"),pSp(2),
-    (()=>{const kW=[2200,900,900,900,900,900,900,1600];return new Table({width:{size:PW,type:WidthType.DXA},columnWidths:kW,rows:[new TableRow({children:[C([p("Feuchtigkeitsmessung",{bold:true,size:15,align:AlignmentType.CENTER}),p("in Digits im Raum",{bold:true,size:15,align:AlignmentType.CENTER})],kW[0],{rs:2}),C([p("Kapazitiv Wand",{bold:true,size:16,align:AlignmentType.CENTER})],kW[1]+kW[2],{cs:2}),C([p("Kapazitiv Boden",{bold:true,size:16,align:AlignmentType.CENTER})],kW[3]+kW[4],{cs:2}),C([p("Kapazitiv Decke",{bold:true,size:16,align:AlignmentType.CENTER})],kW[5]+kW[6],{cs:2}),C([p("Zerstörungsfreie",{bold:true,size:14,align:AlignmentType.CENTER}),p("Fliesenaufnahme in",{bold:true,size:14,align:AlignmentType.CENTER}),p("St",{bold:true,size:14,align:AlignmentType.CENTER})],kW[7],{rs:2,margins:{top:60,bottom:60,left:80,right:80}})]}),new TableRow({children:[C([p("Min",{bold:true,size:16,align:AlignmentType.CENTER})],kW[1]),C([p("Max",{bold:true,size:16,align:AlignmentType.CENTER})],kW[2]),C([p("Min",{bold:true,size:16,align:AlignmentType.CENTER})],kW[3]),C([p("Max",{bold:true,size:16,align:AlignmentType.CENTER})],kW[4]),C([p("Min",{bold:true,size:16,align:AlignmentType.CENTER})],kW[5]),C([p("Max",{bold:true,size:16,align:AlignmentType.CENTER})],kW[6])]}),...(d.kapRows||[]).map(r=>new TableRow({height:{value:360,rule:"atLeast"},children:[C([p(r.raum||"",{size:16})],kW[0]),C([p(r.kapWMin||"",{size:16,align:AlignmentType.CENTER})],kW[1]),C([p(r.kapWMax||"",{size:16,align:AlignmentType.CENTER})],kW[2]),C([p(r.kapBMin||"",{size:16,align:AlignmentType.CENTER})],kW[3]),C([p(r.kapBMax||"",{size:16,align:AlignmentType.CENTER})],kW[4]),C([p(r.kapDMin||"",{size:16,align:AlignmentType.CENTER})],kW[5]),C([p(r.kapDMax||"",{size:16,align:AlignmentType.CENTER})],kW[6]),C([p(r.fliesen||"",{size:16,align:AlignmentType.CENTER})],kW[7])]}))]});})(),
-    pSp(3),
-    (()=>{const wW=[2200,1050,1050,1050,1050,1050,1050,700];return new Table({width:{size:PW,type:WidthType.DXA},columnWidths:wW,rows:[new TableRow({children:[C([p("Feuchtigkeitsmessung",{bold:true,size:15,align:AlignmentType.CENTER}),p("in Digits im Raum",{bold:true,size:15,align:AlignmentType.CENTER})],wW[0],{rs:2}),C([p("Widerstandsmessung\nWand",{bold:true,size:16,align:AlignmentType.CENTER})],wW[1]+wW[2],{cs:2}),C([p("Widerstandsmessung\nBoden",{bold:true,size:16,align:AlignmentType.CENTER})],wW[3]+wW[4],{cs:2}),C([p("Widerstandsmessung\nDecke",{bold:true,size:16,align:AlignmentType.CENTER})],wW[5]+wW[6],{cs:2}),C([pEmpty()],wW[7],{rs:2})]}),new TableRow({children:[C([p("Min",{bold:true,size:16,align:AlignmentType.CENTER})],wW[1]),C([p("Max",{bold:true,size:16,align:AlignmentType.CENTER})],wW[2]),C([p("Min",{bold:true,size:16,align:AlignmentType.CENTER})],wW[3]),C([p("Max",{bold:true,size:16,align:AlignmentType.CENTER})],wW[4]),C([p("Min",{bold:true,size:16,align:AlignmentType.CENTER})],wW[5]),C([p("Max",{bold:true,size:16,align:AlignmentType.CENTER})],wW[6])]}),...(d.widRows||[]).map(r=>new TableRow({height:{value:360,rule:"atLeast"},children:[C([p(r.raum||"",{size:16})],wW[0]),C([p(r.wWMin||"",{size:16,align:AlignmentType.CENTER})],wW[1]),C([p(r.wWMax||"",{size:16,align:AlignmentType.CENTER})],wW[2]),C([p(r.wBMin||"",{size:16,align:AlignmentType.CENTER})],wW[3]),C([p(r.wBMax||"",{size:16,align:AlignmentType.CENTER})],wW[4]),C([p(r.wDMin||"",{size:16,align:AlignmentType.CENTER})],wW[5]),C([p(r.wDMax||"",{size:16,align:AlignmentType.CENTER})],wW[6]),C([pEmpty()],wW[7])]})) ]});})(),
-  ];
-
-  // PAGE 2
-  const c5=Math.floor(PW/5),c5r=PW-c5*4;
-  const page2=[
-    p("Leckortungsbericht",{bold:true,size:52}),pSp(2),topBar(),pSp(2),
-    blueHdr("Zusammenfassung der Ergebnisse der Leckageortung"),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[PW],rows:[new TableRow({children:[C([p("Schadenart",{bold:true,size:17})],PW,{margins:{top:40,bottom:40,left:120,right:120}})]})] }),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[c5,c5,c5,c5,c5r],rows:[
-      new TableRow({children:[C([p("Beschädigtes\nSystem",{bold:true,size:16})],c5),C([p("Beschädigtes Bauteil",{bold:true,size:16})],c5),C([p("Materialart Leitung",{bold:true,size:16})],c5),C([p("Art der Verbindung",{bold:true,size:16})],c5),C([p("Ursache des Schadens",{bold:true,size:16})],c5r)]}),
-      new TableRow({children:[
-        C(chk([["Kaltwasser",d.sys_kalt],["Warmwasser",d.sys_warm],["Heizung",d.sys_heiz],["Abwasser",d.sys_abw],["Regenwasser",d.sys_regen],["Feuchte von außen",d.sys_feuchte],["Spritzwasser",d.sys_spritz],["Sonstiges",d.sys_sonst]]),c5,{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:100,right:100}}),
-        C(chk([["Rohrleitung",d.bauteil_rohr],["Verbindungselement",d.bauteil_verb],["Armatur, Schlauch",d.bauteil_armatur],["Fuge / Abdichtung",d.bauteil_fuge],["Sonstiges",d.bauteil_sonst]]),c5,{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:100,right:100}}),
-        C(chk([["Stahlrohr",d.mat_stahl],["Kupfer",d.mat_kupfer],["Kunststoff",d.mat_kunst],["Guss",d.mat_guss],["Blei",d.mat_blei],["Steinzeug",d.mat_stein],["Sonstiges",d.mat_sonst]]),c5,{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:100,right:100}}),
-        C(chk([["Gewindeverb.",d.verb_gewinde],["Klemmverbindung",d.verb_klemm],["Pressverbindung",d.verb_press],["Lötverbindung",d.verb_loet],["Steckverbindung",d.verb_steck],["Schweißverbindung",d.verb_schweiss],["kaltgeschweißt",d.verb_kalt],["Sonstiges",d.verb_sonst]]),c5,{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:100,right:100}}),
-        C(chk([["Rohrbruch",d.urs_rohrbruch],["Rohrbruch durch Korrosion",d.urs_korros],["Rohrbruch durch Verarbeitungsfehler",d.urs_verarb],["Rohrbruch durch Frost",d.urs_frost],["Rohrbruch durch Beschädigung",d.urs_beschaed],["Undichtigkeit",d.urs_undicht],["undichte Fuge / Abdichtung",d.urs_fuge],["Muffenversatz",d.urs_muffe],["Wurzeleinwuchs",d.urs_wurzel],["Sonstiges / unbekannt",d.urs_sonst]]),c5r,{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:100,right:100}}),
-      ]}),
-    ]}),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[Math.floor(PW/2),PW-Math.floor(PW/2)],rows:[new TableRow({children:[
-      C([p("Weitere Angaben",{bold:true,size:17}),pSp(1),p("Schadensort",{bold:true,size:16}),new Paragraph({spacing:{before:0,after:20},children:[new TextRun({text:(d.schadSort_innen?"☑":"☐")+"  innerhalb Gebäude",size:15,font:"Arial"})]}),new Paragraph({spacing:{before:0,after:20},children:[new TextRun({text:(d.schadSort_aussen?"☑":"☐")+"  außerhalb Gebäude",size:15,font:"Arial"})]}),pSp(1),p("Gesamtschadenshöhe > 5.000 €",{bold:true,size:15}),jaN(d.schaden5k),pSp(1),p("Räume bewohnt?",{bold:true,size:16}),jaN(d.raeumeBeWohnt)],Math.floor(PW/2),{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:120,right:120}}),
-      C([p("Hinweis auf Fremdverschulden",{bold:true,size:17}),pSp(1),...[["Wasser vom Nachbargebäude",d.fremd_nachbar],["Anwendungsfehler vom VN/Mieter",d.fremd_anwend],["Handwerkerfehler",d.fremd_handwerk],["Gewährleistung",d.fremd_gewahr]].map(([l,c])=>new Paragraph({spacing:{before:0,after:20},children:[new TextRun({text:(c?"☑":"☐")+"  "+l,size:15,font:"Arial"})]}) )],PW-Math.floor(PW/2),{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:120,right:120}}),
-    ]})] }),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[PW],rows:[
-      new TableRow({children:[C([p("Ergebnis der Leckortung:",{bold:true,underline:true,size:18})],PW,{borders:{top:bs(),bottom:bn(),left:bs(),right:bs()},margins:{top:60,bottom:20,left:120,right:120}})]}),
-      new TableRow({height:{value:5200,rule:"atLeast"},children:[C([p(d.ergebnis,{size:17})],PW,{borders:{top:bn(),bottom:bs(),left:bs(),right:bs()},margins:{top:80,bottom:80,left:120,right:120}})]}),
-    ]}),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[PW],rows:[new TableRow({children:[C([p("Hinweis: Nach Reparaturen an druckwasserführenden Leitungen (KW, WW, Hzg.) ist durch das reparierende Fachunternehmen eine Druckprobe durchzuführen. Die im Zuge einer Reparatur der Schadenursache ausgebauten Teile sind vom Versicherungsnehmer bis zum Abschluss der Schadenbearbeitung aufzuheben.",{bold:true,size:14})],PW,{margins:{top:60,bottom:60,left:120,right:120}})]})] }),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[2000,PW-2000],rows:[
-      new TableRow({children:[C([p("Leckstelle freigelegt:",{bold:true,size:17}),jaN(d.leckFreigelegt)],2000,{va:VerticalAlign.TOP,margins:{top:60,bottom:60,left:120,right:120}}),C([p("Wurden bereits Maßnahmen zur Verminderung des Schadens getroffen? "+(d.massnahmen?"☑":"☐")+" nein "+(d.massnahmen===false?"☑":"☐")+" ja",{bold:true,size:15}),p("Heizung wurde entleert: "+(d.heizEntleert?"☑":"☐"),{size:15})],PW-2000,{va:VerticalAlign.TOP,margins:{top:60,bottom:60,left:120,right:120}})]}),
-      new TableRow({children:[C([p("Leckstelle wurde nicht freigelegt, weil",{size:16}),pEmpty()],PW,{cs:2,margins:{top:60,bottom:80,left:120,right:120}})]}),
-    ]}),
-  ];
-
-  // PAGE 3
-  const q4=Math.floor(PW/4),q4r=PW-q4*3;
-  const svcO=()=>[new Paragraph({spacing:{before:0,after:20},children:[new TextRun({text:"☐  VN beauftragt eine Firma",size:15,font:"Arial"})]}),new Paragraph({spacing:{before:0,after:20},children:[new TextRun({text:"☐  VN in Eigenleistung",size:15,font:"Arial"})]}),new Paragraph({spacing:{before:0,after:0},children:[new TextRun({text:"☐  Dienstleister",size:15,font:"Arial"})]}),];
-  const page3=[
-    p("Leckortungsbericht",{bold:true,size:52}),pSp(2),topBar(),pSp(2),
-    blueHdr("ErforderlicheMaßnahmen"),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[q4,q4,q4,q4r],rows:[new TableRow({children:[C([p("Leckortung",{bold:true,size:16})],q4),C([p("Reparatur / Installateur",{bold:true,size:16})],q4),C([p("Trocknung",{bold:true,size:16})],q4),C([p("Wiederherstellung",{bold:true,size:16})],q4r)]}),new TableRow({children:[C([jaN(d.erf_leck)],q4),C([jaN(d.erf_rep)],q4),C([jaN(d.erf_trock)],q4),C([jaN(d.erf_wieder)],q4r)]})]}),
-    blueHdr("Der VN wünscht die Ausführung der Maßnahmen durch"),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[q4,q4,q4,q4r],rows:[new TableRow({children:[C([pEmpty()],q4),C([p("Reparatur / Installateur",{bold:true,size:16})],q4),C([p("Trocknung",{bold:true,size:16})],q4),C([p("Wiederherstellung",{bold:true,size:16})],q4r)]}),new TableRow({children:[C([pEmpty()],q4),C(svcO(),q4,{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:120,right:120}}),C(svcO(),q4,{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:120,right:120}}),C(svcO(),q4r,{va:VerticalAlign.TOP,margins:{top:80,bottom:80,left:120,right:120}})]})] }),
-    blueHdr("Weitere erforderliche Leistungen"),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[q4,q4,q4,q4r],rows:[new TableRow({children:[C([p("Zweite Leckortung",{bold:true,size:16})],q4),C([p("Maler / Putzer / Trockenbauer",{bold:true,size:16})],q4),C([p("Bodenleger",{bold:true,size:16})],q4),C([p("Fußbodenheizung vorhanden",{bold:true,size:16})],q4r)]}),new TableRow({children:[C([jaN(d.weit_zweitleck)],q4,{va:VerticalAlign.TOP}),C([jaN(d.weit_maler),p("Schreiner",{bold:true,size:16}),jaN(d.weit_schreiner)],q4,{va:VerticalAlign.TOP}),C([jaN(d.weit_bodenleger),p("Fliesenleger",{bold:true,size:16}),jaN(d.weit_fliesen)],q4,{va:VerticalAlign.TOP}),C([jaN(d.weit_fussbodenheiz)],q4r,{va:VerticalAlign.TOP})]})]}),
-    blueHdr("Protokollierung Messtechnik"),pSp(2),
-    (()=>{const pW=[1100,580,720,720,720,720,720,720,720,1200];return new Table({width:{size:PW,type:WidthType.DXA},columnWidths:pW,rows:[new TableRow({children:[C([p("System",{bold:true,size:16})],pW[0],{rs:2}),C([p("Druckprobe mit Wasser",{bold:true,size:16,align:AlignmentType.CENTER})],pW[1]+pW[2]+pW[3]+pW[4],{cs:4}),C([p("Gasdetektion",{bold:true,size:16,align:AlignmentType.CENTER})],pW[5]+pW[6]+pW[7]+pW[8],{cs:4}),C([pEmpty()],pW[9],{rs:2})]}),new TableRow({children:[C([p("Dauer\nMin",{bold:true,size:13,align:AlignmentType.CENTER})],pW[1]),C([p("Anfangs-\ndruck\nbar",{bold:true,size:13,align:AlignmentType.CENTER})],pW[2]),C([p("End-\ndruck\nbar",{bold:true,size:13,align:AlignmentType.CENTER})],pW[3]),C([p("Diff.\nbar",{bold:true,size:13,align:AlignmentType.CENTER})],pW[4]),C([p("Anfangs-\ndruck\nbar",{bold:true,size:13,align:AlignmentType.CENTER})],pW[5]),C([p("End-\ndruck\nbar",{bold:true,size:13,align:AlignmentType.CENTER})],pW[6]),C([p("Diff.\nbar",{bold:true,size:13,align:AlignmentType.CENTER})],pW[7]),C([p("Volumen",{bold:true,size:13,align:AlignmentType.CENTER})],pW[8])]}),...[0,1,2].map(()=>new TableRow({height:{value:360,rule:"atLeast"},children:pW.map(w=>C([pEmpty()],w))}))]});})(),
-    pSp(3),
-    (()=>{const sW=[1400,1400,1250,1250,1250,1250,PW-1400-1400-1250*4];return new Table({width:{size:PW,type:WidthType.DXA},columnWidths:sW,rows:[new TableRow({children:[C([p("System",{bold:true,size:16})],sW[0],{rs:2}),C([p("Sonstige Messverfahren",{bold:true,size:16,align:AlignmentType.CENTER})],sW[1]+sW[2]+sW[3]+sW[4]+sW[5]+sW[6],{cs:6})]}),new TableRow({children:[C([p("Thermographie",{bold:true,size:15,align:AlignmentType.CENTER})],sW[1]),C([p("Elektro-\nAkustik",{bold:true,size:15,align:AlignmentType.CENTER})],sW[2]),C([p("Leitungs-\nortung",{bold:true,size:15,align:AlignmentType.CENTER})],sW[3]),C([p("Endoskopie",{bold:true,size:15,align:AlignmentType.CENTER})],sW[4]),C([p("Kanal TV",{bold:true,size:15,align:AlignmentType.CENTER})],sW[5]),C([p("Sonstige",{bold:true,size:15,align:AlignmentType.CENTER})],sW[6])]}),...[0,1,2,3].map(()=>new TableRow({height:{value:360,rule:"atLeast"},children:sW.map(w=>C([pEmpty()],w))}))]});})(),
-    ...(d.massnahmenNotiz?[pSp(3),blueHdr("Notizen / Sonstige Hinweise"),new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[PW],rows:[new TableRow({height:{value:600,rule:"atLeast"},children:[C([p(d.massnahmenNotiz,{size:17})],PW,{margins:{top:80,bottom:80,left:120,right:120}})]})]})]:  []),
-  ];
-
-  // PAGE 4: Fotos
-  const imgPhotos = photos.filter(ph=>!ph.isVideo);
-  const photoEls = [];
-  if(imgPhotos.length>0){
-    photoEls.push(p("Leckortungsbericht",{bold:true,size:52}),pSp(2),topBar(),pSp(2),blueHdr("Fotodokumentation"),pSp(2));
-    for(let i=0;i<imgPhotos.length;i++){
-      const ph=imgPhotos[i];
-      try{
-        const bin=atob(ph.base64),bytes=new Uint8Array(bin.length);
-        for(let j=0;j<bin.length;j++) bytes[j]=bin.charCodeAt(j);
-        const imgType=ph.mediaType.includes("png")?"png":"jpg";
-        photoEls.push(new Paragraph({spacing:{before:0,after:80},children:[new ImageRun({type:imgType,data:bytes.buffer,transformation:{width:460,height:280},altText:{title:`Foto ${i+1}`,description:ph.description||"",name:`foto${i+1}`}})]}));
-        photoEls.push(new Paragraph({spacing:{before:0,after:20},children:[new TextRun({text:`Foto ${i+1}:  `,bold:true,size:17,font:"Arial",color:BLUE_HEX}),new TextRun({text:ph.description||"",size:17,font:"Arial",color:BLACK})]}));
-        photoEls.push(pSp(2));
-      }catch(e){
-        photoEls.push(p(`[Foto ${i+1}: ${ph.name}]`,{size:16}));
-        if(ph.description) photoEls.push(p(ph.description,{size:16}));
-        photoEls.push(pSp(2));
-      }
-      if(i<imgPhotos.length-1&&(i+1)%2===0){
-        photoEls.push(PB,p("Leckortungsbericht",{bold:true,size:52}),pSp(2),topBar(),pSp(2),blueHdr("Fotodokumentation"),pSp(2));
-      }
-    }
-  }else{
-    const hw=Math.floor(PW/2),photoRows=[];
-    for(let i=0;i<3;i++){photoRows.push(new TableRow({height:{value:3500,rule:"atLeast"},children:[C([pEmpty()],hw,{va:VerticalAlign.TOP}),C([pEmpty()],PW-hw,{va:VerticalAlign.TOP})]}),new TableRow({height:{value:420,rule:"atLeast"},children:[C([pEmpty()],hw),C([pEmpty()],PW-hw)]}));}
-    photoEls.push(p("Leckortungsbericht",{bold:true,size:52}),pSp(2),topBar(),pSp(2),blueHdr("Fotodokumentation"),new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[hw,PW-hw],rows:photoRows}));
-  }
-
-  // PAGE 5: Unterschrift
-  const hw=Math.floor(PW/2);
-  const page5=[
-    p("Leckortungsbericht",{bold:true,size:52}),pSp(2),topBar(),pSp(2),
-    new Table({width:{size:PW,type:WidthType.DXA},columnWidths:[hw,PW-hw],rows:[new TableRow({height:{value:3000,rule:"atLeast"},children:[C([pEmpty()],hw,{va:VerticalAlign.TOP}),C([pEmpty()],PW-hw,{va:VerticalAlign.CENTER})]}),new TableRow({height:{value:700,rule:"atLeast"},children:[C([pEmpty()],hw),C([pEmpty()],PW-hw)]})]}),
-    pSp(2),p("Digital unterschrieben:",{size:16}),pSp(4),pSp(4),
-    p("PREXIA Leckortung, Inhaber Vincent Prena",{size:17}),pSp(2),
-    new Paragraph({spacing:{before:0,after:0},children:[new TextRun({text:"Ihr Ansprechpartner: ",bold:true,size:17,font:"Arial"}),new TextRun({text:"Herr Vincent Prena (+49 (0)171-72373188)",size:17,font:"Arial"})]}),
-  ];
-
-  const doc=new Document({styles:{default:{document:{run:{font:"Arial",size:18}}}},sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:567,right:851,bottom:567,left:851}}},children:[...page1,PB,...page2,PB,...page3,PB,...photoEls,PB,...page5]}]});
-  const buf=await Packer.toBuffer(doc);
-  const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;a.download="PREXIA_Leckortungsbericht.docx";a.click();URL.revokeObjectURL(url);
-}
-
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 function App() {
-  const [step, setStep] = useState(0);
-  const [generating, setGenerating] = useState(false);
-  const [photos, setPhotos] = useState([]);
-  const [showApiModal, setShowApiModal] = useState(false);
-  const [hasKey, setHasKey] = useState(!!getApiKey());
+  const [step,setStep]=useState(0);
+  const [generating,setGenerating]=useState(false);
+  const [photos,setPhotos]=useState([]);
+  const [showApiModal,setShowApiModal]=useState(false);
+  const [hasKey,setHasKey]=useState(!!getApiKey());
 
-  const [form, setFormState] = useState({
+  const [form,setFormState]=useState({
     name:"",strasse:"",plzOrt:"",kurzbeschreibung:"",ergebnis:"",
     sys_kalt:false,sys_warm:false,sys_heiz:false,sys_abw:false,sys_regen:false,sys_feuchte:false,sys_spritz:false,sys_sonst:false,
     bauteil_rohr:false,bauteil_verb:false,bauteil_armatur:false,bauteil_fuge:false,bauteil_sonst:false,
@@ -490,19 +730,12 @@ function App() {
   const addWid=()=>setFormState(f=>({...f,widRows:[...f.widRows,{raum:"",wWMin:"",wWMax:"",wBMin:"",wBMax:"",wDMin:"",wDMax:""}]}));
 
   const steps=["Kundendaten","Schadenart","Messungen","Fotos","Ergebnis","Maßnahmen"];
-
   const card={background:"white",borderRadius:12,padding:20,marginBottom:16,boxShadow:"0 1px 6px rgba(0,0,0,.07)"};
   const lbl={fontSize:12,fontWeight:700,color:"#888",letterSpacing:.5,marginBottom:6,display:"block"};
   const btnP={display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"12px 22px",background:BLUE,color:"white",border:"none",borderRadius:10,fontWeight:700,fontSize:15};
   const btnS={display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"12px 18px",background:"white",color:BLUE,border:`2px solid ${BLUE}`,borderRadius:10,fontWeight:700,fontSize:15};
   const jnBtn=(val,t)=>({padding:"10px 20px",borderRadius:8,border:"2px solid",fontWeight:600,fontSize:15,background:val===t?BLUE:"white",color:val===t?"white":BLUE,borderColor:BLUE,cursor:"pointer"});
-
-  const JN=({field})=>(
-    <div style={{display:"flex",gap:8}}>
-      <button style={jnBtn(form[field],true)} onClick={()=>set(field,true)}>☑ Ja</button>
-      <button style={jnBtn(form[field],false)} onClick={()=>set(field,false)}>☐ Nein</button>
-    </div>
-  );
+  const JN=({field})=>(<div style={{display:"flex",gap:8}}><button style={jnBtn(form[field],true)} onClick={()=>set(field,true)}>☑ Ja</button><button style={jnBtn(form[field],false)} onClick={()=>set(field,false)}>☐ Nein</button></div>);
 
   const renderStep=()=>{
     if(step===0) return (
@@ -518,7 +751,7 @@ function App() {
         <div style={card}>
           <SecHdr>Kurzbeschreibung Schadensereignis</SecHdr>
           <div style={{marginTop:14}}>
-            <AudioRecorder label="Einsprechen oder tippen – Claude schreibt den Text" onTranscript={t=>set("kurzbeschreibung",t)} value={form.kurzbeschreibung}/>
+            <AudioRecorder label="Einsprechen – Claude schreibt professionellen Text" onTranscript={t=>set("kurzbeschreibung",t)} value={form.kurzbeschreibung}/>
           </div>
         </div>
       </div>
@@ -549,8 +782,8 @@ function App() {
           </div>
         </div>
         <div style={card}>
-          <SecHdr>Hinweis auf Fremdverschulden</SecHdr>
-          <div style={{marginTop:8}}>{[["fremd_nachbar","Wasser vom Nachbargebäude"],["fremd_anwend","Anwendungsfehler vom VN/Mieter"],["fremd_handwerk","Handwerkerfehler"],["fremd_gewahr","Gewährleistung"]].map(([k,l])=><CB key={k} label={l} checked={form[k]} onChange={()=>toggle(k)}/>)}</div>
+          <SecHdr>Fremdverschulden</SecHdr>
+          <div style={{marginTop:8}}>{[["fremd_nachbar","Wasser vom Nachbargebäude"],["fremd_anwend","Anwendungsfehler VN/Mieter"],["fremd_handwerk","Handwerkerfehler"],["fremd_gewahr","Gewährleistung"]].map(([k,l])=><CB key={k} label={l} checked={form[k]} onChange={()=>toggle(k)}/>)}</div>
         </div>
       </div>
     );
@@ -608,14 +841,14 @@ function App() {
         <div style={card}>
           <SecHdr>Ergebnis der Leckortung</SecHdr>
           <div style={{marginTop:14}}>
-            <AudioRecorder label="Befund einsprechen – Claude schreibt den professionellen Bericht" onTranscript={t=>set("ergebnis",t)} value={form.ergebnis}/>
+            <AudioRecorder label="Befund einsprechen – Claude schreibt professionellen Bericht" onTranscript={t=>set("ergebnis",t)} value={form.ergebnis}/>
           </div>
         </div>
         <div style={card}>
           <SecHdr>Leckstelle</SecHdr>
           <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:16}}>
             <div><span style={lbl}>Leckstelle freigelegt?</span><JN field="leckFreigelegt"/></div>
-            <div><CB label="Heizung wurde entleert" checked={form.heizEntleert} onChange={()=>toggle("heizEntleert")}/></div>
+            <CB label="Heizung wurde entleert" checked={form.heizEntleert} onChange={()=>toggle("heizEntleert")}/>
           </div>
         </div>
       </div>
@@ -642,37 +875,39 @@ function App() {
             style={{width:"100%",padding:12,marginTop:12,border:"1px solid #ddd",borderRadius:8,fontSize:15,lineHeight:1.6,resize:"vertical"}}/>
         </div>
         <div style={{...card,background:"#e8f5e9",border:"2px solid #2e7d32"}}>
-          <div style={{fontSize:16,fontWeight:700,color:"#1b5e20",marginBottom:12}}>✅ Protokoll erstellen</div>
-          <div style={{fontSize:13,color:"#444",marginBottom:16,lineHeight:1.7}}>
+          <div style={{fontSize:16,fontWeight:700,color:"#1b5e20",marginBottom:12}}>✅ PDF-Protokoll erstellen</div>
+          <div style={{fontSize:13,color:"#444",marginBottom:16,lineHeight:1.8}}>
             👤 <b>{form.name||"–"}</b> · {form.plzOrt||"–"}<br/>
-            📷 <b>{photos.length}</b> Foto{photos.length!==1?"s":""} · ✏️ {form.ergebnis?form.ergebnis.slice(0,50)+"…":"Kein Ergebnis eingetragen"}
+            📷 <b>{photos.length}</b> Foto{photos.length!==1?"s":""} &nbsp;·&nbsp;
+            ✏️ {form.ergebnis ? form.ergebnis.slice(0,50)+"…" : <i>Kein Ergebnis eingetragen</i>}
           </div>
           {!hasKey && <div style={{background:"#fff3e0",border:"1px solid #ff9800",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,color:"#e65100"}}>
-            ⚠️ Kein API-Key gesetzt. Bitte oben rechts ⚙️ antippen, um den Key einzugeben.
+            ⚠️ Kein API-Key gesetzt. Bitte oben rechts ⚙️ antippen.
           </div>}
-          <button style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"14px 28px",background:"#2e7d32",color:"white",border:"none",borderRadius:10,fontWeight:700,fontSize:16,width:"100%",cursor:"pointer"}}
+          <button style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"14px",background:"#2e7d32",color:"white",border:"none",borderRadius:10,fontWeight:700,fontSize:16,width:"100%",cursor:"pointer"}}
             disabled={generating}
             onClick={async()=>{
-              if(!getApiKey()){ alert("Bitte zuerst den API-Key eingeben (⚙️ oben rechts)."); return; }
               setGenerating(true);
-              try{ await generateDocx(form,photos); }
-              catch(e){ alert("Fehler beim Erstellen: "+e.message); console.error(e); }
-              finally{ setGenerating(false); }
+              try { await generatePDF(form, photos); }
+              catch(e) { alert("Fehler beim Erstellen: "+e.message); console.error(e); }
+              finally { setGenerating(false); }
             }}>
             {generating
-              ? <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Wird erstellt…</>
-              : <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Word-Protokoll herunterladen</>
+              ? <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> PDF wird erstellt…</>
+              : <>📄 PDF-Protokoll herunterladen</>
             }
           </button>
-          <div style={{fontSize:12,color:"#555",marginTop:10,textAlign:"center"}}>Die .docx wird direkt auf dein Gerät heruntergeladen.</div>
+          <div style={{fontSize:12,color:"#555",marginTop:10,textAlign:"center"}}>
+            Das PDF wird direkt auf dein Gerät heruntergeladen &amp; kann direkt versendet werden.
+          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <div style={{minHeight:"100vh",background:"#f0f4f8",fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>
-      {showApiModal && <ApiKeyModal onClose={()=>{ setShowApiModal(false); setHasKey(!!getApiKey()); }}/>}
+    <div style={{minHeight:"100vh",background:"#f0f4f8"}}>
+      {showApiModal && <ApiKeyModal onClose={()=>{setShowApiModal(false);setHasKey(!!getApiKey());}}/>}
 
       {/* Header */}
       <div style={{background:BLUE,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:100}}>
@@ -681,7 +916,7 @@ function App() {
           <div style={{fontSize:12,color:"rgba(255,255,255,.75)"}}>Leckortung · Trocknung · Sanierung</div>
         </div>
         <button onClick={()=>setShowApiModal(true)} style={{marginLeft:"auto",background:"rgba(255,255,255,.2)",border:"none",borderRadius:8,padding:"7px 12px",color:"white",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
-          ⚙️ {hasKey ? <span style={{fontSize:10,background:"#4caf50",borderRadius:10,padding:"1px 6px"}}>✓</span> : <span style={{fontSize:10,background:"#ff5722",borderRadius:10,padding:"1px 6px"}}>!</span>}
+          ⚙️ {hasKey?<span style={{fontSize:10,background:"#4caf50",borderRadius:10,padding:"1px 6px"}}>✓</span>:<span style={{fontSize:10,background:"#ff5722",borderRadius:10,padding:"1px 6px"}}>!</span>}
         </button>
       </div>
 
@@ -695,7 +930,6 @@ function App() {
         ))}
       </div>
 
-      {/* Content */}
       <div style={{padding:"14px 14px 90px"}}>{renderStep()}</div>
 
       {/* Bottom nav */}
