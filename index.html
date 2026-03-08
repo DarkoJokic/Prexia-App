@@ -742,42 +742,60 @@ function PhotoSection({ photos, setPhotos }) {
     setAnalyzingIds(prev=>{const s=new Set(prev);s.delete(id);return s;});
   };
 
-  const isDng=(f)=>/\.(dng|raw|arw|cr2|nef|orf|rw2)$/i.test(f.name);
+  const isDng=(f)=>/\.(dng|raw|arw|cr2|nef|orf|rw2|heic|heif)$/i.test(f.name);
 
-  const processImage=(file)=>new Promise(resolve=>{
-    const url=URL.createObjectURL(file);
-    const img=new Image();
-    img.onload=()=>{
-      const dMax=1600; let dw=img.width,dh=img.height;
-      if(dw>dMax||dh>dMax){if(dw>dh){dh=Math.round(dh*dMax/dw);dw=dMax;}else{dw=Math.round(dw*dMax/dh);dh=dMax;}}
-      const dc=document.createElement("canvas"); dc.width=dw; dc.height=dh;
-      dc.getContext("2d").drawImage(img,0,0,dw,dh);
-      const display=dc.toDataURL("image/jpeg",0.82);
-      URL.revokeObjectURL(url);
-      resolve({display, displayBase64: display.split(",")[1]});
+  // Converts any image file to JPEG via canvas - works for JPEG, PNG, HEIC, DNG etc.
+  const processImage = (file) => new Promise(resolve => {
+    // Step 1: get a data URL via FileReader (works for all types Safari can decode)
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        // Resize for display (max 1600px)
+        const dMax = 1600;
+        let w = img.width, h = img.height;
+        if (w > dMax || h > dMax) {
+          if (w > h) { h = Math.round(h * dMax / w); w = dMax; }
+          else { w = Math.round(w * dMax / h); h = dMax; }
+        }
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        const display = c.toDataURL("image/jpeg", 0.82);
+        resolve({ display, displayBase64: display.split(",")[1] });
+      };
+      img.onerror = () => {
+        // Canvas decode failed (e.g. raw DNG) — use original data URL for display only
+        resolve({ display: ev.target.result, displayBase64: ev.target.result.split(",")[1] });
+      };
+      img.src = ev.target.result;
     };
-    img.onerror=()=>{URL.revokeObjectURL(url);resolve(null);};
-    img.src=url;
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
   });
 
   const handleFiles = async (files) => {
     for (const file of Array.from(files)) {
-      const isVideo=file.type.startsWith("video/");
-      const isImage=file.type.startsWith("image/")||isDng(file);
-      if(!isImage&&!isVideo) continue;
+      const isVideo = file.type.startsWith("video/");
+      const isImage = file.type.startsWith("image/") || isDng(file);
+      if (!isImage && !isVideo) continue;
       let dataUrl, base64, mediaType;
-      if(isVideo){
-        const reader=new FileReader(); reader.readAsDataURL(file);
-        dataUrl=await new Promise(res=>{reader.onload=()=>res(reader.result);});
-        base64=dataUrl.split(",")[1]; mediaType=file.type;
+      if (isVideo) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        dataUrl = await new Promise(res => { reader.onload = () => res(reader.result); });
+        base64 = dataUrl.split(",")[1];
+        mediaType = file.type;
       } else {
         const result = await processImage(file);
-        if(result){ dataUrl=result.display; base64=result.displayBase64; mediaType="image/jpeg"; }
-        else { continue; }
+        if (!result) continue;
+        dataUrl = result.display;
+        base64 = result.displayBase64;
+        mediaType = "image/jpeg";
       }
-      const id=Date.now()+Math.random();
-      setPhotos(prev=>[...prev,{id,dataUrl,base64,mediaType,name:file.name,isVideo,description:"",arrows:[]}]);
-      if(!isVideo) analyzeImage(id, base64);
+      const id = Date.now() + Math.random();
+      setPhotos(prev => [...prev, { id, dataUrl, base64, mediaType, name: file.name, isVideo, description: "", arrows: [] }]);
+      if (!isVideo) analyzeImage(id, base64);
     }
   };
 
