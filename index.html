@@ -70,71 +70,27 @@ function generateQRDataUrl(text) {
   });
 }
 
-// ─── FILE.IO UPLOAD ──────────────────────────────────────────────────────────
+// ─── VIDEO UPLOAD (0x0.st — CORS-fähig, 7 Tage, bis 512MB) ──────────────────
 async function uploadToFileIo(file, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("expires", "7d");
+    formData.append("expires", "168");
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
     };
     xhr.onload = () => {
-      try {
-        const data = JSON.parse(xhr.responseText);
-        if (data.success && data.link) resolve(data.link);
-        else reject(new Error(data.message || "Upload fehlgeschlagen"));
-      } catch(e) { reject(new Error("Ungültige Server-Antwort")); }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const url = xhr.responseText.trim();
+        if (url.startsWith("http")) resolve(url);
+        else reject(new Error("Ungueltige Antwort: " + url.slice(0, 80)));
+      } else {
+        reject(new Error("Upload fehlgeschlagen: HTTP " + xhr.status));
+      }
     };
-    xhr.onerror = () => reject(new Error("Netzwerkfehler beim Upload"));
-    xhr.open("POST", "https://file.io/?expires=7d");
-    xhr.send(formData);
-  });
-}
-
-// ─── QR CODE GENERATOR ───────────────────────────────────────────────────────
-function generateQRDataUrl(text) {
-  return new Promise((resolve) => {
-    try {
-      const div = document.createElement("div");
-      div.style.position = "absolute"; div.style.left = "-9999px";
-      document.body.appendChild(div);
-      const qr = new QRCode(div, {
-        text, width: 200, height: 200,
-        colorDark: "#000000", colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-      setTimeout(() => {
-        const img = div.querySelector("img") || div.querySelector("canvas");
-        let dataUrl = null;
-        if (img && img.tagName === "IMG") dataUrl = img.src;
-        else if (img && img.tagName === "CANVAS") dataUrl = img.toDataURL("image/png");
-        document.body.removeChild(div);
-        resolve(dataUrl);
-      }, 200);
-    } catch(e) { resolve(null); }
-  });
-}
-
-// ─── FILE.IO UPLOAD ──────────────────────────────────────────────────────────
-async function uploadToFileIo(file, onProgress) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    const formData = new FormData();
-    formData.append("file", file);
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onload = () => {
-      try {
-        const data = JSON.parse(xhr.responseText);
-        if (data.success && data.link) resolve(data.link);
-        else reject(new Error(data.message || "Upload fehlgeschlagen"));
-      } catch(e) { reject(new Error("Ungültige Server-Antwort")); }
-    };
-    xhr.onerror = () => reject(new Error("Netzwerkfehler beim Upload"));
-    xhr.open("POST", "https://file.io/?expires=7d");
+    xhr.onerror = () => reject(new Error("Netzwerkfehler — bitte Internetverbindung pruefen"));
+    xhr.open("POST", "https://0x0.st");
     xhr.send(formData);
   });
 }
