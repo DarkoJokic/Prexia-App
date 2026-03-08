@@ -777,11 +777,37 @@ function VideoUploader({ photo, setPhotos }) {
     setUploading(false);
   };
 
+  if (photo.driveUploading) {
+    return (
+      <div style={{marginBottom:8,padding:"10px 12px",background:"#e8eaf6",borderRadius:8,border:"1px solid #90caf9"}}>
+        <div style={{fontSize:12,fontWeight:700,color:"#1565c0",marginBottom:6}}>☁️ Wird auf Google Drive hochgeladen… {photo.driveProgress||0}%</div>
+        <div style={{background:"#bbdefb",borderRadius:4,height:6}}>
+          <div style={{width:(photo.driveProgress||0)+"%",height:"100%",background:"#1565c0",borderRadius:2,transition:"width .3s"}}/>
+        </div>
+      </div>
+    );
+  }
+
+  if (photo.driveError) {
+    return (
+      <div style={{marginBottom:8,padding:"8px 12px",background:"#fff0f0",borderRadius:8,border:"1px solid #ffcdd2"}}>
+        <div style={{fontSize:12,color:"#e53935",fontWeight:700}}>⚠️ Upload fehlgeschlagen</div>
+        <div style={{fontSize:11,color:"#555",marginTop:2}}>{photo.driveError}</div>
+        <button onClick={()=>fileRef.current?.click()}
+          style={{marginTop:6,fontSize:12,background:"#e53935",color:"white",border:"none",borderRadius:6,padding:"5px 12px"}}>
+          🔄 Nochmal versuchen
+        </button>
+        <input ref={fileRef} type="file" accept="video/*" style={{display:"none"}}
+          onChange={e=>{ if(e.target.files[0]) doUpload(e.target.files[0]); }}/>
+      </div>
+    );
+  }
+
   if (photo.videoUrl) {
     return (
       <div style={{marginBottom:8,padding:"10px 12px",background:"#e8f5e9",borderRadius:8,border:"1px solid #a5d6a7"}}>
-        <div style={{fontSize:12,fontWeight:700,color:"#2e7d32",marginBottom:4}}>✅ Video auf Google Drive</div>
-        <div style={{fontSize:11,color:"#555",wordBreak:"break-all",marginBottom:6}}>{photo.videoUrl}</div>
+        <div style={{fontSize:12,fontWeight:700,color:"#2e7d32",marginBottom:2}}>✅ Video auf Google Drive — QR-Code wird ins PDF eingebettet</div>
+        <div style={{fontSize:10,color:"#555",wordBreak:"break-all",marginBottom:6}}>{photo.videoUrl}</div>
         <button onClick={()=>setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,videoUrl:""}:p))}
           style={{fontSize:11,background:"none",border:"1px solid #ccc",borderRadius:5,padding:"2px 8px",color:"#888"}}>
           ✕ Entfernen
@@ -790,38 +816,15 @@ function VideoUploader({ photo, setPhotos }) {
     );
   }
 
+  // No URL yet — show manual link input as fallback
   return (
     <div style={{marginBottom:8}}>
-      <div style={{fontSize:11,fontWeight:700,color:"#888",marginBottom:6}}>📤 Video hochladen für QR-Code im PDF</div>
-      {!uploading ? (
-        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          <button onClick={()=>fileRef.current?.click()}
-            style={{padding:"9px 16px",background:BLUE,color:"white",border:"none",borderRadius:8,fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:6}}>
-            ☁️ Auf Google Drive hochladen
-          </button>
-          <input
-            placeholder="Oder Link manuell eingeben…"
-            onBlur={e=>{ if(e.target.value.trim()) setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,videoUrl:e.target.value.trim()}:p)); }}
-            style={{flex:1,minWidth:160,padding:"8px 10px",border:"1px solid #ddd",borderRadius:7,fontSize:12}}
-          />
-          <input ref={fileRef} type="file" accept="video/*" style={{display:"none"}}
-            onChange={e=>{ if(e.target.files[0]) doUpload(e.target.files[0]); }}/>
-        </div>
-      ) : (
-        <div style={{padding:"10px 12px",background:"#e8f4fc",borderRadius:8,border:"1px solid #90caf9"}}>
-          <div style={{fontSize:12,fontWeight:700,color:BLUE,marginBottom:6}}>
-            ☁️ Wird hochgeladen… {progress}%
-          </div>
-          <div style={{background:"#bbdefb",borderRadius:4,height:6,overflow:"hidden"}}>
-            <div style={{width:progress+"%",height:"100%",background:BLUE,transition:"width .3s"}}/>
-          </div>
-          <div style={{fontSize:11,color:"#555",marginTop:4}}>Bitte warten — große Videos können einige Minuten dauern.</div>
-        </div>
-      )}
-      {error && <div style={{fontSize:12,color:"#e53935",marginTop:6,padding:"6px 10px",background:"#fff0f0",borderRadius:6}}>
-        ⚠️ {error}
-        {error.includes("Client-ID") && <span> — Bitte zuerst Google API einrichten.</span>}
-      </div>}
+      <div style={{fontSize:11,color:"#888",marginBottom:4}}>Oder Link manuell eingeben:</div>
+      <input
+        placeholder="https://drive.google.com/file/d/..."
+        onBlur={e=>{ if(e.target.value.trim()) setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,videoUrl:e.target.value.trim()}:p)); }}
+        style={{width:"100%",padding:"8px 10px",border:"1px solid #ddd",borderRadius:7,fontSize:12}}
+      />
     </div>
   );
 }
@@ -934,6 +937,7 @@ function ArrowEditor({ photo, onSave, onClose }) {
 function PhotoSection({ photos, setPhotos }) {
   const galleryRef = useRef(null);
   const cameraRef  = useRef(null);
+  const driveRef   = useRef(null);
   const [analyzingIds, setAnalyzingIds] = useState(new Set());
   const [arrowEditId, setArrowEditId] = useState(null);
   const [dictatingId, setDictatingId] = useState(null);
@@ -941,6 +945,9 @@ function PhotoSection({ photos, setPhotos }) {
   const dictRecRef = useRef(null);
   const dictFinalRef = useRef("");
   const [dictLive, setDictLive] = useState("");
+  const [driveUploading, setDriveUploading] = useState(false);
+  const [driveProgress, setDriveProgress] = useState(0);
+  const [driveError, setDriveError] = useState("");
 
   // ── guarantee base64 is under 4MB for API ──
   const compressForApi = (base64) => new Promise(resolve => {
@@ -1034,6 +1041,50 @@ function PhotoSection({ photos, setPhotos }) {
       } catch(e2) {
         return null;
       }
+    }
+  };
+
+  const handleDriveFiles = async (files) => {
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("video/")) continue;
+      // Add placeholder immediately so user sees it
+      const id = Date.now() + Math.random();
+      const thumbDataUrl = await new Promise(resolve => {
+        const url = URL.createObjectURL(file);
+        const video = document.createElement("video");
+        video.playsInline = true; video.muted = true; video.preload = "metadata";
+        video.onloadeddata = () => { video.currentTime = Math.min(1, video.duration * 0.1); };
+        video.onseeked = () => {
+          try {
+            const c = document.createElement("canvas");
+            c.width = Math.min(video.videoWidth, 800);
+            c.height = Math.round(video.videoHeight * (c.width / video.videoWidth));
+            c.getContext("2d").drawImage(video, 0, 0, c.width, c.height);
+            URL.revokeObjectURL(url);
+            resolve(c.toDataURL("image/jpeg", 0.8));
+          } catch(e) { URL.revokeObjectURL(url); resolve(null); }
+        };
+        video.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        video.src = url;
+      });
+      setPhotos(prev => [...prev, {
+        id, dataUrl: thumbDataUrl, base64: thumbDataUrl?.split(",")[1]||null,
+        mediaType: file.type, name: file.name, isVideo: true,
+        description: "", arrows: [], videoUrl: "", driveUploading: true
+      }]);
+      // Upload to Drive
+      setDriveUploading(true); setDriveError(""); setDriveProgress(0);
+      try {
+        const url = await uploadToDrive(file, p => {
+          setDriveProgress(p);
+          setPhotos(prev => prev.map(ph => ph.id===id ? {...ph, driveProgress: p} : ph));
+        });
+        setPhotos(prev => prev.map(ph => ph.id===id ? {...ph, videoUrl: url, driveUploading: false} : ph));
+      } catch(e) {
+        setDriveError(e.message);
+        setPhotos(prev => prev.map(ph => ph.id===id ? {...ph, driveUploading: false, driveError: e.message} : ph));
+      }
+      setDriveUploading(false);
     }
   };
 
@@ -1163,20 +1214,33 @@ function PhotoSection({ photos, setPhotos }) {
       )}
 
       <SecHdr>📷 Fotodokumentation</SecHdr>
-      <div style={{display:"flex",gap:10,marginTop:14}}>
-        <div onClick={()=>galleryRef.current?.click()} style={{flex:1,border:`2px dashed ${BLUE}`,borderRadius:12,padding:"20px 10px",textAlign:"center",cursor:"pointer",background:"#f0f8ff"}}>
-          <div style={{fontSize:28}}>🖼️</div>
-          <div style={{fontWeight:700,fontSize:14,color:BLUE,marginTop:4}}>Galerie</div>
-          <div style={{fontSize:11,color:"#888",marginTop:2}}>Alle Formate</div>
+      <div style={{display:"flex",gap:8,marginTop:14,flexWrap:"wrap"}}>
+        <div onClick={()=>galleryRef.current?.click()} style={{flex:1,minWidth:80,border:`2px dashed ${BLUE}`,borderRadius:12,padding:"16px 8px",textAlign:"center",cursor:"pointer",background:"#f0f8ff"}}>
+          <div style={{fontSize:26}}>🖼️</div>
+          <div style={{fontWeight:700,fontSize:13,color:BLUE,marginTop:3}}>Galerie</div>
+          <div style={{fontSize:10,color:"#888",marginTop:1}}>Fotos & Videos</div>
         </div>
-        <div onClick={()=>cameraRef.current?.click()} style={{flex:1,border:"2px dashed #43a047",borderRadius:12,padding:"20px 10px",textAlign:"center",cursor:"pointer",background:"#f1f8f1"}}>
-          <div style={{fontSize:28}}>📷</div>
-          <div style={{fontWeight:700,fontSize:14,color:"#43a047",marginTop:4}}>Kamera</div>
-          <div style={{fontSize:11,color:"#888",marginTop:2}}>Direkt aufnehmen</div>
+        <div onClick={()=>cameraRef.current?.click()} style={{flex:1,minWidth:80,border:"2px dashed #43a047",borderRadius:12,padding:"16px 8px",textAlign:"center",cursor:"pointer",background:"#f1f8f1"}}>
+          <div style={{fontSize:26}}>📷</div>
+          <div style={{fontWeight:700,fontSize:13,color:"#43a047",marginTop:3}}>Kamera</div>
+          <div style={{fontSize:10,color:"#888",marginTop:1}}>Aufnehmen</div>
+        </div>
+        <div onClick={()=>driveRef.current?.click()} style={{flex:1,minWidth:80,border:"2px dashed #1565c0",borderRadius:12,padding:"16px 8px",textAlign:"center",cursor:"pointer",background:"#e8eaf6",position:"relative"}}>
+          <div style={{fontSize:26}}>☁️</div>
+          <div style={{fontWeight:700,fontSize:13,color:"#1565c0",marginTop:3}}>Drive</div>
+          <div style={{fontSize:10,color:"#888",marginTop:1}}>Video → Drive</div>
+          {driveUploading && <div style={{position:"absolute",inset:0,background:"rgba(255,255,255,.85)",borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#1565c0"}}>{driveProgress}%</div>
+            <div style={{width:"70%",height:4,background:"#bbdefb",borderRadius:2}}>
+              <div style={{width:driveProgress+"%",height:"100%",background:"#1565c0",borderRadius:2,transition:"width .3s"}}/>
+            </div>
+          </div>}
         </div>
       </div>
+      {driveError && <div style={{fontSize:12,color:"#e53935",marginTop:8,padding:"8px 12px",background:"#fff0f0",borderRadius:8}}>⚠️ Drive-Fehler: {driveError}</div>}
       <input ref={galleryRef} type="file" accept="image/*,video/*,.dng,.raw,.arw,.cr2,.nef,.orf,.rw2" multiple onChange={e=>handleFiles(e.target.files)} style={{display:"none"}}/>
       <input ref={cameraRef} type="file" accept="image/*,video/*" multiple capture="environment" onChange={e=>handleFiles(e.target.files)} style={{display:"none"}}/>
+      <input ref={driveRef} type="file" accept="video/*" multiple onChange={e=>handleDriveFiles(e.target.files)} style={{display:"none"}}/>
 
       {photos.length===0 && <div style={{textAlign:"center",color:"#bbb",fontSize:13,padding:"24px 0"}}>Noch keine Fotos hinzugefügt</div>}
       <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:14}}>
