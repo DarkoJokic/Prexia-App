@@ -70,30 +70,6 @@ function generateQRDataUrl(text) {
   });
 }
 
-// ─── VIDEO UPLOAD (0x0.st — CORS-fähig, 7 Tage, bis 512MB) ──────────────────
-async function uploadToFileIo(file, onProgress) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("expires", "168");
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        const url = xhr.responseText.trim();
-        if (url.startsWith("http")) resolve(url);
-        else reject(new Error("Ungueltige Antwort: " + url.slice(0, 80)));
-      } else {
-        reject(new Error("Upload fehlgeschlagen: HTTP " + xhr.status));
-      }
-    };
-    xhr.onerror = () => reject(new Error("Netzwerkfehler — bitte Internetverbindung pruefen"));
-    xhr.open("POST", "https://0x0.st");
-    xhr.send(formData);
-  });
-}
 
 // ─── PDF GENERATOR ────────────────────────────────────────────────────────────
 async function loadJsPDF() {
@@ -407,90 +383,115 @@ async function generatePDF(data, photos) {
     doc.addPage(); pageHeader();
     blueHeader("Fotodokumentation");
 
+    // Fixed card dimensions — every item same width, height adapts to content
+    const CARD_IMG_H = 70;   // photo image height in mm
+    const QR_SIZE    = 38;   // QR code size in mm
+    const GAP        = 5;    // gap between items
+
     for (let i = 0; i < allMediaPhotos.length; i++) {
       const ph = allMediaPhotos[i];
-      const imgH = 80;
 
-      checkNewPage(imgH + 30);
-
-      // Badge row
-      doc.setFillColor(...(ph.isVideo ? [60,60,60] : LB));
-      doc.roundedRect(ML, y, CW, 6, 1,1,"F");
-      doc.setTextColor(...(ph.isVideo ? W : B));
-      doc.setFontSize(8); doc.setFont("helvetica","bold");
-      doc.text(`${ph.isVideo?"🎬 Video":"📷 Foto"} ${i+1}${ph.name?" — "+ph.name:""}`, ML+3, y+4.2);
+      // ── Badge ──────────────────────────────────────
+      checkNewPage(CARD_IMG_H + 40);
+      doc.setFillColor(...(ph.isVideo ? [40,40,40] : B));
+      doc.roundedRect(ML, y, CW, 6, 1, 1, "F");
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(7.5); doc.setFont("helvetica","bold");
+      const label = (ph.isVideo ? "VIDEO" : "FOTO") + " " + (i+1) + (ph.name ? "  —  " + ph.name : "");
+      doc.text(label, ML + 3, y + 4.2);
       y += 7;
 
       if (ph.isVideo && ph.videoUrl) {
-        // Generate QR code and embed it
+        // ── Video card: QR left, info right ──────────
+        const cardH = QR_SIZE + 14;
+        doc.setFillColor(250,250,250);
+        doc.setDrawColor(220,220,220);
+        doc.roundedRect(ML, y, CW, cardH, 2, 2, "FD");
+
+        // QR code
         const qrDataUrl = await generateQRDataUrl(ph.videoUrl);
-        const qrSize = 50;
-        const textW = CW - qrSize - 8;
-
-        // QR code box
-        doc.setFillColor(248,248,248);
-        doc.setDrawColor(200,200,200);
-        doc.roundedRect(ML, y, CW, qrSize+10, 2,2,"FD");
-
         if (qrDataUrl) {
-          try {
-            doc.addImage(qrDataUrl, "PNG", ML+4, y+5, qrSize, qrSize);
-          } catch(e) {}
+          try { doc.addImage(qrDataUrl, "PNG", ML+5, y+5, QR_SIZE, QR_SIZE); } catch(e){}
         }
 
-        // Video info next to QR
-        doc.setTextColor(...BK); doc.setFontSize(9); doc.setFont("helvetica","bold");
-        doc.text("📹 Video-Dokumentation", ML+qrSize+10, y+12);
-        doc.setFontSize(7.5); doc.setFont("helvetica","normal"); doc.setTextColor(80,80,80);
-        doc.text("QR-Code scannen zum Abspielen:", ML+qrSize+10, y+19);
-        const urlLines = doc.splitTextToSize(ph.videoUrl, textW-10);
-        doc.setTextColor(...B); doc.setFontSize(7);
-        doc.text(urlLines.slice(0,3), ML+qrSize+10, y+26);
+        // Info block right of QR
+        const ix = ML + QR_SIZE + 12;
+        const iw = CW - QR_SIZE - 17;
+        doc.setTextColor(30,30,30); doc.setFontSize(8.5); doc.setFont("helvetica","bold");
+        doc.text("Video-Dokumentation", ix, y + 10);
+        doc.setFontSize(7); doc.setFont("helvetica","normal"); doc.setTextColor(90,90,90);
+        doc.text("QR-Code scannen oder Link öffnen:", ix, y + 17);
+
+        // Clickable link — blue underline style
+        const urlLines = doc.splitTextToSize(ph.videoUrl, iw);
+        doc.setTextColor(...B); doc.setFontSize(6.5);
+        doc.textWithLink(urlLines[0], ix, y + 23, { url: ph.videoUrl });
+        if (urlLines.length > 1) doc.text(urlLines[1], ix, y + 28);
+
+        // Description below
         if (ph.description) {
-          doc.setTextColor(...BK); doc.setFontSize(8); doc.setFont("helvetica","normal");
-          const dlines = doc.splitTextToSize(ph.description, textW-10);
-          doc.text(dlines.slice(0,3), ML+qrSize+10, y+38);
+          doc.setTextColor(50,50,50); doc.setFontSize(7.5); doc.setFont("helvetica","normal");
+          const dl = doc.splitTextToSize(ph.description, iw);
+          doc.text(dl.slice(0,3), ix, y + 35);
         }
-        y += qrSize + 14;
+
+        y += cardH + GAP;
 
       } else if (ph.isVideo && !ph.videoUrl) {
-        // Video without link — show placeholder
-        doc.setFillColor(245,245,245);
-        doc.roundedRect(ML, y, CW, 20, 1,1,"F");
-        doc.setTextColor(120,120,120); doc.setFontSize(8);
-        doc.text("🎬 Video — kein Link angegeben (URL in App eintragen für QR-Code)", ML+CW/2, y+11, {align:"center"});
-        y += 22;
+        // ── Video without link ────────────────────────
+        doc.setFillColor(245,245,245); doc.setDrawColor(210,210,210);
+        doc.roundedRect(ML, y, CW, 14, 1, 1, "FD");
+        doc.setTextColor(140,140,140); doc.setFontSize(8); doc.setFont("helvetica","italic");
+        doc.text("Kein Video-Link angegeben", ML+CW/2, y+8, {align:"center"});
+        y += 16;
         if (ph.description) {
-          const dlines = doc.splitTextToSize(ph.description, CW-6);
-          doc.setTextColor(...BK); doc.setFontSize(8); doc.setFont("helvetica","normal");
-          doc.text(dlines, ML+3, y+4);
-          y += dlines.length*4.5+8;
+          doc.setTextColor(50,50,50); doc.setFontSize(8); doc.setFont("helvetica","normal");
+          const dl = doc.splitTextToSize(ph.description, CW-6);
+          doc.text(dl, ML+3, y+4);
+          y += dl.length*4.5+6;
         }
 
       } else {
-        // Normal photo
-        try {
-          doc.addImage(ph.dataUrl, "JPEG", ML, y, CW, imgH, undefined, "MEDIUM");
-          y += imgH + 2;
-        } catch(e) {
-          doc.setFillColor(240,240,240);
-          doc.rect(ML, y, CW, 20, "F");
-          doc.setTextColor(150,150,150); doc.setFontSize(8);
-          doc.text("[Bild konnte nicht eingebettet werden]", ML+CW/2, y+11, {align:"center"});
-          y += 22;
+        // ── Photo card ────────────────────────────────
+        // Calculate proportional height to fit full image in CW width
+        let drawH = CARD_IMG_H;
+        if (ph.dataUrl) {
+          // Try to get natural aspect ratio from dataUrl
+          try {
+            const imgEl = new Image();
+            // We compute height from base64 dimensions stored or use fixed
+            drawH = CARD_IMG_H;
+          } catch(e) {}
         }
+
+        doc.setDrawColor(220,220,220);
+        doc.setFillColor(245,245,245);
+        doc.roundedRect(ML, y, CW, drawH, 2, 2, "FD");
+
+        try {
+          // addImage with "NONE" compression to preserve quality, fit full width
+          doc.addImage(ph.dataUrl, "JPEG", ML, y, CW, drawH, undefined, "FAST");
+        } catch(e) {
+          doc.setTextColor(150,150,150); doc.setFontSize(8);
+          doc.text("[Bild konnte nicht eingebettet werden]", ML+CW/2, y+drawH/2, {align:"center"});
+        }
+        y += drawH + 2;
+
+        // Description box
         if (ph.description) {
-          doc.setFillColor(248,252,255); doc.setDrawColor(200,220,235);
-          const descLines = doc.splitTextToSize(ph.description, CW-6);
-          const dh = descLines.length*4.5+5;
-          doc.roundedRect(ML, y, CW, dh, 1,1,"FD");
-          doc.setTextColor(...BK); doc.setFontSize(8); doc.setFont("helvetica","normal");
-          doc.text(descLines, ML+3, y+4);
-          y += dh + 5;
-        } else { y += 3; }
+          doc.setFillColor(248,252,255); doc.setDrawColor(200,225,240);
+          const dl = doc.splitTextToSize(ph.description, CW-8);
+          const dh = dl.length*4.5+6;
+          doc.roundedRect(ML, y, CW, dh, 1, 1, "FD");
+          doc.setTextColor(30,30,30); doc.setFontSize(8); doc.setFont("helvetica","normal");
+          doc.text(dl, ML+4, y+4.5);
+          y += dh + GAP;
+        } else {
+          y += GAP;
+        }
       }
 
-      if (i < allMediaPhotos.length-1) checkNewPage(imgH + 30);
+      if (i < allMediaPhotos.length-1) checkNewPage(CARD_IMG_H + 40);
     }
   }
 
@@ -679,70 +680,37 @@ function AudioRecorder({ label, onTranscript, value }) {
 
 // ─── VIDEO UPLOADER COMPONENT ────────────────────────────────────────────────
 function VideoUploader({ photo, setPhotos }) {
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState("");
-  const fileRef = useRef(null);
-
-  const doUpload = async (file) => {
-    setUploading(true); setError(""); setProgress(0);
-    try {
-      const url = await uploadToFileIo(file, p => setProgress(p));
-      setPhotos(prev => prev.map(p => p.id===photo.id ? {...p, videoUrl: url} : p));
-    } catch(e) {
-      setError(e.message);
-    }
-    setUploading(false);
-  };
-
-  if (photo.driveUploading) {
-    return (
-      <div style={{marginBottom:8,padding:"10px 12px",background:"#fff3e0",borderRadius:8,border:"1px solid #ffcc80"}}>
-        <div style={{fontSize:12,fontWeight:700,color:"#e65100",marginBottom:6}}>📤 Wird hochgeladen… {photo.driveProgress||0}%</div>
-        <div style={{background:"#ffe0b2",borderRadius:4,height:6}}>
-          <div style={{width:(photo.driveProgress||0)+"%",height:"100%",background:"#e65100",borderRadius:2,transition:"width .3s"}}/>
-        </div>
-      </div>
-    );
-  }
-
-  if (photo.driveError) {
-    return (
-      <div style={{marginBottom:8,padding:"8px 12px",background:"#fff0f0",borderRadius:8,border:"1px solid #ffcdd2"}}>
-        <div style={{fontSize:12,color:"#e53935",fontWeight:700}}>⚠️ Upload fehlgeschlagen</div>
-        <div style={{fontSize:11,color:"#555",marginTop:2}}>{photo.driveError}</div>
-        <button onClick={()=>fileRef.current?.click()}
-          style={{marginTop:6,fontSize:12,background:"#e53935",color:"white",border:"none",borderRadius:6,padding:"5px 12px"}}>
-          🔄 Nochmal versuchen
-        </button>
-        <input ref={fileRef} type="file" accept="video/*" style={{display:"none"}}
-          onChange={e=>{ if(e.target.files[0]) doUpload(e.target.files[0]); }}/>
-      </div>
-    );
-  }
+  const [val, setVal] = React.useState(photo.videoUrl || "");
 
   if (photo.videoUrl) {
     return (
       <div style={{marginBottom:8,padding:"10px 12px",background:"#e8f5e9",borderRadius:8,border:"1px solid #a5d6a7"}}>
-        <div style={{fontSize:12,fontWeight:700,color:"#2e7d32",marginBottom:2}}>✅ Video hochgeladen — Link 7 Tage gültig — QR-Code wird ins PDF eingebettet</div>
+        <div style={{fontSize:12,fontWeight:700,color:"#2e7d32",marginBottom:2}}>✅ Video-Link gespeichert — QR-Code wird ins PDF eingebettet</div>
         <div style={{fontSize:10,color:"#555",wordBreak:"break-all",marginBottom:6}}>{photo.videoUrl}</div>
-        <button onClick={()=>setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,videoUrl:""}:p))}
+        <button onClick={()=>{ setVal(""); setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,videoUrl:""}:p)); }}
           style={{fontSize:11,background:"none",border:"1px solid #ccc",borderRadius:5,padding:"2px 8px",color:"#888"}}>
-          ✕ Entfernen
+          ✕ Ändern
         </button>
       </div>
     );
   }
 
-  // No URL yet — show manual link input as fallback
   return (
     <div style={{marginBottom:8}}>
-      <div style={{fontSize:11,color:"#888",marginBottom:4}}>Oder Link manuell eingeben:</div>
-      <input
-        placeholder="https://drive.google.com/file/d/..."
-        onBlur={e=>{ if(e.target.value.trim()) setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,videoUrl:e.target.value.trim()}:p)); }}
-        style={{width:"100%",padding:"8px 10px",border:"1px solid #ddd",borderRadius:7,fontSize:12}}
-      />
+      <div style={{fontSize:11,fontWeight:600,color:"#555",marginBottom:4}}>🔗 Video-Link eingeben (z.B. WhatsApp, iCloud, Google Drive)</div>
+      <div style={{display:"flex",gap:6}}>
+        <input
+          value={val}
+          onChange={e=>setVal(e.target.value)}
+          placeholder="https://..."
+          style={{flex:1,padding:"8px 10px",border:"1px solid #ddd",borderRadius:7,fontSize:12}}
+        />
+        <button
+          onClick={()=>{ if(val.trim()) setPhotos(prev=>prev.map(p=>p.id===photo.id?{...p,videoUrl:val.trim()}:p)); }}
+          style={{padding:"8px 14px",background:BLUE,color:"white",border:"none",borderRadius:7,fontWeight:600,fontSize:13}}>
+          ✓
+        </button>
+      </div>
     </div>
   );
 }
@@ -855,7 +823,7 @@ function ArrowEditor({ photo, onSave, onClose }) {
 function PhotoSection({ photos, setPhotos }) {
   const galleryRef = useRef(null);
   const cameraRef  = useRef(null);
-  const driveRef   = useRef(null);
+  const [showVideoLink, setShowVideoLink] = useState(false);
   const [analyzingIds, setAnalyzingIds] = useState(new Set());
   const [arrowEditId, setArrowEditId] = useState(null);
   const [dictatingId, setDictatingId] = useState(null);
@@ -863,9 +831,6 @@ function PhotoSection({ photos, setPhotos }) {
   const dictRecRef = useRef(null);
   const dictFinalRef = useRef("");
   const [dictLive, setDictLive] = useState("");
-  const [driveUploading, setDriveUploading] = useState(false);
-  const [driveProgress, setDriveProgress] = useState(0);
-  const [driveError, setDriveError] = useState("");
 
   // ── guarantee base64 is under 4MB for API ──
   const compressForApi = (base64) => new Promise(resolve => {
@@ -962,49 +927,7 @@ function PhotoSection({ photos, setPhotos }) {
     }
   };
 
-  const handleDriveFiles = async (files) => {
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith("video/")) continue;
-      // Add placeholder immediately so user sees it
-      const id = Date.now() + Math.random();
-      const thumbDataUrl = await new Promise(resolve => {
-        const url = URL.createObjectURL(file);
-        const video = document.createElement("video");
-        video.playsInline = true; video.muted = true; video.preload = "metadata";
-        video.onloadeddata = () => { video.currentTime = Math.min(1, video.duration * 0.1); };
-        video.onseeked = () => {
-          try {
-            const c = document.createElement("canvas");
-            c.width = Math.min(video.videoWidth, 800);
-            c.height = Math.round(video.videoHeight * (c.width / video.videoWidth));
-            c.getContext("2d").drawImage(video, 0, 0, c.width, c.height);
-            URL.revokeObjectURL(url);
-            resolve(c.toDataURL("image/jpeg", 0.8));
-          } catch(e) { URL.revokeObjectURL(url); resolve(null); }
-        };
-        video.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
-        video.src = url;
-      });
-      setPhotos(prev => [...prev, {
-        id, dataUrl: thumbDataUrl, base64: thumbDataUrl?.split(",")[1]||null,
-        mediaType: file.type, name: file.name, isVideo: true,
-        description: "", arrows: [], videoUrl: "", driveUploading: true
-      }]);
-      // Upload to Drive
-      setDriveUploading(true); setDriveError(""); setDriveProgress(0);
-      try {
-        const url = await uploadToFileIo(file, p => {
-          setDriveProgress(p);
-          setPhotos(prev => prev.map(ph => ph.id===id ? {...ph, driveProgress: p} : ph));
-        });
-        setPhotos(prev => prev.map(ph => ph.id===id ? {...ph, videoUrl: url, driveUploading: false} : ph));
-      } catch(e) {
-        setDriveError(e.message);
-        setPhotos(prev => prev.map(ph => ph.id===id ? {...ph, driveUploading: false, driveError: e.message} : ph));
-      }
-      setDriveUploading(false);
-    }
-  };
+
 
   const handleFiles = async (files) => {
     for (const file of Array.from(files)) {
@@ -1143,23 +1066,36 @@ function PhotoSection({ photos, setPhotos }) {
           <div style={{fontWeight:700,fontSize:13,color:"#43a047",marginTop:3}}>Kamera</div>
           <div style={{fontSize:10,color:"#888",marginTop:1}}>Aufnehmen</div>
         </div>
-        <div onClick={()=>driveRef.current?.click()} style={{flex:1,minWidth:80,border:"2px dashed #e65100",borderRadius:12,padding:"16px 8px",textAlign:"center",cursor:"pointer",background:"#fff3e0",position:"relative"}}>
-          <div style={{fontSize:26}}>📤</div>
-          <div style={{fontWeight:700,fontSize:13,color:"#e65100",marginTop:3}}>Video</div>
-          <div style={{fontSize:10,color:"#888",marginTop:1}}>Link + QR-Code</div>
-          <div style={{fontSize:9,color:"#e65100",marginTop:2,fontWeight:700}}>⚠️ 7 Tage verfügbar</div>
-          {driveUploading && <div style={{position:"absolute",inset:0,background:"rgba(255,255,255,.85)",borderRadius:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4}}>
-            <div style={{fontSize:11,fontWeight:700,color:"#1565c0"}}>{driveProgress}%</div>
-            <div style={{width:"70%",height:4,background:"#ffe0b2",borderRadius:2}}>
-              <div style={{width:driveProgress+"%",height:"100%",background:"#e65100",borderRadius:2,transition:"width .3s"}}/>
-            </div>
-          </div>}
+        <div onClick={()=>setShowVideoLink(v=>!v)} style={{flex:1,minWidth:80,border:"2px dashed #8e24aa",borderRadius:12,padding:"16px 8px",textAlign:"center",cursor:"pointer",background:"#f9f0ff"}}>
+          <div style={{fontSize:26}}>🎬</div>
+          <div style={{fontWeight:700,fontSize:13,color:"#8e24aa",marginTop:3}}>Video-Link</div>
+          <div style={{fontSize:10,color:"#888",marginTop:1}}>Link einfügen</div>
         </div>
       </div>
-      {driveError && <div style={{fontSize:12,color:"#e53935",marginTop:8,padding:"8px 12px",background:"#fff0f0",borderRadius:8}}>⚠️ Drive-Fehler: {driveError}</div>}
+      {showVideoLink && (
+        <div style={{marginTop:10,display:"flex",gap:6,alignItems:"center"}}>
+          <input
+            id="videoLinkInput"
+            placeholder="https://... (WhatsApp, iCloud, Google Drive…)"
+            style={{flex:1,padding:"9px 12px",border:"2px solid #8e24aa",borderRadius:8,fontSize:13}}
+          />
+          <button onClick={()=>{
+            const val = document.getElementById("videoLinkInput").value.trim();
+            if(!val) return;
+            const id = Date.now() + Math.random();
+            setPhotos(prev=>[...prev,{
+              id, dataUrl:null, base64:null, mediaType:"video/mp4",
+              name:"video-link", isVideo:true, description:"", arrows:[], videoUrl:val
+            }]);
+            document.getElementById("videoLinkInput").value="";
+            setShowVideoLink(false);
+          }} style={{padding:"9px 16px",background:"#8e24aa",color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>
+            ✓
+          </button>
+        </div>
+      )}
       <input ref={galleryRef} type="file" accept="image/*,video/*,.dng,.raw,.arw,.cr2,.nef,.orf,.rw2" multiple onChange={e=>handleFiles(e.target.files)} style={{display:"none"}}/>
       <input ref={cameraRef} type="file" accept="image/*,video/*" multiple capture="environment" onChange={e=>handleFiles(e.target.files)} style={{display:"none"}}/>
-      <input ref={driveRef} type="file" accept="video/*" multiple onChange={e=>handleDriveFiles(e.target.files)} style={{display:"none"}}/>
 
       {photos.length===0 && <div style={{textAlign:"center",color:"#bbb",fontSize:13,padding:"24px 0"}}>Noch keine Fotos hinzugefügt</div>}
       <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:14}}>
