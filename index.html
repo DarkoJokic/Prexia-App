@@ -730,137 +730,110 @@ function VideoUploader({ photo, setPhotos }) {
 // ─── PHOTO SECTION ────────────────────────────────────────────────────────────
 // Arrow editor component
 function ArrowEditor({ photo, onSave, onClose }) {
-  const canvasRef = useRef(null);
-  const imgRef    = useRef(null);
-  const arrowsRef = useRef(photo.arrows || []);
-  const [arrows,  setArrows]  = useState(photo.arrows || []);
-  const [placing, setPlacing] = useState(false);
-  const [loaded,  setLoaded]  = useState(false);
-
-  const redraw = (arrs) => {
-    const canvas = canvasRef.current;
-    const img    = imgRef.current;
-    if (!canvas || !img || !img.complete || !img.naturalWidth) return;
-    const maxW    = Math.min(window.innerWidth - 24, 560);
-    const ratio   = img.naturalWidth / img.naturalHeight;
-    canvas.width  = maxW;
-    canvas.height = Math.round(maxW / ratio);
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    arrs.forEach(a => {
-      const tx = a.x * canvas.width;
-      const ty = a.y * canvas.height;
-      const fx = tx - 55, fy = ty - 55;
-      const angle = Math.atan2(ty - fy, tx - fx);
-      const hl = 22;
-      ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 5;
-      ctx.strokeStyle = "#e53935"; ctx.fillStyle = "#e53935"; ctx.lineWidth = 5;
-      ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.lineTo(tx - hl*Math.cos(angle-Math.PI/6), ty - hl*Math.sin(angle-Math.PI/6));
-      ctx.lineTo(tx - hl*Math.cos(angle+Math.PI/6), ty - hl*Math.sin(angle+Math.PI/6));
-      ctx.closePath(); ctx.fill();
-      ctx.shadowBlur = 0;
-    });
-  };
-
-  // Build a safe data: URL from whatever dataUrl we have
-  useEffect(() => {
-    const img = imgRef.current;
-    if (!img) return;
-    img.onload = () => { setLoaded(true); redraw(arrowsRef.current); };
-    img.onerror = (e) => console.error("AE img error", e);
-
-    if (!photo.dataUrl) return;
-
-    if (photo.dataUrl.startsWith("data:")) {
-      img.src = photo.dataUrl;
-    } else {
-      // blob:// or http — convert to data URL via FileReader
-      fetch(photo.dataUrl)
-        .then(r => r.blob())
-        .then(blob => {
-          const fr = new FileReader();
-          fr.onload = () => { img.src = fr.result; };
-          fr.readAsDataURL(blob);
-        })
-        .catch(() => { img.src = photo.dataUrl; });
-    }
-  }, []);
+  const [arrows, setArrows] = useState(photo.arrows || []);
 
   const handleTap = (e) => {
-    if (!placing || !loaded) return;
-    e.preventDefault(); e.stopPropagation();
-    const canvas = canvasRef.current;
-    const rect   = canvas.getBoundingClientRect();
-    const pt     = e.touches ? e.touches[0] : e;
-    const x = (pt.clientX - rect.left) / rect.width;
-    const y = (pt.clientY - rect.top)  / rect.height;
-    const next = [...arrowsRef.current, {x, y}];
-    arrowsRef.current = next;
-    setArrows(next);
-    redraw(next);
-    setPlacing(false);
-  };
-
-  const undo = () => {
-    const next = arrowsRef.current.slice(0, -1);
-    arrowsRef.current = next;
-    setArrows(next);
-    redraw(next);
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pt = e.touches ? e.touches[0] : e;
+    const x = (pt.clientX - rect.left) / rect.width * 100;
+    const y = (pt.clientY - rect.top)  / rect.height * 100;
+    setArrows(prev => [...prev, { x, y }]);
   };
 
   const save = () => {
-    const dataUrl = canvasRef.current.toDataURL("image/jpeg", 0.88);
-    onSave(dataUrl, arrowsRef.current);
+    // Draw image + arrows on canvas and export
+    const imgEl = document.createElement("img");
+    imgEl.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = imgEl.naturalWidth;
+      c.height = imgEl.naturalHeight;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(imgEl, 0, 0);
+      arrows.forEach(a => {
+        const tx = a.x / 100 * c.width;
+        const ty = a.y / 100 * c.height;
+        const fx = tx - c.width * 0.10;
+        const fy = ty - c.height * 0.10;
+        const ang = Math.atan2(ty - fy, tx - fx);
+        const lw = Math.max(4, c.width * 0.012);
+        const hl = lw * 3.5;
+        [[lw*2.5,"white"],[lw*1.4,"#e53935"]].forEach(([w,col]) => {
+          ctx.save();
+          ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w; ctx.lineCap = "round";
+          ctx.shadowColor = "rgba(0,0,0,.5)"; ctx.shadowBlur = lw * 2;
+          ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(tx, ty);
+          ctx.lineTo(tx - hl*Math.cos(ang-Math.PI/6), ty - hl*Math.sin(ang-Math.PI/6));
+          ctx.lineTo(tx - hl*Math.cos(ang+Math.PI/6), ty - hl*Math.sin(ang+Math.PI/6));
+          ctx.closePath(); ctx.fill();
+          ctx.restore();
+        });
+      });
+      onSave(c.toDataURL("image/jpeg", 0.88), arrows);
+    };
+    imgEl.src = photo.dataUrl;
   };
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.93)",zIndex:2000,display:"flex",flexDirection:"column"}}>
-      {/* img tag used as canvas source — never displayed */}
-      <img ref={imgRef} style={{display:"none"}} alt=""/>
-
-      <div style={{padding:"10px 16px",color:"white",fontWeight:700,fontSize:14,textAlign:"center"}}>
-        {!loaded ? "⏳ Bild wird geladen…" : placing ? "👆 Tippe auf das Bild" : "✏️ Pfeil-Editor"}
-      </div>
-
-      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:"0 8px"}}>
-        <canvas ref={canvasRef}
-          style={{maxWidth:"100%",maxHeight:"62vh",objectFit:"contain",borderRadius:8,
-                  border: placing ? "3px solid #e53935" : "3px solid #444",
-                  cursor: placing ? "crosshair" : "default",
-                  opacity: loaded ? 1 : 0.3, transition:"opacity .3s"}}
-          onClick={handleTap}
-          onTouchStart={handleTap}
-        />
-      </div>
-
-      <div style={{display:"flex",gap:8,padding:"10px 12px",flexWrap:"wrap",justifyContent:"center"}}>
-        <button onClick={()=>setPlacing(p=>!p)}
-          style={{flex:1,minWidth:110,padding:"12px 8px",
-                  background: placing ? "#b71c1c" : "#e53935",
-                  color:"white",border:"none",borderRadius:9,fontWeight:700,fontSize:13}}>
-          {placing ? "⬆ Tippe aufs Bild" : "➕ Pfeil setzen"}
-        </button>
-        {arrows.length > 0 &&
-          <button onClick={undo}
-            style={{padding:"12px 16px",background:"#555",color:"white",border:"none",borderRadius:9,fontWeight:700,fontSize:13}}>
-            ↩ Undo
-          </button>}
+    <div style={{position:"fixed",inset:0,zIndex:2000,background:"#111",display:"flex",flexDirection:"column"}}>
+      {/* Top bar */}
+      <div style={{background:"#222",padding:"10px 12px",display:"flex",gap:8,alignItems:"center",flexShrink:0,borderBottom:"1px solid #333"}}>
+        <span style={{color:"white",fontSize:13,flex:1}}>Tippe aufs Bild → roter Pfeil</span>
+        {arrows.length > 0 && (
+          <button onClick={() => setArrows(a => a.slice(0,-1))}
+            style={{padding:"8px 14px",background:"#555",color:"white",border:"none",borderRadius:7,fontWeight:700,fontSize:13}}>
+            ↩
+          </button>
+        )}
         <button onClick={save}
-          style={{flex:1,minWidth:110,padding:"12px 8px",background:"#2e7d32",color:"white",border:"none",borderRadius:9,fontWeight:700,fontSize:13}}>
-          ✅ Speichern
+          style={{padding:"8px 14px",background:"#2e7d32",color:"white",border:"none",borderRadius:7,fontWeight:700,fontSize:13}}>
+          ✓ Fertig
         </button>
         <button onClick={onClose}
-          style={{width:"100%",padding:"11px",background:"#333",color:"white",border:"none",borderRadius:9,fontSize:13}}>
-          Abbrechen
+          style={{padding:"8px 14px",background:"#c62828",color:"white",border:"none",borderRadius:7,fontWeight:700,fontSize:13}}>
+          ✕
         </button>
+      </div>
+
+      {/* Image with tap area */}
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:12,overflow:"hidden"}}>
+        <div style={{position:"relative",display:"inline-block",lineHeight:0}}
+          onTouchStart={handleTap} onClick={handleTap}>
+          <img
+            src={photo.dataUrl}
+            draggable={false}
+            style={{display:"block",maxWidth:"calc(100vw - 24px)",maxHeight:"calc(100dvh - 120px)",borderRadius:8,WebkitUserSelect:"none",userSelect:"none"}}
+          />
+          {arrows.map((a, i) => (
+            <div key={i} style={{
+              position:"absolute",
+              left: a.x + "%",
+              top:  a.y + "%",
+              transform:"translate(-50%,-50%) rotate(-45deg)",
+              pointerEvents:"none",
+              display:"flex",
+              alignItems:"center",
+              filter:"drop-shadow(1px 1px 3px rgba(0,0,0,0.8))"
+            }}>
+              {/* shaft */}
+              <div style={{width:36,height:6,background:"#e53935",borderRadius:3}}/>
+              {/* head */}
+              <div style={{
+                width:0,height:0,
+                borderTop:"11px solid transparent",
+                borderBottom:"11px solid transparent",
+                borderLeft:"18px solid #e53935",
+                marginLeft:-1
+              }}/>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
+
 
 function PhotoSection({ photos, setPhotos }) {
   const galleryRef = useRef(null);
