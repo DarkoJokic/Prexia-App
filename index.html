@@ -731,119 +731,130 @@ function VideoUploader({ photo, setPhotos }) {
 // Arrow editor component
 function ArrowEditor({ photo, onSave, onClose }) {
   const canvasRef = useRef(null);
-  const [arrows, setArrows] = useState(photo.arrows || []);
+  const imgRef    = useRef(null);
+  const arrowsRef = useRef(photo.arrows || []);
+  const [arrows,  setArrows]  = useState(photo.arrows || []);
   const [placing, setPlacing] = useState(false);
-  const [ready, setReady] = useState(false);
-  const imgRef = useRef(new Image());
+  const [loaded,  setLoaded]  = useState(false);
 
-  useEffect(() => {
-    const img = imgRef.current;
-    img.onload = () => { setReady(true); drawAll(arrows, img); };
-    img.onerror = () => console.warn("ArrowEditor: Bild konnte nicht geladen werden");
-    // blob:// URLs can't be loaded in a new Image() — convert via canvas first
-    if (photo.dataUrl && photo.dataUrl.startsWith("blob:")) {
-      // Draw from the existing <img> in the DOM if possible, otherwise skip
-      const domImg = document.querySelector(`img[src="${photo.dataUrl}"]`);
-      if (domImg && domImg.complete) {
-        const c = document.createElement("canvas");
-        c.width = domImg.naturalWidth || domImg.width;
-        c.height = domImg.naturalHeight || domImg.height;
-        c.getContext("2d").drawImage(domImg, 0, 0);
-        img.src = c.toDataURL("image/jpeg", 0.92);
-      } else {
-        img.src = photo.dataUrl;
-      }
-    } else {
-      img.src = photo.dataUrl;
-    }
-  }, []);
-
-  const drawAll = (arrs, imgOverride) => {
+  const redraw = (arrs) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const img = imgOverride || imgRef.current;
-    if (!img.complete) return;
+    const img    = imgRef.current;
+    if (!canvas || !img || !img.complete || !img.naturalWidth) return;
+    const maxW    = Math.min(window.innerWidth - 24, 560);
+    const ratio   = img.naturalWidth / img.naturalHeight;
+    canvas.width  = maxW;
+    canvas.height = Math.round(maxW / ratio);
     const ctx = canvas.getContext("2d");
-    // Fit to screen width
-    const maxW = Math.min(window.innerWidth - 32, 600);
-    const scale = maxW / img.width;
-    canvas.width = maxW;
-    canvas.height = img.height * scale;
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     arrs.forEach(a => {
-      const x = a.x * canvas.width;
-      const y = a.y * canvas.height;
-      drawArrow(ctx, x - 50, y - 50, x, y, "#e53935", 4);
+      const tx = a.x * canvas.width;
+      const ty = a.y * canvas.height;
+      const fx = tx - 55, fy = ty - 55;
+      const angle = Math.atan2(ty - fy, tx - fx);
+      const hl = 22;
+      ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 5;
+      ctx.strokeStyle = "#e53935"; ctx.fillStyle = "#e53935"; ctx.lineWidth = 5;
+      ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(tx - hl*Math.cos(angle-Math.PI/6), ty - hl*Math.sin(angle-Math.PI/6));
+      ctx.lineTo(tx - hl*Math.cos(angle+Math.PI/6), ty - hl*Math.sin(angle+Math.PI/6));
+      ctx.closePath(); ctx.fill();
+      ctx.shadowBlur = 0;
     });
   };
 
-  const drawArrow = (ctx, fx, fy, tx, ty, color, lw) => {
-    const headlen = 18, angle = Math.atan2(ty - fy, tx - fx);
-    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw;
-    ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(tx, ty);
-    ctx.lineTo(tx - headlen * Math.cos(angle - Math.PI/6), ty - headlen * Math.sin(angle - Math.PI/6));
-    ctx.lineTo(tx - headlen * Math.cos(angle + Math.PI/6), ty - headlen * Math.sin(angle + Math.PI/6));
-    ctx.closePath(); ctx.fill();
-    // White border for visibility
-    ctx.strokeStyle = "white"; ctx.lineWidth = 1;
-    ctx.stroke();
-  };
+  // Build a safe data: URL from whatever dataUrl we have
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    img.onload = () => { setLoaded(true); redraw(arrowsRef.current); };
+    img.onerror = (e) => console.error("AE img error", e);
 
-  const handleCanvasTap = (e) => {
-    if (!placing) return;
+    if (!photo.dataUrl) return;
+
+    if (photo.dataUrl.startsWith("data:")) {
+      img.src = photo.dataUrl;
+    } else {
+      // blob:// or http — convert to data URL via FileReader
+      fetch(photo.dataUrl)
+        .then(r => r.blob())
+        .then(blob => {
+          const fr = new FileReader();
+          fr.onload = () => { img.src = fr.result; };
+          fr.readAsDataURL(blob);
+        })
+        .catch(() => { img.src = photo.dataUrl; });
+    }
+  }, []);
+
+  const handleTap = (e) => {
+    if (!placing || !loaded) return;
+    e.preventDefault(); e.stopPropagation();
     const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const x = (clientX - rect.left) / canvas.width;
-    const y = (clientY - rect.top) / canvas.height;
-    const newArrows = [...arrows, {x, y}];
-    setArrows(newArrows);
-    drawAll(newArrows);
+    const rect   = canvas.getBoundingClientRect();
+    const pt     = e.touches ? e.touches[0] : e;
+    const x = (pt.clientX - rect.left) / rect.width;
+    const y = (pt.clientY - rect.top)  / rect.height;
+    const next = [...arrowsRef.current, {x, y}];
+    arrowsRef.current = next;
+    setArrows(next);
+    redraw(next);
     setPlacing(false);
   };
 
-  const undoLast = () => {
-    const newArrows = arrows.slice(0, -1);
-    setArrows(newArrows);
-    drawAll(newArrows);
+  const undo = () => {
+    const next = arrowsRef.current.slice(0, -1);
+    arrowsRef.current = next;
+    setArrows(next);
+    redraw(next);
   };
 
-  const handleSave = () => {
-    // Render final image with arrows baked in
-    const canvas = canvasRef.current;
-    const finalDataUrl = canvas.toDataURL("image/jpeg", 0.9);
-    onSave(finalDataUrl, arrows);
+  const save = () => {
+    const dataUrl = canvasRef.current.toDataURL("image/jpeg", 0.88);
+    onSave(dataUrl, arrowsRef.current);
   };
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.9)",zIndex:2000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{color:"white",fontWeight:700,fontSize:15,marginBottom:10}}>
-        {placing ? "👆 Tippe auf das Bild um einen Pfeil zu platzieren" : "Roter Pfeil setzen"}
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.93)",zIndex:2000,display:"flex",flexDirection:"column"}}>
+      {/* img tag used as canvas source — never displayed */}
+      <img ref={imgRef} style={{display:"none"}} alt=""/>
+
+      <div style={{padding:"10px 16px",color:"white",fontWeight:700,fontSize:14,textAlign:"center"}}>
+        {!loaded ? "⏳ Bild wird geladen…" : placing ? "👆 Tippe auf das Bild" : "✏️ Pfeil-Editor"}
       </div>
-      {!ready && <div style={{color:"#aaa",fontSize:13,padding:20}}>⏳ Bild wird geladen…</div>}
-      <canvas ref={canvasRef}
-        style={{maxWidth:"100%",borderRadius:8,cursor:placing?"crosshair":"default",border:placing?"3px solid #e53935":"3px solid #333",display:ready?"block":"none"}}
-        onClick={handleCanvasTap}
-        onTouchStart={handleCanvasTap}
-      />
-      <div style={{display:"flex",gap:10,marginTop:14,flexWrap:"wrap",justifyContent:"center"}}>
-        <button onClick={()=>setPlacing(true)}
-          style={{padding:"10px 18px",background:"#e53935",color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>
-          ➕ Pfeil setzen
+
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:"0 8px"}}>
+        <canvas ref={canvasRef}
+          style={{maxWidth:"100%",maxHeight:"62vh",objectFit:"contain",borderRadius:8,
+                  border: placing ? "3px solid #e53935" : "3px solid #444",
+                  cursor: placing ? "crosshair" : "default",
+                  opacity: loaded ? 1 : 0.3, transition:"opacity .3s"}}
+          onClick={handleTap}
+          onTouchStart={handleTap}
+        />
+      </div>
+
+      <div style={{display:"flex",gap:8,padding:"10px 12px",flexWrap:"wrap",justifyContent:"center"}}>
+        <button onClick={()=>setPlacing(p=>!p)}
+          style={{flex:1,minWidth:110,padding:"12px 8px",
+                  background: placing ? "#b71c1c" : "#e53935",
+                  color:"white",border:"none",borderRadius:9,fontWeight:700,fontSize:13}}>
+          {placing ? "⬆ Tippe aufs Bild" : "➕ Pfeil setzen"}
         </button>
-        {arrows.length > 0 && <button onClick={undoLast}
-          style={{padding:"10px 18px",background:"#555",color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>
-          ↩ Rückgängig
-        </button>}
-        <button onClick={handleSave}
-          style={{padding:"10px 18px",background:"#2e7d32",color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>
+        {arrows.length > 0 &&
+          <button onClick={undo}
+            style={{padding:"12px 16px",background:"#555",color:"white",border:"none",borderRadius:9,fontWeight:700,fontSize:13}}>
+            ↩ Undo
+          </button>}
+        <button onClick={save}
+          style={{flex:1,minWidth:110,padding:"12px 8px",background:"#2e7d32",color:"white",border:"none",borderRadius:9,fontWeight:700,fontSize:13}}>
           ✅ Speichern
         </button>
         <button onClick={onClose}
-          style={{padding:"10px 18px",background:"#333",color:"white",border:"none",borderRadius:8,fontWeight:700,fontSize:14}}>
+          style={{width:"100%",padding:"11px",background:"#333",color:"white",border:"none",borderRadius:9,fontSize:13}}>
           Abbrechen
         </button>
       </div>
