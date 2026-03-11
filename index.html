@@ -383,116 +383,97 @@ async function generatePDF(data, photos) {
     doc.addPage(); pageHeader();
     blueHeader("Fotodokumentation");
 
-    // Fixed card dimensions — every item same width, height adapts to content
-    const CARD_IMG_H = 70;   // photo image height in mm
-    const QR_SIZE    = 38;   // QR code size in mm
-    const GAP        = 5;    // gap between items
+    const QR_SIZE  = 36;
+    const GAP      = 4;
+    const CELL_W   = (CW - 4) / 2;
+    const CELL_H   = 52;
+    const DESC_H   = 10;
 
-    for (let i = 0; i < allMediaPhotos.length; i++) {
-      const ph = allMediaPhotos[i];
+    const vidItems   = allMediaPhotos.filter(p => p.isVideo);
+    const photoItems = allMediaPhotos.filter(p => !p.isVideo);
 
-      // ── Badge ──────────────────────────────────────
-      checkNewPage(CARD_IMG_H + 40);
-      doc.setFillColor(...(ph.isVideo ? [40,40,40] : B));
-      doc.roundedRect(ML, y, CW, 6, 1, 1, "F");
-      doc.setTextColor(255,255,255);
-      doc.setFontSize(7.5); doc.setFont("helvetica","bold");
-      const label = (ph.isVideo ? "VIDEO" : "FOTO") + " " + (i+1) + (ph.name ? "  —  " + ph.name : "");
-      doc.text(label, ML + 3, y + 4.2);
-      y += 7;
+    // ── Photos: 2 per row ──────────────────────────
+    for (let i = 0; i < photoItems.length; i += 2) {
+      const left  = photoItems[i];
+      const right = photoItems[i+1] || null;
+      checkNewPage(CELL_H + DESC_H + 10);
 
-      if (ph.isVideo && ph.videoUrl) {
-        // ── Video card: QR left, info right ──────────
-        const cardH = QR_SIZE + 14;
-        doc.setFillColor(250,250,250);
-        doc.setDrawColor(220,220,220);
-        doc.roundedRect(ML, y, CW, cardH, 2, 2, "FD");
+      [left, right].forEach((ph, col) => {
+        if (!ph) return;
+        const cx = ML + col * (CELL_W + 4);
+        const num = photoItems.indexOf(ph) + 1;
 
-        // QR code
-        const qrDataUrl = await generateQRDataUrl(ph.videoUrl);
-        if (qrDataUrl) {
-          try { doc.addImage(qrDataUrl, "PNG", ML+5, y+5, QR_SIZE, QR_SIZE); } catch(e){}
-        }
+        doc.setFillColor(...B);
+        doc.roundedRect(cx, y, CELL_W, 5.5, 1, 1, "F");
+        doc.setTextColor(255,255,255); doc.setFontSize(6.5); doc.setFont("helvetica","bold");
+        doc.text("FOTO " + num + (ph.name ? "  " + ph.name.slice(0,16) : ""), cx+2, y+3.8);
 
-        // Info block right of QR
-        const ix = ML + QR_SIZE + 12;
-        const iw = CW - QR_SIZE - 17;
-        doc.setTextColor(30,30,30); doc.setFontSize(8.5); doc.setFont("helvetica","bold");
-        doc.text("Video-Dokumentation", ix, y + 10);
-        doc.setFontSize(7); doc.setFont("helvetica","normal"); doc.setTextColor(90,90,90);
-        doc.text("QR-Code scannen oder Link öffnen:", ix, y + 17);
-
-        // Clickable link — blue underline style
-        const urlLines = doc.splitTextToSize(ph.videoUrl, iw);
-        doc.setTextColor(...B); doc.setFontSize(6.5);
-        doc.textWithLink(urlLines[0], ix, y + 23, { url: ph.videoUrl });
-        if (urlLines.length > 1) doc.text(urlLines[1], ix, y + 28);
-
-        // Description below
-        if (ph.description) {
-          doc.setTextColor(50,50,50); doc.setFontSize(7.5); doc.setFont("helvetica","normal");
-          const dl = doc.splitTextToSize(ph.description, iw);
-          doc.text(dl.slice(0,3), ix, y + 35);
-        }
-
-        y += cardH + GAP;
-
-      } else if (ph.isVideo && !ph.videoUrl) {
-        // ── Video without link ────────────────────────
-        doc.setFillColor(245,245,245); doc.setDrawColor(210,210,210);
-        doc.roundedRect(ML, y, CW, 14, 1, 1, "FD");
-        doc.setTextColor(140,140,140); doc.setFontSize(8); doc.setFont("helvetica","italic");
-        doc.text("Kein Video-Link angegeben", ML+CW/2, y+8, {align:"center"});
-        y += 16;
-        if (ph.description) {
-          doc.setTextColor(50,50,50); doc.setFontSize(8); doc.setFont("helvetica","normal");
-          const dl = doc.splitTextToSize(ph.description, CW-6);
-          doc.text(dl, ML+3, y+4);
-          y += dl.length*4.5+6;
-        }
-
-      } else {
-        // ── Photo card ────────────────────────────────
-        // Calculate proportional height to fit full image in CW width
-        // Use stored pixel dimensions for correct aspect ratio
-        let drawW = CW;
-        let drawH = CARD_IMG_H;
+        let iw = CELL_W, ih = CELL_H;
         if (ph.imgW > 0 && ph.imgH > 0) {
-          const ratio = ph.imgW / ph.imgH;
-          drawH = Math.round(CW / ratio);
-          if (drawH > 130) { drawH = 130; drawW = Math.round(drawH * ratio); }
-          if (drawW > CW) drawW = CW;
+          const r = ph.imgW / ph.imgH;
+          ih = Math.round(CELL_W / r);
+          if (ih > CELL_H) { ih = CELL_H; iw = Math.round(ih * r); }
+          if (iw > CELL_W) iw = CELL_W;
         }
+        const ix = cx + (CELL_W - iw) / 2;
+        doc.setFillColor(220,220,220);
+        doc.rect(cx, y+5.5, CELL_W, CELL_H, "F");
+        try { doc.addImage(ph.dataUrl, "JPEG", ix, y+5.5+(CELL_H-ih)/2, iw, ih, undefined, "FAST"); } catch(e){}
 
-        checkNewPage(drawH + 20);
-        doc.setDrawColor(220,220,220);
-        doc.setFillColor(245,245,245);
-        const imgX = ML + (CW - drawW) / 2;
-        doc.roundedRect(imgX, y, drawW, drawH, 2, 2, "FD");
-
-        try {
-          doc.addImage(ph.dataUrl, "JPEG", imgX, y, drawW, drawH, undefined, "FAST");
-        } catch(e) {
-          doc.setTextColor(150,150,150); doc.setFontSize(8);
-          doc.text("[Bild konnte nicht eingebettet werden]", ML+CW/2, y+drawH/2, {align:"center"});
-        }
-        y += drawH + 2;
-
-        // Description box
         if (ph.description) {
           doc.setFillColor(248,252,255); doc.setDrawColor(200,225,240);
-          const dl = doc.splitTextToSize(ph.description, CW-8);
-          const dh = dl.length*4.5+6;
-          doc.roundedRect(ML, y, CW, dh, 1, 1, "FD");
-          doc.setTextColor(30,30,30); doc.setFontSize(8); doc.setFont("helvetica","normal");
-          doc.text(dl, ML+4, y+4.5);
-          y += dh + GAP;
+          const dl = doc.splitTextToSize(ph.description, CELL_W-4);
+          doc.roundedRect(cx, y+5.5+CELL_H, CELL_W, DESC_H, 0, 0, "FD");
+          doc.setTextColor(30,30,30); doc.setFontSize(6); doc.setFont("helvetica","normal");
+          doc.text(dl.slice(0,2), cx+2, y+5.5+CELL_H+3.5);
         } else {
-          y += GAP;
+          doc.setFillColor(245,245,245);
+          doc.rect(cx, y+5.5+CELL_H, CELL_W, DESC_H, "F");
         }
-      }
+      });
 
-      if (i < allMediaPhotos.length-1) checkNewPage(CARD_IMG_H + 40);
+      y += 5.5 + CELL_H + DESC_H + GAP;
+    }
+
+    // ── Videos: full width ─────────────────────────
+    for (let i = 0; i < vidItems.length; i++) {
+      const ph = vidItems[i];
+      const num = photoItems.length + i + 1;
+      checkNewPage(QR_SIZE + 18);
+
+      doc.setFillColor(40,40,40);
+      doc.roundedRect(ML, y, CW, 5.5, 1, 1, "F");
+      doc.setTextColor(255,255,255); doc.setFontSize(6.5); doc.setFont("helvetica","bold");
+      doc.text("VIDEO " + num, ML+2, y+3.8);
+      y += 6;
+
+      if (ph.videoUrl) {
+        const cardH = QR_SIZE + 12;
+        doc.setFillColor(250,250,250); doc.setDrawColor(220,220,220);
+        doc.roundedRect(ML, y, CW, cardH, 2, 2, "FD");
+        const qrDataUrl = await generateQRDataUrl(ph.videoUrl);
+        if (qrDataUrl) { try { doc.addImage(qrDataUrl, "PNG", ML+4, y+4, QR_SIZE, QR_SIZE); } catch(e){} }
+        const ix = ML + QR_SIZE + 10;
+        const iw = CW - QR_SIZE - 14;
+        doc.setTextColor(30,30,30); doc.setFontSize(8); doc.setFont("helvetica","bold");
+        doc.text("Video-Dokumentation", ix, y+10);
+        doc.setFontSize(7); doc.setFont("helvetica","normal"); doc.setTextColor(80,80,80);
+        doc.text("QR-Code scannen oder Link öffnen:", ix, y+17);
+        const urlLines = doc.splitTextToSize(ph.videoUrl, iw);
+        doc.setTextColor(...B); doc.setFontSize(6.5);
+        doc.textWithLink(urlLines[0], ix, y+23, { url: ph.videoUrl });
+        if (urlLines.length > 1) doc.text(urlLines[1], ix, y+28);
+        if (ph.description) {
+          doc.setTextColor(50,50,50); doc.setFontSize(7); doc.setFont("helvetica","normal");
+          doc.text(doc.splitTextToSize(ph.description, iw).slice(0,2), ix, y+34);
+        }
+        y += cardH + GAP;
+      } else {
+        doc.setFillColor(245,245,245); doc.roundedRect(ML, y, CW, 12, 1, 1, "F");
+        doc.setTextColor(140,140,140); doc.setFontSize(7.5); doc.setFont("helvetica","italic");
+        doc.text("Kein Video-Link angegeben", ML+CW/2, y+7, {align:"center"});
+        y += 14;
+      }
     }
   }
 
@@ -752,17 +733,35 @@ function ArrowEditor({ photo, onSave, onClose }) {
   const canvasRef = useRef(null);
   const [arrows, setArrows] = useState(photo.arrows || []);
   const [placing, setPlacing] = useState(false);
+  const [ready, setReady] = useState(false);
   const imgRef = useRef(new Image());
 
   useEffect(() => {
-    imgRef.current.onload = () => drawAll(arrows);
-    imgRef.current.src = photo.dataUrl;
+    const img = imgRef.current;
+    img.onload = () => { setReady(true); drawAll(arrows, img); };
+    img.onerror = () => console.warn("ArrowEditor: Bild konnte nicht geladen werden");
+    // blob:// URLs can't be loaded in a new Image() — convert via canvas first
+    if (photo.dataUrl && photo.dataUrl.startsWith("blob:")) {
+      // Draw from the existing <img> in the DOM if possible, otherwise skip
+      const domImg = document.querySelector(`img[src="${photo.dataUrl}"]`);
+      if (domImg && domImg.complete) {
+        const c = document.createElement("canvas");
+        c.width = domImg.naturalWidth || domImg.width;
+        c.height = domImg.naturalHeight || domImg.height;
+        c.getContext("2d").drawImage(domImg, 0, 0);
+        img.src = c.toDataURL("image/jpeg", 0.92);
+      } else {
+        img.src = photo.dataUrl;
+      }
+    } else {
+      img.src = photo.dataUrl;
+    }
   }, []);
 
-  const drawAll = (arrs) => {
+  const drawAll = (arrs, imgOverride) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const img = imgRef.current;
+    const img = imgOverride || imgRef.current;
     if (!img.complete) return;
     const ctx = canvas.getContext("2d");
     // Fit to screen width
@@ -824,8 +823,9 @@ function ArrowEditor({ photo, onSave, onClose }) {
       <div style={{color:"white",fontWeight:700,fontSize:15,marginBottom:10}}>
         {placing ? "👆 Tippe auf das Bild um einen Pfeil zu platzieren" : "Roter Pfeil setzen"}
       </div>
+      {!ready && <div style={{color:"#aaa",fontSize:13,padding:20}}>⏳ Bild wird geladen…</div>}
       <canvas ref={canvasRef}
-        style={{maxWidth:"100%",borderRadius:8,cursor:placing?"crosshair":"default",border:placing?"3px solid #e53935":"3px solid #333"}}
+        style={{maxWidth:"100%",borderRadius:8,cursor:placing?"crosshair":"default",border:placing?"3px solid #e53935":"3px solid #333",display:ready?"block":"none"}}
         onClick={handleCanvasTap}
         onTouchStart={handleCanvasTap}
       />
@@ -909,7 +909,7 @@ function PhotoSection({ photos, setPhotos }) {
     try {
       // createImageBitmap works for HEIC/HEIF on Safari iOS 16+
       const bitmap = await createImageBitmap(file);
-      const dMax = 1600;
+      const dMax = 1200;
       let w = bitmap.width, h = bitmap.height;
       if (w > dMax || h > dMax) {
         if (w > h) { h = Math.round(h * dMax / w); w = dMax; }
@@ -938,7 +938,7 @@ function PhotoSection({ photos, setPhotos }) {
           img.src = dataUrl;
         });
         if (loaded && img.width > 0) {
-          const dMax = 1600;
+          const dMax = 1200;
           let w = img.width, h = img.height;
           if (w > dMax || h > dMax) {
             if (w > h) { h = Math.round(h * dMax / w); w = dMax; }
@@ -1139,33 +1139,31 @@ function PhotoSection({ photos, setPhotos }) {
       <input ref={cameraRef} type="file" accept="image/*,video/*" multiple capture="environment" onChange={e=>handleFiles(e.target.files)} style={{display:"none"}}/>
 
       {photos.length===0 && <div style={{textAlign:"center",color:"#bbb",fontSize:13,padding:"24px 0"}}>Noch keine Fotos hinzugefügt</div>}
-      <div style={{marginTop:14,display:"flex",flexDirection:"column",gap:14}}>
+      <div style={{marginTop:14,display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         {photos.map((photo,idx)=>(
-          <div key={photo.id} style={{background:"white",borderRadius:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,.1)"}}>
+          <div key={photo.id} style={{background:"white",borderRadius:10,overflow:"hidden",boxShadow:"0 2px 6px rgba(0,0,0,.1)"}}>
             <div style={{position:"relative"}}>
               {photo.dngError
-                ? <div style={{background:"#fff3e0",padding:"18px 16px",textAlign:"center"}}>
-                    <div style={{fontSize:24,marginBottom:6}}>⚠️</div>
-                    <div style={{fontWeight:700,color:"#e65100",fontSize:14,marginBottom:6}}>DNG/RAW nicht unterstützt</div>
-                    <div style={{fontSize:12,color:"#666",lineHeight:1.5}}>
-                      Safari kann DNG-Dateien nicht verarbeiten.<br/>
-                      <b>Lösung:</b> iPhone-Einstellungen → Kamera → Formate → <b>„Hohe Effizienz"</b> deaktivieren,<br/>
-                      oder Foto in der Fotos-App als JPEG exportieren und nochmals hochladen.
+                ? <div style={{background:"#fff3e0",padding:"12px 8px",textAlign:"center"}}>
+                    <div style={{fontSize:18,marginBottom:4}}>⚠️</div>
+                    <div style={{fontWeight:700,color:"#e65100",fontSize:11,marginBottom:4}}>DNG nicht unterstützt</div>
+                    <div style={{fontSize:10,color:"#666",lineHeight:1.4}}>
+                      iPhone-Einstellungen → Kamera → Formate → <b>JPEG</b> aktivieren
                     </div>
                   </div>
                 : photo.isVideo
-                  ?<video src={photo.dataUrl} controls playsInline style={{width:"100%",maxHeight:240,display:"block",background:"#000"}}/>
-                  :<img src={photo.dataUrl} style={{width:"100%",maxHeight:240,objectFit:"cover",display:"block"}}/>
+                  ?<video src={photo.dataUrl} controls playsInline style={{width:"100%",height:120,objectFit:"cover",display:"block",background:"#000"}}/>
+                  :<img src={photo.dataUrl} style={{width:"100%",height:120,objectFit:"cover",display:"block"}}/>
               }
-              <div style={{position:"absolute",top:8,left:8,background:"rgba(0,0,0,.5)",color:"white",fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20}}>
+              <div style={{position:"absolute",top:5,left:5,background:"rgba(0,0,0,.55)",color:"white",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:20}}>
                 {photo.isVideo?"🎬":"📷"} {idx+1}
               </div>
-              <div style={{position:"absolute",top:8,right:8,display:"flex",gap:6}}>
+              <div style={{position:"absolute",top:5,right:5,display:"flex",gap:4}}>
                 {!photo.isVideo && <button onClick={()=>setArrowEditId(photo.id)}
-                  style={{background:"#e53935",color:"white",border:"none",borderRadius:20,width:32,height:32,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}
-                  title="Roten Pfeil setzen">➤</button>}
+                  style={{background:"#e53935",color:"white",border:"none",borderRadius:20,width:26,height:26,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}
+                  title="Pfeil setzen">➤</button>}
                 <button onClick={()=>setPhotos(prev=>prev.filter(p=>p.id!==photo.id))}
-                  style={{background:"rgba(80,80,80,.85)",color:"white",border:"none",borderRadius:20,width:32,height:32,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                  style={{background:"rgba(80,80,80,.85)",color:"white",border:"none",borderRadius:20,width:26,height:26,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
             </div>
             <div style={{padding:12}}>
