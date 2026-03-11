@@ -33,6 +33,30 @@ const BLUE = "#1B9AD6";
 function getApiKey() { return localStorage.getItem("prexia_api_key") || ""; }
 function saveApiKey(k) { localStorage.setItem("prexia_api_key", k); }
 
+const DRAFT_KEY = "prexia_draft_v1";
+function saveDraft(form, photos) {
+  try {
+    // Photos ohne volle dataUrl speichern wäre zu groß — wir speichern alles außer video-only
+    const photosSlim = photos.map(p => ({...p})); // keep as-is, localStorage kann ~5MB
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, photos: photosSlim, savedAt: Date.now() }));
+  } catch(e) { console.warn("Draft save failed:", e); }
+}
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+function deleteDraft() { localStorage.removeItem(DRAFT_KEY); }
+function formatDraftAge(ts) {
+  const mins = Math.round((Date.now()-ts)/60000);
+  if (mins < 1) return "gerade eben";
+  if (mins < 60) return `vor ${mins} Min.`;
+  const hrs = Math.floor(mins/60);
+  if (hrs < 24) return `vor ${hrs} Std.`;
+  return `vor ${Math.floor(hrs/24)} Tag(en)`;
+}
+
 async function claudeApi(messages, maxTokens=1200) {
   const key = getApiKey();
   if (!key) throw new Error("Kein API-Key. Bitte ⚙️ antippen.");
@@ -1202,6 +1226,9 @@ function App() {
   const [photos,setPhotos]=useState([]);
   const [showApiModal,setShowApiModal]=useState(false);
   const [hasKey,setHasKey]=useState(!!getApiKey());
+  const [draftInfo,setDraftInfo]=useState(()=>{ const d=loadDraft(); return d?{savedAt:d.savedAt}:null; });
+  const [draftLoaded,setDraftLoaded]=useState(false);
+  const [mailSent,setMailSent]=useState(false);
 
   const [form,setFormState]=useState({
     name:"",strasse:"",plzOrt:"",objektSchadenort:"",
@@ -1231,6 +1258,52 @@ function App() {
   const addWid=()=>setFormState(f=>({...f,widRows:[...f.widRows,{raum:"",wWMin:"",wWMax:"",wBMin:"",wBMax:"",wDMin:"",wDMax:""}]}));
   const updRow=(key,i,field,val)=>setFormState(f=>{const r=[...f[key]];r[i]={...r[i],[field]:val};return{...f,[key]:r}});
   const addRow=(key,empty)=>setFormState(f=>({...f,[key]:[...f[key],empty]}));
+
+  // Auto-save draft on every change
+  const { useEffect } = React;
+  useEffect(() => {
+    const t = setTimeout(() => {
+      saveDraft(form, photos);
+      setDraftInfo({ savedAt: Date.now() });
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [form, photos]);
+
+  const loadDraftNow = () => {
+    const d = loadDraft();
+    if (!d) return;
+    setFormState(d.form);
+    setPhotos(d.photos || []);
+    setDraftLoaded(true);
+    setTimeout(() => setDraftLoaded(false), 3000);
+  };
+
+  const clearAll = () => {
+    if (!confirm("Alle Daten löschen und neu beginnen?")) return;
+    deleteDraft();
+    setFormState({
+      name:"",strasse:"",plzOrt:"",objektSchadenort:"",
+      projektnummer:"",versicherungsscheinnummer:"",schadennummer:"",
+      einsatzNr:"",fremdAuftragsnummer:"",kurzbeschreibung:"",ergebnis:"",
+      sys_kalt:false,sys_warm:false,sys_heiz:false,sys_abw:false,sys_regen:false,sys_feuchte:false,sys_spritz:false,sys_sonst:false,
+      bauteil_rohr:false,bauteil_verb:false,bauteil_armatur:false,bauteil_fuge:false,bauteil_sonst:false,
+      mat_stahl:false,mat_kupfer:false,mat_kunst:false,mat_guss:false,mat_blei:false,mat_stein:false,mat_sonst:false,
+      verb_gewinde:false,verb_klemm:false,verb_press:false,verb_loet:false,verb_steck:false,verb_schweiss:false,verb_kalt:false,verb_sonst:false,
+      urs_rohrbruch:false,urs_korros:false,urs_verarb:false,urs_frost:false,urs_beschaed:false,urs_undicht:false,urs_fuge:false,urs_muffe:false,urs_wurzel:false,urs_sonst:false,
+      schadSort_innen:false,schadSort_aussen:false,schaden5k:null,raeumeBeWohnt:null,
+      fremd_nachbar:false,fremd_anwend:false,fremd_handwerk:false,fremd_gewahr:false,
+      leckFreigelegt:null,massnahmen:null,heizEntleert:false,
+      erf_leck:null,erf_rep:null,erf_trock:null,erf_wieder:null,massnahmenNotiz:"",
+      weit_zweitleck:null,weit_maler:null,weit_schreiner:null,weit_bodenleger:null,weit_fliesen:null,weit_fussbodenheiz:null,
+      kapRows:[{raum:"",kapWMin:"",kapWMax:"",kapBMin:"",kapBMax:"",kapDMin:"",kapDMax:"",fliesen:""}],
+      widRows:[{raum:"",wWMin:"",wWMax:"",wBMin:"",wBMax:"",wDMin:"",wDMax:""}],
+      druckprobeRows:[{system:"",dauer:"",anfang:"",ende:"",diff:"",gasAnfang:"",gasEnde:"",volumen:""}],
+      sonstigeMessRows:[{system:"",thermo:"",akustik:"",leitung:"",endoskop:"",kanal:"",sonstige:""}],
+    });
+    setPhotos([]);
+    setDraftInfo(null);
+    setStep(0);
+  };
 
   const steps=["Kundendaten","Schadenart","Messungen","Fotos","Ergebnis","Maßnahmen"];
   const card={background:"white",borderRadius:12,padding:20,marginBottom:16,boxShadow:"0 1px 6px rgba(0,0,0,.07)"};
@@ -1431,6 +1504,18 @@ function App() {
             placeholder="Weitere Hinweise, Besonderheiten, Anmerkungen…" rows={4}
             style={{width:"100%",padding:12,marginTop:12,border:"1px solid #ddd",borderRadius:8,fontSize:15,lineHeight:1.6,resize:"vertical"}}/>
         </div>
+        {/* Draft banner */}
+        {draftInfo && (
+          <div style={{...card,background:"#e3f2fd",border:"1px solid #90caf9",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+            <span style={{fontSize:13,color:"#1565c0",flex:1}}>💾 Entwurf gespeichert · {formatDraftAge(draftInfo.savedAt)}</span>
+            <button onClick={clearAll} style={{padding:"6px 12px",background:"#ef5350",color:"white",border:"none",borderRadius:7,fontSize:12,fontWeight:700,cursor:"pointer"}}>🗑 Neu</button>
+          </div>
+        )}
+        {draftLoaded && (
+          <div style={{...card,background:"#e8f5e9",border:"1px solid #66bb6a",fontSize:13,color:"#2e7d32",fontWeight:700}}>
+            ✅ Entwurf geladen!
+          </div>
+        )}
         <div style={{...card,background:"#e8f5e9",border:"2px solid #2e7d32"}}>
           <div style={{fontSize:16,fontWeight:700,color:"#1b5e20",marginBottom:12}}>✅ PDF-Protokoll erstellen</div>
           <div style={{fontSize:13,color:"#444",marginBottom:16,lineHeight:1.8}}>
@@ -1454,8 +1539,33 @@ function App() {
               : <>📄 PDF-Protokoll herunterladen</>
             }
           </button>
+          <button style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"13px",background:"#1565c0",color:"white",border:"none",borderRadius:10,fontWeight:700,fontSize:15,width:"100%",cursor:"pointer",marginTop:10}}
+            onClick={()=>{
+              const name = form.name||"Kunde";
+              const proj = form.projektnummer ? ` (Proj. ${form.projektnummer})` : "";
+              const date = new Date().toLocaleDateString("de-DE");
+              const subj = encodeURIComponent(`PREXIA Leckortungsbericht – ${name}${proj} – ${date}`);
+              const body = encodeURIComponent(
+                `Guten Tag,
+
+anbei erhalten Sie den Leckortungsbericht vom ${date}.
+
+Bitte laden Sie das PDF aus dem Anhang.
+
+Mit freundlichen Grüßen
+Vincent Prena
+PREXIA Leckortung
+Tel: 0151 723 731 88
+info@prexia24.de`
+              );
+              window.location.href = \`mailto:?subject=\${subj}&body=\${body}\`;
+              setMailSent(true);
+              setTimeout(()=>setMailSent(false), 4000);
+            }}>
+            {mailSent ? "✅ Mail-App geöffnet!" : "✉️ Per E-Mail teilen"}
+          </button>
           <div style={{fontSize:12,color:"#555",marginTop:10,textAlign:"center"}}>
-            Das PDF wird direkt auf dein Gerät heruntergeladen &amp; kann direkt versendet werden.
+            PDF zuerst herunterladen, dann als Anhang in der Mail hinzufügen.
           </div>
         </div>
       </div>
@@ -1472,6 +1582,11 @@ function App() {
           <div style={{fontWeight:900,fontSize:20,color:"white",letterSpacing:1}}>PREXIA</div>
           <div style={{fontSize:12,color:"rgba(255,255,255,.75)"}}>Leckortung · Trocknung · Sanierung</div>
         </div>
+        {loadDraft() && (
+          <button onClick={loadDraftNow} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:8,padding:"7px 12px",color:"white",fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+            💾 Entwurf
+          </button>
+        )}
         <button onClick={()=>setShowApiModal(true)} style={{marginLeft:"auto",background:"rgba(255,255,255,.2)",border:"none",borderRadius:8,padding:"7px 12px",color:"white",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
           ⚙️ {hasKey?<span style={{fontSize:10,background:"#4caf50",borderRadius:10,padding:"1px 6px"}}>✓</span>:<span style={{fontSize:10,background:"#ff5722",borderRadius:10,padding:"1px 6px"}}>!</span>}
         </button>
