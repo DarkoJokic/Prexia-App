@@ -10,7 +10,7 @@
 <title>PREXIA – Leckageortung</title>
 <style>
 :root{
-  --blue:#0e5fa3;--blue-l:#e4f0fb;--blue-d:#0a4878;
+  --blue:#0e5fa3;--blue-l:#e4f0fb;
   --green:#1a8c5e;--green-l:#e2f4ec;
   --amber:#c47a00;--amber-l:#fdf2dc;
   --red:#b83232;--red-l:#fbeaea;
@@ -22,34 +22,29 @@
 }
 @media(prefers-color-scheme:dark){:root{
   --text:#ede9e2;--text2:#a09a90;--text3:#6a6460;
-  --bg:#1c1a18;--card:#252220;--border:rgba(255,255,255,0.09);
-  --border2:rgba(255,255,255,0.18);--input:#2e2b28;
-  --blue-l:#0c2b4a;--green-l:#082b1c;--amber-l:#2a1c04;
-  --red-l:#2d0c0c;--purple-l:#1a1740;
+  --bg:#1c1a18;--card:#252220;
+  --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.18);
+  --input:#2e2b28;--blue-l:#0c2b4a;--green-l:#082b1c;
+  --amber-l:#2a1c04;--red-l:#2d0c0c;--purple-l:#1a1740;
 }}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:calc(32px + env(safe-area-inset-bottom))}
 
-/* TOP */
 .top{background:var(--blue);padding:12px 16px 10px;padding-top:calc(12px + env(safe-area-inset-top));position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px}
-.top-icon{width:34px;height:34px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.top-ico{width:34px;height:34px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .top h1{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px}
 .top p{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px}
 .top-step{margin-left:auto;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
 .prog{height:3px;background:rgba(255,255,255,.25)}
 .prog-fill{height:100%;background:#fff;transition:width .4s ease}
 
-/* BODY */
 .body{padding:12px 14px;max-width:660px;margin:0 auto}
-
-/* CARD */
 .card{background:var(--card);border-radius:var(--r);border:.5px solid var(--border);padding:14px;margin-bottom:10px}
 .ch{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .ch-ico{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .ch h2{font-size:14px;font-weight:700;color:var(--text)}
 .ch p{font-size:11px;color:var(--text3);margin-top:1px}
 
-/* FIELDS */
 .f{margin-bottom:11px}.f:last-child{margin-bottom:0}
 .f>label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
 .f>label .s{font-weight:400;color:var(--text3);font-size:11px;margin-left:4px}
@@ -57,6 +52,14 @@ select,input[type=number],input[type=text],textarea{width:100%;padding:10px 12px
 select:focus,input:focus,textarea:focus{border-color:var(--blue)}
 textarea{resize:none;line-height:1.45}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* BAUJAHR RISK BOX */
+.risk-box{border-radius:var(--rs);padding:10px 12px;margin-top:8px;border-left:3px solid;display:none}
+.risk-box.show{display:block}
+.risk-title{font-size:12px;font-weight:700;margin-bottom:3px}
+.risk-text{font-size:12px;line-height:1.5}
+.risk-source{font-size:10px;margin-top:4px;opacity:.7}
 
 /* DIGITS */
 .dg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}
@@ -66,7 +69,7 @@ textarea{resize:none;line-height:1.45}
 .mm span{font-size:10px;color:var(--text3);display:block;margin-bottom:2px}
 .mm input{padding:7px 8px;font-size:14px}
 .dref{border-radius:var(--rs);padding:10px 12px;margin-top:8px;border:.5px solid var(--border);background:var(--input)}
-.dref .drt{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
+.drt{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
 .dr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:.5px solid var(--border);font-size:12px}
 .dr:last-child{border-bottom:none}
 .dr .mat{color:var(--text2);flex:1}
@@ -76,30 +79,24 @@ textarea{resize:none;line-height:1.45}
 .wet{background:var(--red-l);color:var(--red);font-weight:700;padding:1px 6px;border-radius:4px;font-size:11px}
 .dhint{font-size:10px;color:var(--text3);font-style:italic;line-height:1.4;margin-top:6px}
 
-/* DRUCK TABLE */
 .dt{width:100%;border-collapse:collapse;font-size:13px}
 .dt th{font-size:10px;font-weight:700;color:var(--text3);text-align:center;padding:4px 4px 6px;border-bottom:.5px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
 .dt td{padding:4px 3px}
 .dt td input{padding:8px 6px;font-size:14px;text-align:center}
 .dt .sl{font-size:12px;font-weight:600;color:var(--text2);padding:5px 0;white-space:nowrap}
-.diff-pos{color:var(--red);font-weight:700}
-.diff-ok{color:var(--green);font-weight:700}
 
-/* TOGGLE */
 .trow{display:flex;gap:6px;flex-wrap:wrap}
 .tb{padding:8px 14px;background:var(--input);border:.5px solid var(--border);border-radius:var(--rs);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;user-select:none}
 .tb.ay{background:var(--green-l);border-color:var(--green);color:var(--green)}
 .tb.an{background:var(--red-l);border-color:var(--red);color:var(--red)}
 .tb.au{background:var(--amber-l);border-color:var(--amber);color:var(--amber)}
 
-/* CHECKBOXES */
 .cg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .ci{display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--input);border-radius:var(--rs);cursor:pointer;border:.5px solid var(--border);transition:border-color .15s}
 .ci.on{border-color:var(--blue);background:var(--blue-l)}
 .ci input{width:16px;height:16px;accent-color:var(--blue);flex-shrink:0}
 .ci span{font-size:13px;line-height:1.3}
 
-/* PHOTO */
 .uz{border:1.5px dashed var(--border2);border-radius:var(--rs);padding:16px;text-align:center;cursor:pointer;background:var(--input)}
 .uz:active{opacity:.7}
 .uz input{display:none}
@@ -114,23 +111,19 @@ textarea{resize:none;line-height:1.45}
 .pn{font-size:10px;color:var(--text3);text-align:center;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pbadge{display:inline-block;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px}
 
-/* INFO / WARN */
 .info{background:var(--blue-l);border:.5px solid var(--blue);border-radius:var(--rs);padding:9px 12px;font-size:12px;color:var(--blue);line-height:1.5;margin-bottom:10px}
 .info strong{display:block;font-size:12px;margin-bottom:2px}
 .warn{background:var(--amber-l);border:.5px solid var(--amber);border-radius:var(--rs);padding:9px 12px;font-size:12px;color:var(--amber);line-height:1.5;margin-bottom:10px}
 .warn strong{display:block;font-size:12px;margin-bottom:2px}
 
-/* NAV */
 .nav{display:flex;gap:8px;margin-top:8px}
 .bback{flex:1;padding:13px;background:transparent;border:.5px solid var(--border2);border-radius:var(--r);font-size:15px;font-weight:600;color:var(--text2);font-family:inherit;cursor:pointer}
 .bnext{flex:2;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:inherit;cursor:pointer}
-.bnext:active{opacity:.85;transform:scale(.99)}
-.bnext:disabled{background:var(--input);color:var(--text3)}
+.bnext:active,.bfull:active{opacity:.85;transform:scale(.99)}
+.bnext:disabled,.bfull:disabled{background:var(--input);color:var(--text3)}
 .bfull{width:100%;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px}
-.bfull:disabled{background:var(--input);color:var(--text3)}
 .breset{width:100%;padding:12px;background:transparent;border:.5px solid var(--border2);border-radius:var(--rs);font-size:14px;color:var(--text3);font-family:inherit;cursor:pointer;margin-top:8px}
 
-/* RESULT */
 .rh{display:none}.rv{display:block}
 .big{text-align:center;padding:18px 0 14px}
 .big .bl{font-size:13px;color:var(--text3);margin-bottom:5px}
@@ -138,26 +131,22 @@ textarea{resize:none;line-height:1.45}
 .big .bs{font-size:12px;color:var(--text3);margin-top:4px;line-height:1.4;max-width:260px;margin-left:auto;margin-right:auto}
 .pbb{height:10px;background:var(--input);border-radius:5px;overflow:hidden;margin:0 0 4px}
 .pbf{height:100%;border-radius:5px;transition:width .8s cubic-bezier(.4,0,.2,1)}
-
 .li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--border)}
 .li:last-child{border-bottom:none}
 .lrank{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
 .linfo{flex:1;min-width:0}
 .lname{font-size:14px;font-weight:600;color:var(--text)}
-.lreason{font-size:11px;color:var(--text3);margin-top:2px;line-height:1.3}
+.lreason{font-size:11px;color:var(--text3);margin-top:1px;line-height:1.3}
 .lmbar{height:4px;border-radius:2px;margin-top:4px}
 .lpct{font-size:16px;font-weight:800;min-width:46px;text-align:right}
-
 .mc{border-radius:0 var(--rs) var(--rs) 0;padding:10px 12px;margin-bottom:8px;border-left:3px solid}
 .mc:last-child{margin-bottom:0}
 .mct{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
 .mctx{font-size:13px;color:var(--text);line-height:1.5}
-
 .af{border-radius:0 var(--rs) var(--rs) 0;padding:10px 12px;margin-bottom:8px;border-left:3px solid}
 .af:last-child{margin-bottom:0}
 .aft{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
 .aftx{font-size:13px;color:var(--text);line-height:1.55}
-
 .slbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
 .divl{border:none;border-top:.5px solid var(--border);margin:12px 0}
 .disc{background:var(--input);border-radius:var(--rs);padding:10px 12px;font-size:11px;color:var(--text3);line-height:1.55;margin-top:8px;border:.5px solid var(--border)}
@@ -165,12 +154,15 @@ textarea{resize:none;line-height:1.45}
 .spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-row{display:flex;align-items:center;gap:10px;padding:12px 0;color:var(--text2);font-size:13px}
+
+/* RISK BADGE inline */
+.rbadge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle}
 </style>
 </head>
 <body>
 
 <div class="top">
-  <div class="top-icon">
+  <div class="top-ico">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="12" r="3"/>
     </svg>
@@ -182,7 +174,7 @@ textarea{resize:none;line-height:1.45}
 
 <div class="body">
 
-<!-- ===== SCHRITT 1: ANLAGE & SYSTEM ===== -->
+<!-- ===== S1: ANLAGE & SYSTEM ===== -->
 <div id="s1">
   <div class="card">
     <div class="ch">
@@ -191,6 +183,7 @@ textarea{resize:none;line-height:1.45}
       </div>
       <div><h2>Anlage & System</h2><p>Was ist betroffen?</p></div>
     </div>
+
     <div class="g2">
       <div class="f">
         <label>Gebäudetyp</label>
@@ -199,8 +192,7 @@ textarea{resize:none;line-height:1.45}
           <option value="efh">Einfamilienhaus</option>
           <option value="mfh">Mehrfamilienhaus</option>
           <option value="gwb">Gewerbe</option>
-          <option value="alt">Altbau (vor 1970)</option>
-          <option value="nb">Neubau (nach 2000)</option>
+          <option value="ind">Industrie</option>
         </select>
       </div>
       <div class="f">
@@ -215,6 +207,29 @@ textarea{resize:none;line-height:1.45}
         </select>
       </div>
     </div>
+
+    <!-- BAUJAHR – neu -->
+    <div class="f">
+      <label>Baujahr Gebäude<span class="s">(ca.)</span>
+        <span id="risk-badge" class="rbadge" style="display:none"></span>
+      </label>
+      <select id="baujahr" onchange="updateBaujahr()">
+        <option value="">– wählen –</option>
+        <option value="vor1950">Vor 1950 (Gründerzeit / Wiederaufbau)</option>
+        <option value="1950-1969">1950 – 1969 (Wirtschaftswunder)</option>
+        <option value="1970-1989">1970 – 1989 (Höchstes Schadensrisiko)</option>
+        <option value="1990-2000">1990 – 2000 (Wendezeit / Sanierungsphase)</option>
+        <option value="2001-2010">2001 – 2010</option>
+        <option value="nach2010">Nach 2010 (Neubau)</option>
+      </select>
+      <!-- Risk Info Box -->
+      <div class="risk-box" id="risk-box">
+        <div class="risk-title" id="risk-title"></div>
+        <div class="risk-text" id="risk-text"></div>
+        <div class="risk-source" id="risk-source"></div>
+      </div>
+    </div>
+
     <div class="f">
       <label>Betroffenes System</label>
       <select id="system">
@@ -230,13 +245,14 @@ textarea{resize:none;line-height:1.45}
         <option value="unk">Unbekannt</option>
       </select>
     </div>
+
     <div class="g2">
       <div class="f">
         <label>Leitungsmaterial</label>
-        <select id="mat">
+        <select id="mat" onchange="updateMaterial()">
           <option value="">– wählen –</option>
           <option value="kupfer">Kupfer</option>
-          <option value="stahl">Stahl / Eisen</option>
+          <option value="stahl">Stahl / verzinkt</option>
           <option value="kunststoff">Kunststoff (PE/PP)</option>
           <option value="verbund">Mehrschichtverbund</option>
           <option value="blei">Blei (Altbau)</option>
@@ -249,6 +265,10 @@ textarea{resize:none;line-height:1.45}
         <input type="number" id="alter" placeholder="z.B. 30" min="0" max="120" inputmode="numeric">
       </div>
     </div>
+
+    <!-- Material-Hinweis Box -->
+    <div class="risk-box" id="mat-box"></div>
+
     <div class="f">
       <label>FBH vorhanden?</label>
       <div class="trow" id="fbh-t">
@@ -258,6 +278,7 @@ textarea{resize:none;line-height:1.45}
       </div>
       <input type="hidden" id="fbh" value="">
     </div>
+
     <div class="f">
       <label>Kurze Schadensbeschreibung</label>
       <textarea id="beschr" placeholder="Was wurde bemerkt? Wann? Wo zuerst aufgefallen?" rows="3"></textarea>
@@ -266,27 +287,26 @@ textarea{resize:none;line-height:1.45}
   <button class="bfull" onclick="go(2)">Weiter →</button>
 </div>
 
-<!-- ===== SCHRITT 2: FEUCHTEMESSUNG ===== -->
+<!-- ===== S2: FEUCHTEMESSUNG ===== -->
 <div id="s2" style="display:none">
   <div class="card">
     <div class="ch">
       <div class="ch-ico" style="background:var(--blue-l)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
       </div>
-      <div><h2>Kapazitive Messung<span class="s" style="font-size:11px;font-weight:400;color:var(--text3)">Digits (0–200)</span></h2><p>Dielektrisches Verfahren – Raumweise erfassen</p></div>
+      <div><h2>Kapazitive Messung<span class="s" style="font-size:11px;font-weight:400;color:var(--text3)">Digits (0–200)</span></h2><p>Dielektrisches Verfahren – raumweise erfassen</p></div>
     </div>
     <div class="info">
       <strong>Hinweis zur Methode</strong>
-      Kapazitive Messung liefert Vergleichswerte, keine Absolutwerte. Messwerte verschiedener Gerätehersteller sind nicht direkt vergleichbar. Trendwerte und Maxima sind aussagekräftiger als Einzelmessungen.
+      Kapazitive Messung = Vergleichswerte, keine Absolutwerte. Gerätewerte verschiedener Hersteller nicht direkt vergleichbar. Trennung von kapazitiver und Widerstandsmessung zwingend – keine Mischung der Zahlenwerte.
     </div>
-    <!-- Raum -->
     <div class="f"><label>Raum / Bereich</label><input type="text" id="raum0" placeholder="z.B. Badezimmer EG"></div>
     <div class="dg">
       <div class="db"><label>Wand</label><div class="mm"><div><span>Min</span><input type="number" id="kw0" placeholder="—" min="0" max="200" inputmode="numeric"></div><div><span>Max</span><input type="number" id="kw1" placeholder="—" min="0" max="200" inputmode="numeric"></div></div></div>
       <div class="db"><label>Boden</label><div class="mm"><div><span>Min</span><input type="number" id="kb0" placeholder="—" min="0" max="200" inputmode="numeric"></div><div><span>Max</span><input type="number" id="kb1" placeholder="—" min="0" max="200" inputmode="numeric"></div></div></div>
       <div class="db"><label>Decke</label><div class="mm"><div><span>Min</span><input type="number" id="kd0" placeholder="—" min="0" max="200" inputmode="numeric"></div><div><span>Max</span><input type="number" id="kd1" placeholder="—" min="0" max="200" inputmode="numeric"></div></div></div>
     </div>
-    <div class="dhint">Orientierung kapazitiv: unauffällig 11–16 | erhöht 17–21 | stark erhöht 22–30 | Leckstelle-Hinweis &gt;30 Digits</div>
+    <div class="dhint">Orientierung kapazitiv: unauffällig 11–16 · erhöht 17–21 · stark erhöht 22–30 · Leckstelle-Hinweis &gt;30 Digits</div>
   </div>
 
   <div class="card">
@@ -294,14 +314,13 @@ textarea{resize:none;line-height:1.45}
       <div class="ch-ico" style="background:var(--blue-l)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       </div>
-      <div><h2>Widerstandsmessung<span class="s" style="font-size:11px;font-weight:400;color:var(--text3)">Leitfähigkeit 0–100 SKE</span></h2><p>Qualitative Vergleichsmessung</p></div>
+      <div><h2>Widerstandsmessung<span class="s" style="font-size:11px;font-weight:400;color:var(--text3)">0–100 SKE</span></h2><p>Qualitative Vergleichsmessung – separat auswerten</p></div>
     </div>
     <div class="dg">
       <div class="db"><label>Wand</label><div class="mm"><div><span>Min</span><input type="number" id="ww0" placeholder="—" min="0" max="100" inputmode="numeric"></div><div><span>Max</span><input type="number" id="ww1" placeholder="—" min="0" max="100" inputmode="numeric"></div></div></div>
       <div class="db"><label>Boden</label><div class="mm"><div><span>Min</span><input type="number" id="wb0" placeholder="—" min="0" max="100" inputmode="numeric"></div><div><span>Max</span><input type="number" id="wb1" placeholder="—" min="0" max="100" inputmode="numeric"></div></div></div>
       <div class="db"><label>Decke</label><div class="mm"><div><span>Min</span><input type="number" id="wd0" placeholder="—" min="0" max="100" inputmode="numeric"></div><div><span>Max</span><input type="number" id="wd1" placeholder="—" min="0" max="100" inputmode="numeric"></div></div></div>
     </div>
-    <!-- Referenztabelle -->
     <div class="dref">
       <div class="drt">Richtwerte Widerstandsmessung (Hankammer/Resch 2023)</div>
       <div class="dr"><span class="mat">Calciumsulfat- / Zementestrich</span><div class="vals"><span class="dry">&lt;35</span><span class="mid">36–45</span><span class="wet">&gt;46</span></div></div>
@@ -319,7 +338,7 @@ textarea{resize:none;line-height:1.45}
   </div>
 </div>
 
-<!-- ===== SCHRITT 3: DRUCKPROBE & WEITERE VERFAHREN ===== -->
+<!-- ===== S3: DRUCKPROBE & VERFAHREN ===== -->
 <div id="s3" style="display:none">
   <div class="card">
     <div class="ch">
@@ -330,16 +349,16 @@ textarea{resize:none;line-height:1.45}
     </div>
     <div class="warn">
       <strong>Wichtig</strong>
-      Druckabfall ≠ zwingend Leckage. Luftblasen im System können Fehlmessungen verursachen. Systemspezifischen Prüfdruck verwenden, min. 30 Min. halten.
+      Druckabfall ≠ automatisch Leckage. Luftblasen im System können Fehlmessungen verursachen. Min. 30 Min. Prüfdauer. Systemspezifischen Prüfdruck verwenden.
     </div>
     <table class="dt">
-      <tr><th style="text-align:left">System</th><th>Dauer (Min)</th><th>Anfang (bar)</th><th>Ende (bar)</th><th>Δ (bar)</th></tr>
+      <tr><th style="text-align:left">System</th><th>Min</th><th>Anfang (bar)</th><th>Ende (bar)</th><th>Δ (bar)</th></tr>
       <tr><td class="sl">KW</td><td><input type="number" id="pkw-d" placeholder="—" inputmode="numeric"></td><td><input type="number" id="pkw-a" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pkw-e" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pkw-diff" placeholder="—" step="0.01" inputmode="decimal"></td></tr>
       <tr><td class="sl">WW</td><td><input type="number" id="pww-d" placeholder="—" inputmode="numeric"></td><td><input type="number" id="pww-a" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pww-e" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pww-diff" placeholder="—" step="0.01" inputmode="decimal"></td></tr>
       <tr><td class="sl">HZ</td><td><input type="number" id="phz-d" placeholder="—" inputmode="numeric"></td><td><input type="number" id="phz-a" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="phz-e" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="phz-diff" placeholder="—" step="0.01" inputmode="decimal"></td></tr>
       <tr><td class="sl">FBH</td><td><input type="number" id="pfbh-d" placeholder="—" inputmode="numeric"></td><td><input type="number" id="pfbh-a" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pfbh-e" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pfbh-diff" placeholder="—" step="0.01" inputmode="decimal"></td></tr>
     </table>
-    <div id="druck-live" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+    <div id="druck-live" style="margin-top:8px;font-size:12px;min-height:18px"></div>
   </div>
 
   <div class="card">
@@ -347,25 +366,25 @@ textarea{resize:none;line-height:1.45}
       <div class="ch-ico" style="background:var(--purple-l)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
       </div>
-      <div><h2>Angewandte Messverfahren</h2><p>Alle bereits eingesetzten Verfahren</p></div>
+      <div><h2>Angewandte Messverfahren</h2><p>Bereits eingesetzte Verfahren ankreuzen</p></div>
     </div>
     <div class="cg" id="mv-grid">
-      <label class="ci"><input type="checkbox" value="thermografie" onchange="styleCI(this)"> <span>Thermografie</span></label>
-      <label class="ci"><input type="checkbox" value="elektroakustik" onchange="styleCI(this)"> <span>Elektroakustik</span></label>
-      <label class="ci"><input type="checkbox" value="leitungsortung" onchange="styleCI(this)"> <span>Leitungsortung</span></label>
-      <label class="ci"><input type="checkbox" value="endoskopie" onchange="styleCI(this)"> <span>Endoskopie / Videoskop</span></label>
-      <label class="ci"><input type="checkbox" value="korrelator" onchange="styleCI(this)"> <span>Korrelator</span></label>
-      <label class="ci"><input type="checkbox" value="tracergas" onchange="styleCI(this)"> <span>Tracergas (H₂/N₂)</span></label>
-      <label class="ci"><input type="checkbox" value="gasdetektion" onchange="styleCI(this)"> <span>Gasdetektion</span></label>
-      <label class="ci"><input type="checkbox" value="faerbemittel" onchange="styleCI(this)"> <span>Färbemittel</span></label>
-      <label class="ci"><input type="checkbox" value="rohrkamera" onchange="styleCI(this)"> <span>Rohrkamera / Kanal TV</span></label>
-      <label class="ci"><input type="checkbox" value="frequenzanalyse" onchange="styleCI(this)"> <span>Frequenz-/Tonanalyse</span></label>
-      <label class="ci"><input type="checkbox" value="mikrowelle" onchange="styleCI(this)"> <span>Mikrowelle</span></label>
-      <label class="ci"><input type="checkbox" value="blowerdoor" onchange="styleCI(this)"> <span>Blower Door</span></label>
+      <label class="ci"><input type="checkbox" value="thermografie" onchange="ci(this)"> <span>Thermografie</span></label>
+      <label class="ci"><input type="checkbox" value="elektroakustik" onchange="ci(this)"> <span>Elektroakustik</span></label>
+      <label class="ci"><input type="checkbox" value="leitungsortung" onchange="ci(this)"> <span>Leitungsortung</span></label>
+      <label class="ci"><input type="checkbox" value="endoskopie" onchange="ci(this)"> <span>Endoskopie / Video</span></label>
+      <label class="ci"><input type="checkbox" value="korrelator" onchange="ci(this)"> <span>Korrelator</span></label>
+      <label class="ci"><input type="checkbox" value="tracergas" onchange="ci(this)"> <span>Tracergas (H₂/N₂)</span></label>
+      <label class="ci"><input type="checkbox" value="gasdetektion" onchange="ci(this)"> <span>Gasdetektion</span></label>
+      <label class="ci"><input type="checkbox" value="faerbemittel" onchange="ci(this)"> <span>Färbemittel</span></label>
+      <label class="ci"><input type="checkbox" value="rohrkamera" onchange="ci(this)"> <span>Rohrkamera / Kanal TV</span></label>
+      <label class="ci"><input type="checkbox" value="frequenzanalyse" onchange="ci(this)"> <span>Frequenz-/Tonanalyse</span></label>
+      <label class="ci"><input type="checkbox" value="mikrowelle" onchange="ci(this)"> <span>Mikrowelle</span></label>
+      <label class="ci"><input type="checkbox" value="blowerdoor" onchange="ci(this)"> <span>Blower Door</span></label>
     </div>
     <div class="f" style="margin-top:12px">
-      <label>Befunde aus Messverfahren<span class="s">(optional – stichpunktartig)</span></label>
-      <textarea id="mv-befund" placeholder="z.B. Thermografie: Wärmeauffälligkeit Bereich Wand Süd | Korrelator: Peak bei ca. 4,2 m" rows="3"></textarea>
+      <label>Befunde aus Verfahren<span class="s">(stichpunktartig)</span></label>
+      <textarea id="mv-befund" placeholder="z.B. Thermografie: Wärmeauffälligkeit Wand Süd · Korrelator: Peak ~4,2 m" rows="3"></textarea>
     </div>
   </div>
 
@@ -375,7 +394,7 @@ textarea{resize:none;line-height:1.45}
   </div>
 </div>
 
-<!-- ===== SCHRITT 4: FOTOS ===== -->
+<!-- ===== S4: FOTOS & ANALYSE ===== -->
 <div id="s4" style="display:none">
   <div class="card">
     <div class="ch">
@@ -387,8 +406,7 @@ textarea{resize:none;line-height:1.45}
         <p>Heizung · Bad · Feuchtstellen · Leitungen · Verbindungen</p>
       </div>
     </div>
-    <div class="uz" id="uz">
-      <input type="file" id="fi" accept="image/*" multiple>
+    <div class="uz" id="uz"><input type="file" id="fi" accept="image/*" multiple>
       <svg class="uz-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
       <div class="uz-t">Fotos aufnehmen oder aus Galerie</div>
       <div class="uz-s">Kamera · Galerie · bis zu 8 Fotos</div>
@@ -396,33 +414,26 @@ textarea{resize:none;line-height:1.45}
     <div class="pg" id="pg"></div>
   </div>
 
-  <div class="info">
-    Die KI-Analyse wertet alle Fotos zusammen mit den eingegebenen Messdaten aus und liefert eine fachliche Einschätzung als <strong>Entscheidungshilfe</strong> – kein Ersatz für die Beurteilung vor Ort.
-  </div>
+  <div class="info">KI-Analyse wertet Fotos + alle Messdaten + Baujahr-Risikoprofil gemeinsam aus. Ergebnis ist <strong>Entscheidungshilfe</strong> – kein Ersatz für Fachbeurteilung vor Ort.</div>
 
   <button class="bfull" id="abtn" onclick="analyse()">Analyse starten</button>
 
-  <!-- ERGEBNIS -->
   <div id="res" class="rh">
     <div class="card" style="margin-top:10px">
       <div class="ch"><div class="ch-ico" style="background:var(--blue-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><h2>Analyseergebnis</h2></div></div>
-
       <div class="big">
         <div class="bl">Leckagewahrscheinlichkeit</div>
         <div class="bn" id="res-pct">—</div>
         <div class="bs" id="res-sub">—</div>
       </div>
       <div class="pbb"><div class="pbf" id="res-bar" style="width:0%"></div></div>
-
-      <div class="disc">
-        <strong>Zur Interpretation:</strong> Dieser Wert ist eine Orientierungshilfe basierend auf den eingegebenen Kriterien. Kapazitive und Widerstandsmessungen liefern qualitative Vergleichswerte – keine absoluten Feuchtegehalte. Eine Leckage kann auch bei niedrigem Wert vorliegen, wenn die Datenlage unvollständig ist.
-      </div>
+      <div class="disc"><strong>Zur Interpretation:</strong> Orientierungshilfe basierend auf eingegebenen Kriterien und statistischem Baujahr-Risikoprofil (GDV / IfS). Kapazitive und Widerstandsmessungen = qualitative Vergleichswerte, keine absoluten Feuchtegehalte. Eine Leckage kann auch bei niedrigem Wert vorliegen, wenn die Datenlage unvollständig ist.</div>
     </div>
 
     <div class="card" style="margin-top:10px">
       <div class="slbl">Wahrscheinlichste Leckagepositionen</div>
       <div id="loc-list"></div>
-      <div class="disc" style="margin-top:10px">Positionsangaben basieren auf Systemdaten und Messwerten. Mehrere Leckstellen sind möglich. Tatsächliche Leckstelle kann auch außerhalb dieser Positionen liegen.</div>
+      <div class="disc" style="margin-top:10px">Positionsangaben basieren auf Systemdaten, Messwerten und Baujahr-Risikoprofil. Tatsächliche Leckstelle kann außerhalb dieser Positionen liegen. Mehrere Leckstellen sind möglich.</div>
     </div>
 
     <div class="card" id="meth-card" style="margin-top:10px;display:none">
@@ -445,71 +456,160 @@ textarea{resize:none;line-height:1.45}
   </div>
 </div>
 
-</div><!-- /body -->
+</div>
 
 <script>
+// ===== BAUJAHR RISIKODATEN (Quellen: GDV, IfS, Hankammer/Resch) =====
+const BAUJAHR_DATA = {
+  'vor1950': {
+    risk: 'sehr hoch',
+    col: '#b83232', bg: '#fbeaea',
+    badge: 'Sehr hohes Risiko',
+    badgeCol: '#b83232', badgeBg: '#fbeaea',
+    title: 'Vor 1950 – Blei, Stahl, Guss dominieren',
+    text: 'Leitungen oft aus Blei (bis 1973 verbaut), Guss oder unverzinktem Stahl. Typische Probleme: Bleilötstellen, Muffenversatz bei Gussrohren, fortgeschrittene Außenkorrosion. Gewindeverbindungen mit Hanf-Dichtung oft porös. Schäden häufig durch langsames Durchrosten – kein plötzlicher Rohrbruch.',
+    score: 25,
+    topUrsachen: ['Korrosion / Lochfraß (Stahl/Guss)', 'Undichte Gewindeverbindungen', 'Bleirohre / Bleilötungen', 'Muffenversatz (Guss)', 'Erdkorrosion Außenleitung'],
+    source: 'Quellen: IfS Ursachenstatistik, Hankammer/Resch – Bauwerksdiagnostik 2023'
+  },
+  '1950-1969': {
+    risk: 'hoch',
+    col: '#c47a00', bg: '#fdf2dc',
+    badge: 'Hohes Risiko',
+    badgeCol: '#c47a00', badgeBg: '#fdf2dc',
+    title: '1950–1969 – Verzinkter Stahl, erste Kupferinstallationen',
+    text: 'Leitungen überwiegend aus verzinktem Stahl (Gewindeverbindungen) und ersten Kupferrohren. Verzinkter Stahl nach 50+ Jahren oft stark korrodiert, Zinkschicht aufgebraucht – Lochfraß und Rohrbrüche typisch. Laut IfS: Rohrsysteme dieser Ära nähern sich oder überschreiten die technische Lebensdauer von ~50 Jahren.',
+    score: 20,
+    topUrsachen: ['Lochfraß verzinkter Stahlrohre', 'Korrodierte Gewindeverbindungen', 'Kupferlochfraß (Typ I/II)', 'Poröse Flachdichtungen (Alter)', 'Inkrustationen / Verengungen'],
+    source: 'Quellen: GDV Schadenstatistik, IfS Ursachenstatistik, BundesBauBlatt 2022'
+  },
+  '1970-1989': {
+    risk: 'höchstes Risiko',
+    col: '#b83232', bg: '#fbeaea',
+    badge: '⚠ Höchstes Risiko',
+    badgeCol: '#b83232', badgeBg: '#fbeaea',
+    title: '1970–1989 – Höchste Schadenshäufigkeit laut GDV',
+    text: 'Laut GDV: In 40–45 Jahre alten Gebäuden platzen am häufigsten Rohre – 77 Schäden pro 1.000 Verträge. Jedes 4. Gebäude in Deutschland stammt aus den 70er/80er Jahren. Verzinkte Stahlrohre, erste Kunststoff- und Verbundrohre. Fast 40% aller Leitungswasserschäden entstehen durch Installations- und Montagefehler dieser Ära (IfS 2023).',
+    score: 30,
+    topUrsachen: ['Poröse Dichtungen / Verbindungsstücke (25%)', 'Defekte Geräte / Bauteile (24%)', 'Rohrbrüche durch Korrosion (21%)', 'Installationsfehler / Montagefehler (~40%)', 'Lochfraß verzinkter Stahl im WW-Bereich'],
+    source: 'Quellen: GDV (77 Schäden/1.000 Verträge), IfS Ursachenstatistik 2023, Hankammer/Resch 2023'
+  },
+  '1990-2000': {
+    risk: 'mittel',
+    col: '#c47a00', bg: '#fdf2dc',
+    badge: 'Mittleres Risiko',
+    badgeCol: '#c47a00', badgeBg: '#fdf2dc',
+    title: '1990–2000 – Übergangsphase, Verbundrohre & Kunststoff',
+    text: 'Erste Mehrschichtverbundrohre und PE-Rohre. Kupferinstallationen mit Pressfittings. In Ostdeutschland nach der Wiedervereinigung viele Sanierungen – dort statistisch weniger Schäden. Bekannte Schwachstelle: frühe Pressfittings und nicht korrekt verpresste Verbindungen. Installationsfehler nach wie vor häufigste Ursache.',
+    score: 12,
+    topUrsachen: ['Nicht korrekt verpresste Verbindungen', 'Installationsfehler (frühe Pressfitting-Ära)', 'Poröse Flexschläuche an Armaturen', 'Undichte Silikonfugen / Abdichtungen', 'Frühe Kunststoffrohre (Materialermüdung)'],
+    source: 'Quellen: GDV, IfS Ursachenstatistik 2023, Hankammer/Resch 2023'
+  },
+  '2001-2010': {
+    risk: 'gering-mittel',
+    col: '#1a8c5e', bg: '#e2f4ec',
+    badge: 'Geringes Risiko',
+    badgeCol: '#1a8c5e', badgeBg: '#e2f4ec',
+    title: '2001–2010 – Moderne Installation, Schäden oft durch Fehler',
+    text: 'Überwiegend Kunststoff und Verbundrohre, Pressverbindungen Standard. GDV: Häuser unter 15 Jahren haben nur ~15 Schäden pro 1.000 Verträge. Schäden in dieser Ära häufig durch Planungs- oder Ausführungsfehler, defekte Haustechnikgeräte oder unsachgemäße DIY-Arbeiten – nicht durch Materialermüdung.',
+    score: 6,
+    topUrsachen: ['Defekte Haushaltsgeräte (Spüler, Waschmaschine)', 'Installationsfehler Dritte / Heimwerker', 'Undichte Flexschläuche an Armaturen', 'Planungsfehler (Wasserdruck)', 'Nicht erkannte Baufeuchtigkeit'],
+    source: 'Quellen: GDV (15 Schäden/1.000 Verträge bei <15 Jahren), IfS 2023'
+  },
+  'nach2010': {
+    risk: 'gering',
+    col: '#1a8c5e', bg: '#e2f4ec',
+    badge: 'Geringes Risiko',
+    badgeCol: '#1a8c5e', badgeBg: '#e2f4ec',
+    title: 'Nach 2010 – Neubau, geringste Materialermüdung',
+    text: 'Moderne Kunststoff- und Edelstahlsysteme, kaum Materialermüdung. Laut GDV: Neubauten bis 5 Jahre haben nur ~15 Schäden pro 1.000 Verträge – allerdings bei Neubauschäden die höchste Schadenssumme je Fall. Schäden meist durch Baufehler, fehlerhafte Erstinstallation oder Planungsmängel, selten Leitungsversagen.',
+    score: 3,
+    topUrsachen: ['Baufehler / Erstinstallationsfehler', 'Undichte Anschlüsse Haustechnik', 'Baufeuchtigkeit (noch nicht abgetrocknet)', 'Druckstöße / Wasserhammer', 'Frostschäden (Erstbezug / Leerstand)'],
+    source: 'Quellen: GDV, IfS Ursachenstatistik 2023'
+  }
+};
+
+const MAT_DATA = {
+  'blei': {col:'#b83232', bg:'#fbeaea', title:'Blei – Gesundheitsrisiko + Leckagegefahr', text:'Bleirohre wurden bis in die 1970er Jahre verbaut. Blei korrodiert selten durch Lochfraß, stellt aber ein erhebliches Gesundheitsrisiko dar. Undichtigkeiten oft an Verbindungsstellen oder durch mechanische Beschädigungen. Austausch nach Trinkwasserverordnung Pflicht.'},
+  'stahl': {col:'#c47a00', bg:'#fdf2dc', title:'Verzinkter Stahl – Korrosionsanfällig', text:'Nach Aufbrauch der Zinkschicht (typisch nach 30–50 Jahren) beginnt Lochfraß. Im WW-Bereich durch Potenzialumkehr beschleunigte Korrosion. Nie mit Kupfer kombinieren – galvanische Korrosion. Typisch: Rostrotes Wasser, Druckverlust durch Inkrustationen.'},
+  'kupfer': {col:'#c47a00', bg:'#fdf2dc', title:'Kupfer – Lochfraß möglich', text:'Kupfer in der Regel langlebig (~50 Jahre). Kupferlochfraß Typ I (kalt) und Typ II (warm) möglich bei ungünstiger Wasserchemie. Erkennbar durch nadelstichgroße Löcher, feines Sprühen oder Tropfen. An Gewindeverbindungen und Rohrbögen erhöhtes Risiko.'},
+  'verbund': {col:'#1a8c5e', bg:'#e2f4ec', title:'Mehrschichtverbund – Pressverbindungen prüfen', text:'Langlebig bei korrekter Installation. Hauptgefahr: nicht korrekt verpresste Verbindungen. Frühzeitig kaum erkennbar. Verbindungen mit Presszange und Prüfindikator prüfen. Im Heizungsbereich auf korrekte Dehnungsausgleich achten.'},
+};
+
+function updateBaujahr(){
+  const val = document.getElementById('baujahr').value;
+  const d = BAUJAHR_DATA[val];
+  const box = document.getElementById('risk-box');
+  const badge = document.getElementById('risk-badge');
+  if(!d){box.classList.remove('show');badge.style.display='none';return;}
+  box.style.borderLeftColor = d.col;
+  box.style.background = d.bg;
+  document.getElementById('risk-title').textContent = d.title;
+  document.getElementById('risk-title').style.color = d.col;
+  document.getElementById('risk-text').textContent = d.text;
+  document.getElementById('risk-source').textContent = d.source;
+  box.classList.add('show');
+  badge.style.display='inline-block';
+  badge.textContent = d.badge;
+  badge.style.background = d.badgeBg;
+  badge.style.color = d.badgeCol;
+}
+
+function updateMaterial(){
+  const val = document.getElementById('mat').value;
+  const d = MAT_DATA[val];
+  const box = document.getElementById('mat-box');
+  if(!d){box.classList.remove('show');return;}
+  box.style.borderLeftColor = d.col;
+  box.style.background = d.bg;
+  box.innerHTML = `<div class="risk-title" style="color:${d.col};font-size:12px;font-weight:700;margin-bottom:3px">${d.title}</div><div class="risk-text" style="font-size:12px;line-height:1.5">${d.text}</div>`;
+  box.classList.add('show');
+}
+
+// ===== NAV =====
 const photos=[];
 const tvs={};
-
 function go(n){
   for(let i=1;i<=4;i++) document.getElementById('s'+i).style.display=i===n?'block':'none';
   document.getElementById('sp').textContent='Schritt '+n+' / 4';
   document.getElementById('pf').style.width=(n*25)+'%';
   window.scrollTo({top:0,behavior:'smooth'});
 }
-
 function tog(id,val,el){
-  tvs[id]=val;
-  document.getElementById(id).value=val;
+  tvs[id]=val;document.getElementById(id).value=val;
   const p=document.getElementById(id+'-t');
   p.querySelectorAll('.tb').forEach(b=>b.classList.remove('ay','an','au'));
   el.classList.add(val==='ja'?'ay':val==='nein'?'an':'au');
 }
-
-function styleCI(cb){ cb.closest('.ci').classList.toggle('on',cb.checked); }
+function ci(cb){cb.closest('.ci').classList.toggle('on',cb.checked);}
 
 // Photos
 document.getElementById('uz').addEventListener('click',()=>document.getElementById('fi').click());
-document.getElementById('fi').addEventListener('change',function(e){
-  Array.from(e.target.files).forEach(f=>addPhoto(f)); this.value='';
-});
-function addPhoto(f){
-  if(photos.length>=8)return;
-  const r=new FileReader();
-  r.onload=e=>{photos.push({file:f,dataUrl:e.target.result,name:f.name});renderPhotos();};
-  r.readAsDataURL(f);
-}
-function removePhoto(i){photos.splice(i,1);renderPhotos();}
-function renderPhotos(){
-  document.getElementById('pg').innerHTML=photos.map((p,i)=>`
-    <div class="pi"><div class="pt"><img src="${p.dataUrl}" alt=""></div>
-    <button class="pd" onclick="removePhoto(${i})">&#x2715;</button>
-    <div class="pn">${p.name.replace(/\.[^.]+$/,'')}</div></div>`).join('');
+document.getElementById('fi').addEventListener('change',function(e){Array.from(e.target.files).forEach(f=>addP(f));this.value='';});
+function addP(f){if(photos.length>=8)return;const r=new FileReader();r.onload=e=>{photos.push({file:f,dataUrl:e.target.result,name:f.name});renderP();};r.readAsDataURL(f);}
+function removePhoto(i){photos.splice(i,1);renderP();}
+function renderP(){
+  document.getElementById('pg').innerHTML=photos.map((p,i)=>`<div class="pi"><div class="pt"><img src="${p.dataUrl}" alt=""></div><button class="pd" onclick="removePhoto(${i})">&#x2715;</button><div class="pn">${p.name.replace(/\.[^.]+$/,'')}</div></div>`).join('');
   const b=document.getElementById('pbadge');
   if(photos.length>0){b.className='pbadge';b.textContent=photos.length+' Foto'+(photos.length>1?'s':'');}
   else{b.className='';b.textContent='';}
 }
 
-// Live Druckverlust-Feedback
-['pkw','pww','phz','pfbh'].forEach(pfx=>{
-  ['a','e','diff'].forEach(s=>{
-    const el=document.getElementById(pfx+'-'+s);
-    if(el) el.addEventListener('input',updateDruckFeedback);
-  });
-});
-function updateDruckFeedback(){
-  const systems=[{id:'pkw',name:'KW'},{id:'pww',name:'WW'},{id:'phz',name:'HZ'},{id:'pfbh',name:'FBH'}];
-  const msgs=[];
-  systems.forEach(sys=>{
-    const a=parseFloat(document.getElementById(sys.id+'-a')?.value)||0;
-    const e=parseFloat(document.getElementById(sys.id+'-e')?.value)||0;
-    const d=parseFloat(document.getElementById(sys.id+'-diff')?.value)||0;
-    const actual = a>0&&e>0 ? parseFloat((a-e).toFixed(2)) : d;
-    if(actual>0.5) msgs.push(`<span style="color:var(--red);font-weight:700">${sys.name}: Δ${actual.toFixed(2)} bar – deutlicher Druckabfall</span>`);
-    else if(actual>0.1) msgs.push(`<span style="color:var(--amber);font-weight:600">${sys.name}: Δ${actual.toFixed(2)} bar – leichter Abfall, weiter beobachten</span>`);
-    else if(actual>0) msgs.push(`<span style="color:var(--text3)">${sys.name}: Δ${actual.toFixed(2)} bar – im Toleranzbereich</span>`);
-  });
-  document.getElementById('druck-live').innerHTML=msgs.join(' &nbsp;|&nbsp; ');
+// Druckprobe Live
+['pkw','pww','phz','pfbh'].forEach(p=>['a','e','diff'].forEach(s=>{const el=document.getElementById(p+'-'+s);if(el)el.addEventListener('input',druckFeed);}));
+function druckFeed(){
+  const sys=[{id:'pkw',n:'KW'},{id:'pww',n:'WW'},{id:'phz',n:'HZ'},{id:'pfbh',n:'FBH'}];
+  const msgs=sys.map(s=>{
+    const a=parseFloat(document.getElementById(s.id+'-a')?.value)||0;
+    const e=parseFloat(document.getElementById(s.id+'-e')?.value)||0;
+    const d=parseFloat(document.getElementById(s.id+'-diff')?.value)||0;
+    const act=a>0&&e>0?parseFloat((a-e).toFixed(2)):d;
+    if(act>0.5)return`<span style="color:var(--red);font-weight:700">${s.n}: Δ${act.toFixed(2)} bar – deutlich</span>`;
+    if(act>0.1)return`<span style="color:var(--amber)">${s.n}: Δ${act.toFixed(2)} bar – leicht</span>`;
+    if(act>0)return`<span style="color:var(--text3)">${s.n}: Δ${act.toFixed(2)} bar – Toleranz</span>`;
+    return null;
+  }).filter(Boolean);
+  document.getElementById('druck-live').innerHTML=msgs.join('&nbsp;|&nbsp;');
 }
 
 // ===== SCORE =====
@@ -517,62 +617,48 @@ function calcScore(){
   const v=id=>parseFloat(document.getElementById(id)?.value)||0;
   const sv=id=>document.getElementById(id)?.value||'';
   let s=0,m=0;
-
-  // Druckprobe (stärkstes Signal, 30 Pkt)
+  // Druckprobe (30)
   m+=30;
-  const diffs=['pkw-diff','pww-diff','phz-diff','pfbh-diff'].map(id=>{
-    const a=v(id.replace('diff','a')), e=v(id.replace('diff','e')), d=v(id);
-    return a>0&&e>0 ? Math.abs(a-e) : Math.abs(d);
-  });
+  const diffs=['pkw','pww','phz','pfbh'].map(p=>{const a=v(p+'-a'),e=v(p+'-e'),d=v(p+'-diff');return a>0&&e>0?Math.abs(a-e):Math.abs(d);});
   const maxD=Math.max(...diffs);
-  if(maxD>0.5)s+=30; else if(maxD>0.2)s+=21; else if(maxD>0.05)s+=12; else if(maxD>0)s+=5;
-
-  // Kapazitiv-Digits (20 Pkt)
-  m+=20;
-  const kapMax=Math.max(v('kw1'),v('kb1'),v('kd1'));
-  if(kapMax>30)s+=20; else if(kapMax>22)s+=14; else if(kapMax>16)s+=8; else if(kapMax>0)s+=3;
-
-  // Widerstand (15 Pkt)
-  m+=15;
-  const widMax=Math.max(v('ww1'),v('wb1'),v('wd1'));
-  if(widMax>46)s+=15; else if(widMax>36)s+=9; else if(widMax>25)s+=4; else if(widMax>0)s+=1;
-
-  // System (10 Pkt)
-  m+=10;
-  const sys=sv('system');
-  if(sys==='hz'||sys==='fbh')s+=10;
-  else if(sys==='kw'||sys==='ww')s+=8;
-  else if(sys==='zl')s+=7;
-  else if(sys==='abwasser'||sys==='aussen-l')s+=6;
-
-  // Material + Alter (10 Pkt)
-  m+=10;
-  const mat=sv('mat'), age=v('alter');
-  if(mat==='blei')s+=7; else if(mat==='stahl')s+=5; else if(mat==='kupfer')s+=3; else if(mat==='verbund')s+=2;
-  if(age>=50)s+=3; else if(age>=30)s+=1;
-
-  // Eingesetzte Verfahren mit Befund (10 Pkt)
-  m+=10;
-  const angekreuzt=document.querySelectorAll('#mv-grid input:checked').length;
-  const befund=(document.getElementById('mv-befund')?.value||'').length;
-  s+=Math.min(7,angekreuzt*1.5);
-  if(befund>20)s+=3; else if(befund>5)s+=1;
-
-  // Lage (5 Pkt)
-  m+=5;
-  const lage=sv('lage');
-  if(lage==='keller')s+=4; else if(lage==='eg'||lage==='og')s+=3; else if(lage==='aussen')s+=5;
+  if(maxD>0.5)s+=30;else if(maxD>0.2)s+=21;else if(maxD>0.05)s+=12;else if(maxD>0)s+=5;
+  // Kapazitiv (20)
+  m+=20;const kapMax=Math.max(v('kw1'),v('kb1'),v('kd1'));
+  if(kapMax>30)s+=20;else if(kapMax>22)s+=14;else if(kapMax>16)s+=8;else if(kapMax>0)s+=3;
+  // Widerstand (15)
+  m+=15;const widMax=Math.max(v('ww1'),v('wb1'),v('wd1'));
+  if(widMax>46)s+=15;else if(widMax>36)s+=9;else if(widMax>25)s+=4;else if(widMax>0)s+=1;
+  // System (8)
+  m+=8;const sys=sv('system');
+  if(sys==='hz'||sys==='fbh')s+=8;else if(sys==='kw'||sys==='ww')s+=6;else if(sys==='zl')s+=5;else if(sys==='abwasser'||sys==='aussen-l')s+=4;
+  // Baujahr (10) – statistisches Risiko aus GDV/IfS
+  m+=10;const bj=sv('baujahr');
+  if(BAUJAHR_DATA[bj]) s+=Math.round(BAUJAHR_DATA[bj].score/3);
+  // Material (7)
+  m+=7;const mat=sv('mat');
+  if(mat==='blei')s+=6;else if(mat==='stahl')s+=5;else if(mat==='kupfer')s+=3;else if(mat==='verbund')s+=2;
+  // Leitungsalter (5)
+  m+=5;const age=v('alter');
+  if(age>=50)s+=5;else if(age>=30)s+=3;else if(age>=20)s+=1;
+  // Messverfahren + Befund (7)
+  m+=7;
+  const anz=document.querySelectorAll('#mv-grid input:checked').length;
+  const bef=(document.getElementById('mv-befund')?.value||'').length;
+  s+=Math.min(5,anz);if(bef>20)s+=2;else if(bef>5)s+=1;
+  // Lage (3)
+  m+=3;const lage=sv('lage');
+  if(lage==='keller')s+=2;else if(lage==='aussen')s+=3;else if(lage==='eg'||lage==='og')s+=2;
 
   return Math.min(97,Math.max(3,Math.round((s/m)*100)));
 }
 
-// ===== LOCATIONS =====
+// ===== LOCATIONS (mit Baujahr-Einfluss) =====
 function calcLocations(){
   const sv=id=>document.getElementById(id)?.value||'';
   const v=id=>parseFloat(document.getElementById(id)?.value)||0;
-  const sys=sv('system'), mat=sv('mat'), lage=sv('lage'), fbh=sv('fbh');
+  const sys=sv('system'),mat=sv('mat'),lage=sv('lage'),fbh=sv('fbh'),bj=sv('baujahr');
   const age=v('alter');
-  const kapBMax=v('kb1'), kapWMax=v('kw1'), kapDMax=v('kd1');
+  const kapBMax=v('kb1'),kapWMax=v('kw1'),kapDMax=v('kd1');
   const pfbhDiff=Math.abs(v('pfbh-a')>0&&v('pfbh-e')>0?v('pfbh-a')-v('pfbh-e'):v('pfbh-diff'));
   const phzDiff=Math.abs(v('phz-a')>0&&v('phz-e')>0?v('phz-a')-v('phz-e'):v('phz-diff'));
   const thermo=document.querySelector('#mv-grid input[value="thermografie"]')?.checked;
@@ -587,10 +673,11 @@ function calcLocations(){
     'Sanitärbereich / Nasszone':5,
     'Wanddurchführung / Verteiler':5,
     'Technikraum / Heizungsanlage':5,
-    'Dachbereich / Flachdach':5,
+    'Dachbereich / Abdichtung':5,
     'Abwasserleitung / Kanal':5
   };
 
+  // System-Signale
   if(sys==='fbh'||fbh==='ja'){w['Fußbodenheizung / Estrich']+=40;}
   if(pfbhDiff>0.05)w['Fußbodenheizung / Estrich']+=25;
   if(kapBMax>18)w['Fußbodenheizung / Estrich']+=kapBMax>28?20:12;
@@ -600,13 +687,35 @@ function calcLocations(){
   if(sys==='kw'||sys==='ww'){w['Sanitärbereich / Nasszone']+=18;w['Wanddurchführung / Verteiler']+=12;}
   if(lage==='keller'){w['Kellerleitung / Fundament']+=35;w['Außenleitung / Erdreich']+=15;}
   if(lage==='aussen'||sys==='aussen-l'){w['Außenleitung / Erdreich']+=40;w['Kellerleitung / Fundament']+=15;}
-  if(mat==='blei'||age>45){w['Kellerleitung / Fundament']+=18;w['Außenleitung / Erdreich']+=12;}
   if(kapWMax>18)w['Wanddurchführung / Verteiler']+=kapWMax>28?18:10;
   if(kapDMax>18)w['Sanitärbereich / Nasszone']+=12;
-  if(sys==='regen'||lage==='dg'){w['Dachbereich / Flachdach']+=40;}
+  if(sys==='regen'||lage==='dg'){w['Dachbereich / Abdichtung']+=40;}
   if(sys==='abwasser'){w['Abwasserleitung / Kanal']+=35;w['Kellerleitung / Fundament']+=10;}
   if(korr)w['Außenleitung / Erdreich']+=12;
   if(elektro)w['Wanddurchführung / Verteiler']+=8;
+
+  // Baujahr-Einfluss auf Positionen
+  if(bj==='vor1950'||bj==='1950-1969'){
+    w['Kellerleitung / Fundament']+=18;
+    w['Außenleitung / Erdreich']+=12;
+    w['Wanddurchführung / Verteiler']+=10;
+  }
+  if(bj==='1970-1989'){
+    w['Fußbodenheizung / Estrich']+=10; // viele FBH-Erstinstallationen 70er/80er
+    w['Sanitärbereich / Nasszone']+=10; // Badezimmer-Erstinstallation dieser Ära
+    w['Kellerleitung / Fundament']+=8;
+  }
+  if(bj==='1990-2000'||bj==='2001-2010'){
+    w['Wanddurchführung / Verteiler']+=8; // Pressverbindungen
+    w['Sanitärbereich / Nasszone']+=8;
+  }
+
+  // Material-Einfluss
+  if(mat==='blei'||mat==='stahl'||(age>40)){
+    w['Kellerleitung / Fundament']+=15;
+    w['Außenleitung / Erdreich']+=10;
+  }
+
   // Befund-Keywords
   if(befund.includes('boden')||befund.includes('estrich'))w['Fußbodenheizung / Estrich']+=15;
   if(befund.includes('wand'))w['Wanddurchführung / Verteiler']+=12;
@@ -625,35 +734,25 @@ function getMethodRecs(prob){
   const lage=document.getElementById('lage')?.value||'';
   const checked=Array.from(document.querySelectorAll('#mv-grid input:checked')).map(c=>c.value);
   const recs=[];
-
   if(!checked.includes('thermografie')&&(sys==='fbh'||fbh==='ja'||sys==='hz'))
     recs.push({t:'Thermografie',tx:'FBH mind. 12 Std. ausschalten, dann Kreislauf für Kreislauf hochfahren. Temperaturdiff. >15 K nötig. Kamera nach VaTh-Richtlinie.',c:'var(--blue)'});
   if(!checked.includes('korrelator')&&(lage==='aussen'||sys==='aussen-l'||lage==='keller'))
-    recs.push({t:'Korrelator',tx:'Für Erdleitungen und Außenleitungen. Rohrlänge, Durchmesser und Material vorab erfassen. Bei Störgeräuschen Nachtmessung erwägen.',c:'var(--purple)'});
+    recs.push({t:'Korrelator',tx:'Für Erd- und Außenleitungen. Rohrlänge, Durchmesser und Material vorab erfassen. Bei Störgeräuschen Nachtmessung.',c:'var(--purple)'});
   if(!checked.includes('tracergas')&&prob>=55)
-    recs.push({t:'Tracergas (H₂/N₂)',tx:'System komplett entleeren. Tracergas ist leichter als Luft und steigt auf. Systematische Absuche mit H₂-Sensor. Besonders bei verdeckten und unzugänglichen Leitungen.',c:'var(--amber)'});
+    recs.push({t:'Tracergas (H₂/N₂)',tx:'System komplett entleeren. Tracergas steigt auf. Systematische Absuche mit H₂-Sensor. Besonders bei verdeckten Leitungen.',c:'var(--amber)'});
   if(!checked.includes('endoskopie')&&(sys==='abwasser'||sys==='regen'))
-    recs.push({t:'Endoskopie / Kanal TV',tx:'Für Abwasser- und Regenwasserleitungen. Starre oder flexible Sonde je nach Zugänglichkeit. Befund fotografisch dokumentieren.',c:'var(--green)'});
-  if(!checked.includes('faerbemittel')&&(sys==='abwasser'||sys==='regen'))
-    recs.push({t:'Färbemittel (Uranin)',tx:'Geeignet für Abwasser und Regenwasserleitungen. Uranin unter UV-Licht sichtbar. Rodamin nur unter speziellen Voraussetzungen.',c:'var(--green)'});
+    recs.push({t:'Endoskopie / Kanal TV',tx:'Für Abwasser- und Regenwasserleitungen. Starre oder flexible Sonde je nach Zugänglichkeit.',c:'var(--green)'});
   if(!checked.includes('elektroakustik')&&(sys==='kw'||sys==='ww'||sys==='hz')&&prob>=45)
-    recs.push({t:'Elektroakustik',tx:'Geräuschbasierte Ortung für druckführende Metallrohre. Stille Umgebung wichtig. In Kombination mit Korrelator besonders effektiv.',c:'var(--red)'});
+    recs.push({t:'Elektroakustik',tx:'Geräuschortung für druckführende Rohre. Stille Umgebung wichtig. In Kombination mit Korrelator effektiv.',c:'var(--red)'});
   return recs.slice(0,4);
 }
 
-// ===== AI CALL =====
-async function callClaude(prompt, imgUrls){
+// ===== AI PROMPT =====
+async function callClaude(prompt,imgUrls){
   const content=[];
-  imgUrls.forEach(url=>{
-    const[meta,data]=url.split(',');
-    const mt=meta.match(/:(.*?);/)[1];
-    content.push({type:'image',source:{type:'base64',media_type:mt,data}});
-  });
+  imgUrls.forEach(url=>{const[m,d]=url.split(',');content.push({type:'image',source:{type:'base64',media_type:m.match(/:(.*?);/)[1],data:d}});});
   content.push({type:'text',text:prompt});
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content}]})
-  });
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content}]})});
   const d=await r.json();
   return d.content?.map(b=>b.text||'').join('')||'';
 }
@@ -661,143 +760,99 @@ async function callClaude(prompt, imgUrls){
 function buildPrompt(){
   const g=id=>document.getElementById(id)?.value||'—';
   const v=id=>parseFloat(document.getElementById(id)?.value)||0;
+  const bj=g('baujahr');
+  const bjData=BAUJAHR_DATA[bj];
+  const bjRisk=bjData?`${bjData.title} | Typische Ursachen dieser Ära: ${bjData.topUrsachen.join(', ')}`:'nicht angegeben';
   const checked=Array.from(document.querySelectorAll('#mv-grid input:checked')).map(c=>c.value).join(', ')||'keine';
+  const dw=['KW','WW','HZ','FBH'].map((s,i)=>{const p=['pkw','pww','phz','pfbh'][i];const a=v(p+'-a'),e=v(p+'-e'),d=v(p+'-diff');const diff=a>0&&e>0?(a-e):d;return diff!==0?`${s}: Anfang ${a||'?'} / Ende ${e||'?'} / Δ${diff.toFixed(2)} bar`:null;}).filter(Boolean).join(' | ')||'keine';
 
-  const druckwerte=['KW','WW','HZ','FBH'].map((sys,i)=>{
-    const pfx=['pkw','pww','phz','pfbh'][i];
-    const a=v(pfx+'-a'), e=v(pfx+'-e'), d=v(pfx+'-diff');
-    const diff=a>0&&e>0?parseFloat((a-e).toFixed(2)):d;
-    return diff!==0?`${sys}: Anfang ${a||'?'} / Ende ${e||'?'} / Δ${diff.toFixed(2)} bar`:null;
-  }).filter(Boolean).join(' | ')||'keine Werte eingetragen';
+  return `Du bist erfahrener Leckortungsexperte. Analysiere Fotos und Daten zur Leckageortung.
 
-  return `Du bist erfahrener Leckortungsexperte. Analysiere diese Vor-Ort-Daten und Fotos zur Leckageortung.
+BAUJAHR-RISIKOPROFIL (Quelle: GDV / IfS):
+${bjRisk}
 
-SYSTEM & ANLAGE:
+ANLAGE:
 - Gebäude: ${g('gtyp')} | Lage: ${g('lage')} | System: ${g('system')}
-- Material: ${g('mat')} | Alter ca.: ${g('alter')} Jahre | FBH vorhanden: ${g('fbh')}
+- Material: ${g('mat')} | Leitungsalter: ${g('alter')} Jahre | FBH: ${g('fbh')}
 - Beschreibung: ${g('beschr')}
 
 FEUCHTEMESSUNG (kapazitiv, Digits):
-- Wand: ${g('kw0')}–${g('kw1')} | Boden: ${g('kb0')}–${g('kb1')} | Decke: ${g('kd0')}–${g('kd1')}
-Widerstand (SKE): Wand: ${g('ww0')}–${g('ww1')} | Boden: ${g('wb0')}–${g('wb1')} | Decke: ${g('wd0')}–${g('wd1')}
+Wand ${g('kw0')}–${g('kw1')} | Boden ${g('kb0')}–${g('kb1')} | Decke ${g('kd0')}–${g('kd1')}
+Widerstand (SKE): Wand ${g('ww0')}–${g('ww1')} | Boden ${g('wb0')}–${g('wb1')} | Decke ${g('wd0')}–${g('wd1')}
 
-DRUCKPROBE: ${druckwerte}
+DRUCKPROBE: ${dw}
+MESSVERFAHREN: ${checked}
+BEFUNDE: ${g('mv-befund')||'keine'}
 
-EINGESETZTE MESSVERFAHREN: ${checked}
-BEFUNDE AUS VERFAHREN: ${g('mv-befund')||'keine Angabe'}
-
-AUFTRAG: Analysiere Fotos + Daten zur Leckageortung.
-
-Antworte auf Deutsch in genau 3 Abschnitten:
+Antworte auf Deutsch, 3 Abschnitte:
 
 BILDBEFUND:
-Was ist konkret auf den Fotos erkennbar? (Feuchteflecken, Rostspuren, Kalkablagerungen, Schäden an Verbindungen, Fugen, Armaturen, Verfärbungen)
+Was ist konkret auf Fotos erkennbar? (Feuchteflecken, Rost, Kalk, Schäden an Verbindungen, Fugen, Armaturen)
 
 MESSAUSWERTUNG:
-Bewerte die Messwerte fachlich. Digits auffällig? Druckabfall signifikant? Was lässt sich aus den Daten schließen – und was nicht?
+Digits auffällig? Druckabfall signifikant? Was lässt sich schließen – und was nicht? Passt das Schadensbild zum Baujahr-Risikoprofil?
 
 ORTUNGSEINSCHÄTZUNG:
-Wo ist die Leckstelle am wahrscheinlichsten? Was sollte als nächstes geprüft werden?
+Wo ist die Leckstelle am wahrscheinlichsten? Was als nächstes prüfen?
 
-Trenne klar zwischen Tatsachen (Messwerten) und Interpretation. Keine Spekulation ohne Datenbasis. Maximal 200 Wörter.`;
+Trenne klar Tatsachen von Interpretation. Keine Spekulation ohne Datenbasis. Max. 200 Wörter.`;
 }
 
 function parseAI(text){
-  const secs=[
-    {k:'BILDBEFUND',c:'var(--blue)',b:'var(--blue-l)'},
-    {k:'MESSAUSWERTUNG',c:'var(--purple)',b:'var(--purple-l)'},
-    {k:'ORTUNGSEINSCHÄTZUNG',c:'var(--green)',b:'var(--green-l)'}
-  ];
+  const secs=[{k:'BILDBEFUND',c:'var(--blue)',b:'var(--blue-l)'},{k:'MESSAUSWERTUNG',c:'var(--purple)',b:'var(--purple-l)'},{k:'ORTUNGSEINSCHÄTZUNG',c:'var(--green)',b:'var(--green-l)'}];
   let html='';
   for(const s of secs){
     const rx=new RegExp(s.k+'[:\\s]*([\\s\\S]*?)(?=(?:BILDBEFUND|MESSAUSWERTUNG|ORTUNGSEINSCHÄTZUNG)|$)','i');
     const m=text.match(rx);
-    if(m&&m[1].trim()){
-      html+=`<div class="af" style="border-left-color:${s.c};background:${s.b};margin-bottom:8px">`;
-      html+=`<div class="aft" style="color:${s.c}">${s.k}</div>`;
-      html+=`<div class="aftx">${m[1].trim().replace(/\n+/g,'<br>')}</div></div>`;
-    }
+    if(m&&m[1].trim()) html+=`<div class="af" style="border-left-color:${s.c};background:${s.b};margin-bottom:8px"><div class="aft" style="color:${s.c}">${s.k}</div><div class="aftx">${m[1].trim().replace(/\n+/g,'<br>')}</div></div>`;
   }
   return html||`<div class="af" style="border-left-color:var(--blue);background:var(--blue-l)"><div class="aftx">${text.replace(/\n+/g,'<br>')}</div></div>`;
 }
 
-// ===== MAIN =====
+// ===== MAIN ANALYSE =====
 async function analyse(){
   const btn=document.getElementById('abtn');
-  btn.disabled=true; btn.textContent='Analyse läuft…';
-
+  btn.disabled=true;btn.textContent='Analyse läuft…';
   const prob=calcScore();
   const locs=calcLocations();
   const col=prob>=70?'#b83232':prob>=45?'#c47a00':'#1a8c5e';
-
   document.getElementById('res').className='rv';
-
   document.getElementById('res-pct').textContent=prob+'%';
   document.getElementById('res-pct').style.color=col;
-  const bar=document.getElementById('res-bar');
-  bar.style.width=prob+'%'; bar.style.background=col;
-
-  const sub=prob>=70?'Hohe Wahrscheinlichkeit – aktive Leckage sehr wahrscheinlich':
-    prob>=45?'Mittlere Wahrscheinlichkeit – weiterführende Ortung empfohlen':
-    prob>=25?'Geringe bis moderate Wahrscheinlichkeit – Datenlage prüfen':
-    'Kein eindeutiger Leckage-Hinweis aus den vorliegenden Daten';
+  const bar=document.getElementById('res-bar');bar.style.width=prob+'%';bar.style.background=col;
+  const sub=prob>=70?'Hohe Wahrscheinlichkeit – aktive Leckage sehr wahrscheinlich':prob>=45?'Mittlere Wahrscheinlichkeit – weiterführende Ortung empfohlen':prob>=25?'Geringe bis moderate Wahrscheinlichkeit':'Kein eindeutiger Leckage-Hinweis aus vorliegenden Daten';
   document.getElementById('res-sub').textContent=sub;
-
   const lc=['#0e5fa3','#1a8c5e','#c47a00','#b83232','#5b4fcf'];
   const lb=['#e4f0fb','#e2f4ec','#fdf2dc','#fbeaea','#eeecfc'];
-  document.getElementById('loc-list').innerHTML=locs.map((l,i)=>`
-    <div class="li">
-      <div class="lrank" style="background:${lb[i]};color:${lc[i]}">${i+1}</div>
-      <div class="linfo">
-        <div class="lname">${l.name}</div>
-        <div class="lmbar" style="width:${l.pct}%;background:${lc[i]};opacity:.5"></div>
-      </div>
-      <div class="lpct" style="color:${lc[i]}">${l.pct}%</div>
-    </div>`).join('');
-
+  document.getElementById('loc-list').innerHTML=locs.map((l,i)=>`<div class="li"><div class="lrank" style="background:${lb[i]};color:${lc[i]}">${i+1}</div><div class="linfo"><div class="lname">${l.name}</div><div class="lmbar" style="width:${l.pct}%;background:${lc[i]};opacity:.5"></div></div><div class="lpct" style="color:${lc[i]}">${l.pct}%</div></div>`).join('');
   const meths=getMethodRecs(prob);
   const mc=document.getElementById('meth-card');
-  if(meths.length>0){
-    mc.style.display='block';
-    document.getElementById('meth-list').innerHTML=meths.map(m=>`
-      <div class="mc" style="border-left-color:${m.c};background:var(--input)">
-        <div class="mct" style="color:${m.c}">${m.t}</div>
-        <div class="mctx">${m.tx}</div>
-      </div>`).join('');
-  } else mc.style.display='none';
-
+  if(meths.length>0){mc.style.display='block';document.getElementById('meth-list').innerHTML=meths.map(m=>`<div class="mc" style="border-left-color:${m.c};background:var(--input)"><div class="mct" style="color:${m.c}">${m.t}</div><div class="mctx">${m.tx}</div></div>`).join('');}
+  else mc.style.display='none';
   const top=locs[0]?.name||'dem Verdachtsbereich';
+  const bj=document.getElementById('baujahr')?.value||'';
+  const bjInfo=BAUJAHR_DATA[bj]?` (Baujahr-Risiko: ${BAUJAHR_DATA[bj].risk})`:'';
   let hand='';
-  if(prob>=70) hand=`Die Messwerte und Systemdaten sprechen deutlich für eine aktive Leckage (${prob}%). Schwerpunkt: „${top}". Druckprobe und gezielte Ortung in diesem Bereich priorisieren. Bereich noch nicht invasiv öffnen ohne weiteren Ortungsnachweis.`;
-  else if(prob>=45) hand=`Mittlere Wahrscheinlichkeit (${prob}%). „${top}" als Hauptverdacht. Bisher nicht eingesetzte Messverfahren (siehe oben) sollten ergänzend eingesetzt werden, bevor ein invasiver Eingriff erfolgt.`;
-  else hand=`Geringe bis moderate Datenlage (${prob}%). Messwerte derzeit nicht ausreichend für eindeutigen Leckage-Nachweis. Mögliche andere Ursachen: Kondensation, Baufeuchte, Wärmebrücken. Weitere Messpunkte erfassen, Messung wiederholen oder ergänzendes Verfahren einsetzen.`;
+  if(prob>=70)hand=`Messwerte und Risikoprofil${bjInfo} sprechen deutlich für eine aktive Leckage (${prob}%). Schwerpunkt: „${top}". Druckprobe und gezielte Ortung in diesem Bereich priorisieren. Vor invasivem Eingriff weiteren Ortungsnachweis sichern.`;
+  else if(prob>=45)hand=`Mittlere Wahrscheinlichkeit (${prob}%)${bjInfo}. Hauptverdacht: „${top}". Bisher nicht eingesetzte Verfahren (oben) vor invasivem Eingriff einsetzen.`;
+  else hand=`Geringe bis moderate Datenlage (${prob}%)${bjInfo}. Messwerte nicht ausreichend für eindeutigen Nachweis. Mögliche andere Ursachen: Kondensation, Baufeuchte, Wärmebrücken. Weitere Messpunkte erfassen oder ergänzendes Verfahren einsetzen.`;
   document.getElementById('res-hand').textContent=hand;
-
   document.getElementById('res').scrollIntoView({behavior:'smooth',block:'start'});
-
-  // AI
   const aiSec=document.getElementById('ai-sec');
   if(photos.length>0){
-    aiSec.innerHTML=`<div class="card" style="margin-top:10px"><div class="loading-row"><div class="spinner"></div><span>KI analysiert ${photos.length} Foto${photos.length>1?'s':''} und alle Messdaten…</span></div></div>`;
+    aiSec.innerHTML=`<div class="card" style="margin-top:10px"><div class="loading-row"><div class="spinner"></div><span>KI analysiert ${photos.length} Foto${photos.length>1?'s':''} + Messdaten + Baujahr-Profil…</span></div></div>`;
     try{
       const text=await callClaude(buildPrompt(),photos.map(p=>p.dataUrl));
-      aiSec.innerHTML=`<div class="card" style="margin-top:10px">
-        <div class="slbl">KI-Analyse (Foto + Messdaten)</div>
-        ${parseAI(text)}
-        <div class="disc" style="margin-top:8px"><strong>Hinweis:</strong> KI-Befund ist Entscheidungshilfe. Alle Aussagen müssen durch den Messtechniker vor Ort validiert werden.</div>
-      </div>`;
-    }catch(e){
-      aiSec.innerHTML=`<div class="card" style="margin-top:10px"><div class="warn">KI-Analyse nicht verfügbar – Verbindung prüfen.</div></div>`;
-    }
-  } else aiSec.innerHTML='';
-
-  btn.disabled=false; btn.textContent='Analyse starten';
+      aiSec.innerHTML=`<div class="card" style="margin-top:10px"><div class="slbl">KI-Analyse (Foto + Messdaten + Baujahr)</div>${parseAI(text)}<div class="disc" style="margin-top:8px"><strong>Hinweis:</strong> KI-Befund ist Entscheidungshilfe. Alle Aussagen durch Messtechniker vor Ort validieren.</div></div>`;
+    }catch(e){aiSec.innerHTML=`<div class="card" style="margin-top:10px"><div class="warn">KI-Analyse nicht verfügbar – Verbindung prüfen.</div></div>`;}
+  }else aiSec.innerHTML='';
+  btn.disabled=false;btn.textContent='Analyse starten';
 }
 
 function reset(){
   document.getElementById('res').className='rh';
-  photos.length=0; renderPhotos();
-  go(1); window.scrollTo({top:0,behavior:'smooth'});
+  photos.length=0;renderP();go(1);
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 </script>
 </body>
