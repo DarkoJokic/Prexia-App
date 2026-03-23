@@ -1,0 +1,26 @@
+{
+  "name": "PREXIA – Schadenservice",
+  "short_name": "PREXIA",
+  "description": "Schaden melden und Rückruf anfordern",
+  "start_url": "/Prexia-App/",
+  "scope": "/Prexia-App/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e5fa3",
+  "theme_color": "#0e5fa3",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
