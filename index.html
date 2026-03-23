@@ -165,6 +165,22 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
 .auf-status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px}
 .auf-status-offen{background:var(--amber)}
 .auf-status-erledigt{background:var(--green)}
+.tl-item{display:flex;gap:14px;margin-bottom:4px}
+.tl-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.tl-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;z-index:1}
+.tl-line{width:2px;flex:1;background:var(--sep2);margin:4px 0;min-height:20px}
+.tl-body{flex:1;padding-bottom:22px}
+.tl-title{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.2px;margin-bottom:6px;margin-top:4px}
+.tl-text{font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:8px}
+.tl-badge{display:inline-block;background:var(--blue-l);color:var(--blue);font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px}
+.faq-item{background:var(--card);cursor:pointer;overflow:hidden}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-size:14px;font-weight:600;color:var(--text);gap:8px}
+.faq-ico{font-size:20px;font-weight:300;color:var(--text3);flex-shrink:0;transition:transform .2s;line-height:1}
+.faq-a{font-size:14px;color:var(--text3);line-height:1.6;padding:0 16px 14px;display:none}
+.faq-item.open .faq-a{display:block}
+.faq-item.open .faq-ico{transform:rotate(45deg);color:var(--blue)}
+.kontakt-card{display:flex;align-items:center;gap:14px;padding:18px 16px;border-radius:var(--r);text-decoration:none;cursor:pointer;transition:opacity .15s}
+.kontakt-card:active{opacity:.85}
 @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fu{animation:fu .28s ease both}
 @keyframes scin{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
@@ -195,15 +211,31 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
         <svg width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5" stroke-linecap="round"><polyline points="1 1 8 7.5 1 14"/></svg>
       </button>
     </div>
-    <div id="home-section-auftraege" style="padding:0 16px;margin-top:16px;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Anfragen</div>
-      <div style="background:var(--card);border-radius:var(--r);padding:20px 16px;text-align:center">
-        <div style="font-size:28px;margin-bottom:8px">📋</div>
-        <div style="font-size:14px;font-weight:500;color:var(--text2);margin-bottom:4px">Noch keine Anfragen</div>
-        <div style="font-size:13px;color:var(--text3);line-height:1.5">Ihre Rückrufanfragen erscheinen hier</div>
+    <!-- TÜV & Vertrauen -->
+    <div style="padding:0 16px;margin-top:20px;margin-bottom:20px">
+      <div style="background:var(--card);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <img src="data:image/png;base64,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" alt="TÜV Rheinland Zertifiziert" style="width:52px;height:52px;object-fit:contain;flex-shrink:0">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:1px">TÜV Rheinland Zertifiziert</div>
+          <div style="font-size:12px;color:var(--text3)">Geprüfter Fachbetrieb · Bauwerksdiagnostik</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--card);border-radius:var(--r);padding:14px 10px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--blue);letter-spacing:-.5px;line-height:1">50+</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.4">Versicherungen vertrauen uns</div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--r);padding:14px 10px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--blue);letter-spacing:-.5px;line-height:1">24/7</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.4">Notruf-Hotline</div>
+        </div>
+        <div style="background:var(--card);border-radius:var(--r);padding:14px 10px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--blue);letter-spacing:-.5px;line-height:1">100%</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;line-height:1.4">Zufriedene Kunden</div>
+        </div>
       </div>
     </div>
-    <div style="font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:0 18px;margin-top:16px;margin-bottom:8px" id="home-section-ratgeber">Ratgeber</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:0 18px;margin-top:16px;margin-bottom:8px" id="home-section-ratgeber">Ratgeber</div>
     <div class="info-grid">
       <button class="info-tile" onclick="showInfo('wasser')"><div class="it-ico">💧</div><div class="it-title">Wasserschaden – was tun?</div><div class="it-sub">Erste Schritte richtig machen</div></button>
       <button class="info-tile" onclick="showInfo('schimmel')"><div class="it-ico">🌫️</div><div class="it-title">Schimmel – was beachten?</div><div class="it-sub">Tipps & Warnsignale</div></button>
@@ -214,54 +246,10 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
   </div>
 
   <nav class="tabbar" id="tabbar-home">
-    <button class="tab-item on" onclick="homeTab('home')" id="tab-home">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <span>Home</span>
-    </button>
-    <button class="tab-item" onclick="homeTab('auftraege')" id="tab-auftraege">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-      <span>Aufträge</span>
-    </button>
-    <button class="tab-item" onclick="homeTab('notruf')" id="tab-notruf">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-      <span>Notruf</span>
-    </button>
-    <button class="tab-item" onclick="homeTab('ratgeber')" id="tab-ratgeber">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span>Ratgeber</span>
-    </button>
-  </nav>
-</div>
-
-<!-- AUFTRÄGE SCREEN -->
-<div class="screen hidden" id="s-auftraege">
-  <div class="sb"><span id="clk-auf">9:41</span><div class="sb-icons"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity=".4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="white" opacity=".6"/><rect x="9" y="0" width="3" height="12" rx="1" fill="white" opacity=".8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg></div></div>
-  <div style="background:var(--blue);padding:12px 20px 20px;flex-shrink:0">
-    <div style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-.4px">Meine Anfragen</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:3px" id="auf-count">Wird geladen…</div>
-  </div>
-  <!-- Filter Chips -->
-  <div style="background:var(--card);border-bottom:.5px solid var(--sep);padding:10px 16px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0">
-    <button class="auf-chip sel" id="auf-chip-alle" onclick="filterAuf(this,'')">Alle</button>
-    <button class="auf-chip" id="auf-chip-offen" onclick="filterAuf(this,'offen')">⏳ Offen</button>
-    <button class="auf-chip" id="auf-chip-erledigt" onclick="filterAuf(this,'erledigt')">✅ Erledigt</button>
-  </div>
-  <div class="scroll has-tabs" style="padding-top:10px">
-    <div id="auf-list" style="padding:0 16px;display:flex;flex-direction:column;gap:10px">
-      <div style="text-align:center;padding:48px 20px">
-        <div style="font-size:40px;margin-bottom:12px">📋</div>
-        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px">Noch keine Anfragen</div>
-        <div style="font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:20px">Wenn Sie einen Schaden melden, erscheint er hier mit aktuellem Status.</div>
-        <button onclick="homeTab('home')" style="background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:12px 24px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">Jetzt Schaden melden</button>
-      </div>
-    </div>
-    <div class="gap"></div>
-  </div>
-  <nav class="tabbar" id="tabbar-auf">
-    <button class="tab-item" onclick="homeTab('home')" id="tab2-home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
-    <button class="tab-item on" onclick="homeTab('auftraege')" id="tab2-auftraege"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span style="color:var(--blue)">Aufträge</span></button>
-    <button class="tab-item" onclick="homeTab('notruf')" id="tab2-notruf"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><span>Notruf</span></button>
-    <button class="tab-item" onclick="homeTab('ratgeber')" id="tab2-ratgeber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Ratgeber</span></button>
+    <button class="tab-item on" onclick="homeTab('home')" id="tab-home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span style="color:var(--blue)">Home</span></button>
+    <button class="tab-item" onclick="homeTab('ablauf')" id="tab-ablauf"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Ablauf</span></button>
+    <button class="tab-item" onclick="homeTab('ratgeber')" id="tab-ratgeber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Ratgeber</span></button>
+    <button class="tab-item" onclick="homeTab('kontakt')" id="tab-kontakt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><span>Kontakt</span></button>
   </nav>
 </div>
 
@@ -336,11 +324,172 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
     </div>
     <div class="gap"></div>
   </div>
-  <nav class="tabbar" id="tabbar-rat">
+    <nav class="tabbar" id="tabbar-3">
     <button class="tab-item" onclick="homeTab('home')" id="tab3-home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
-    <button class="tab-item" onclick="homeTab('auftraege')" id="tab3-auftraege"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Aufträge</span></button>
-    <button class="tab-item" onclick="homeTab('notruf')" id="tab3-notruf"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><span>Notruf</span></button>
+    <button class="tab-item" onclick="homeTab('ablauf')" id="tab3-ablauf"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Ablauf</span></button>
     <button class="tab-item on" onclick="homeTab('ratgeber')" id="tab3-ratgeber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span style="color:var(--blue)">Ratgeber</span></button>
+    <button class="tab-item" onclick="homeTab('kontakt')" id="tab3-kontakt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><span>Kontakt</span></button>
+  </nav>
+</div>
+
+<!-- ABLAUF SCREEN -->
+<div class="screen hidden" id="s-ablauf">
+  <div class="sb"><span id="clk-abl">9:41</span><div class="sb-icons"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity=".4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="white" opacity=".6"/><rect x="9" y="0" width="3" height="12" rx="1" fill="white" opacity=".8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg></div></div>
+  <div style="background:var(--blue);padding:12px 20px 20px;flex-shrink:0">
+    <div style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-.4px">So läuft es ab</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:3px">Von der Meldung bis zur Lösung</div>
+  </div>
+  <div class="scroll has-tabs" style="padding-top:20px">
+
+    <!-- Timeline -->
+    <div style="padding:0 20px;margin-bottom:24px">
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot" style="background:var(--blue)">1</div><div class="tl-line"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Schaden melden</div>
+          <div class="tl-text">Sie tippen in der App auf „Schaden melden", wählen die Kategorie und geben Ihre Kontaktdaten ein. Dauert weniger als 60 Sekunden.</div>
+          <div class="tl-badge">⚡ Sofort</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot" style="background:#5b8dd9">2</div><div class="tl-line"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Wir rufen zurück</div>
+          <div class="tl-text">Ein PREXIA-Experte meldet sich bei Ihnen – werktags in unter 2 Stunden. Wir besprechen den Schaden und vereinbaren einen Vor-Ort-Termin.</div>
+          <div class="tl-badge">📞 Innerhalb 2 Std.</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot" style="background:#7a9fd4">3</div><div class="tl-line"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Vor-Ort-Begehung</div>
+          <div class="tl-text">Wir kommen zu Ihnen und begutachten den Schaden direkt vor Ort. Modernste Messtechnik – kapazitiv, Widerstand, Thermografie und mehr.</div>
+          <div class="tl-badge">🔬 Professionelle Diagnostik</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot" style="background:#a0b8e0">4</div><div class="tl-line"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Leckage lokalisieren</div>
+          <div class="tl-text">Mit präzisen Verfahren wie Tracer­gas, Korrelator oder Elektroakustik finden wir die genaue Schadensquelle – zerstörungsfrei, schnell und sicher.</div>
+          <div class="tl-badge">📍 Ø 47 Min. bis zur Ortung</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot" style="background:var(--green)">5</div><div class="tl-line" style="opacity:0"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Protokoll & Versicherung</div>
+          <div class="tl-text">Sie erhalten ein vollständiges Messprotokoll für Ihre Versicherung. Wir koordinieren auf Wunsch auch die Weiterleitung an Sanierungsbetriebe.</div>
+          <div class="tl-badge">🛡️ Versicherungskonform</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div style="padding:0 16px;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Häufige Fragen</div>
+    <div style="display:flex;flex-direction:column;gap:1px;background:var(--sep);border-radius:var(--r);overflow:hidden;margin:0 16px;margin-bottom:20px">
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Was kostet der Rückruf?<span class="faq-ico">+</span></div>
+        <div class="faq-a">Der Rückruf und die erste Beratung sind komplett kostenlos und unverbindlich. Kosten entstehen erst nach einem vereinbarten Auftrag.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Wie schnell kommen Sie?<span class="faq-ico">+</span></div>
+        <div class="faq-a">Bei akuten Schäden versuchen wir noch am selben Tag vor Ort zu sein. Reguläre Termine vereinbaren wir nach Ihrer Verfügbarkeit.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Übernimmt die Versicherung die Kosten?<span class="faq-ico">+</span></div>
+        <div class="faq-a">In vielen Fällen ja – insbesondere bei Leitungswasserschäden. Unser Protokoll ist von Versicherungen anerkannt. Wir beraten Sie dazu kostenlos.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">In welchen Regionen sind Sie tätig?<span class="faq-ico">+</span></div>
+        <div class="faq-a">Wir sind in Kassel und der gesamten Region Nordhessen tätig. Bei größeren Schäden auch darüber hinaus – einfach anfragen.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Muss ich beim Termin anwesend sein?<span class="faq-ico">+</span></div>
+        <div class="faq-a">Ja, für den Vor-Ort-Termin sollten Sie oder eine bevollmächtigte Person anwesend sein um Zutritt zu ermöglichen.</div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="margin:0 16px;margin-bottom:20px;background:var(--blue-l);border-radius:var(--r);padding:18px;text-align:center">
+      <div style="font-size:15px;font-weight:700;color:var(--blue);margin-bottom:4px">Bereit? Jetzt kostenlos melden</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:14px">Unverbindlich · Rückruf in unter 2 Stunden</div>
+      <button onclick="homeTab('home')" style="background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:12px 28px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">Schaden melden</button>
+    </div>
+    <div class="gap"></div>
+  </div>
+    <nav class="tabbar" id="tabbar-2">
+    <button class="tab-item" onclick="homeTab('home')" id="tab2-home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
+    <button class="tab-item on" onclick="homeTab('ablauf')" id="tab2-ablauf"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span style="color:var(--blue)">Ablauf</span></button>
+    <button class="tab-item" onclick="homeTab('ratgeber')" id="tab2-ratgeber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Ratgeber</span></button>
+    <button class="tab-item" onclick="homeTab('kontakt')" id="tab2-kontakt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><span>Kontakt</span></button>
+  </nav>
+</div>
+
+<!-- KONTAKT SCREEN -->
+<div class="screen hidden" id="s-kontakt-tab">
+  <div class="sb"><span id="clk-kon">9:41</span><div class="sb-icons"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity=".4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="white" opacity=".6"/><rect x="9" y="0" width="3" height="12" rx="1" fill="white" opacity=".8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg></div></div>
+  <div style="background:var(--blue);padding:12px 20px 20px;flex-shrink:0">
+    <div style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-.4px">Kontakt</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:3px">Wir sind für Sie da</div>
+  </div>
+  <div class="scroll has-tabs" style="padding-top:20px">
+
+    <!-- Direkt kontaktieren -->
+    <div style="display:flex;flex-direction:column;gap:10px;padding:0 16px;margin-bottom:24px">
+      <a href="tel:+4956199999999" class="kontakt-card" style="background:var(--green)">
+        <div style="font-size:28px">📞</div>
+        <div style="flex:1"><div style="font-size:16px;font-weight:700;color:#fff">Jetzt anrufen</div><div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:2px">Mo–So · 24 Stunden</div></div>
+        <svg width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.5" stroke-linecap="round"><polyline points="1 1 8 7.5 1 14"/></svg>
+      </a>
+      <a href="https://wa.me/4956199999999" class="kontakt-card" style="background:#25D366">
+        <div style="font-size:28px">💬</div>
+        <div style="flex:1"><div style="font-size:16px;font-weight:700;color:#fff">WhatsApp schreiben</div><div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:2px">Schnelle Antwort · auch Fotos senden</div></div>
+        <svg width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.5" stroke-linecap="round"><polyline points="1 1 8 7.5 1 14"/></svg>
+      </a>
+      <a href="mailto:info@prexia24.de" class="kontakt-card" style="background:var(--blue)">
+        <div style="font-size:28px">✉️</div>
+        <div style="flex:1"><div style="font-size:16px;font-weight:700;color:#fff">E-Mail schreiben</div><div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:2px">info@prexia24.de</div></div>
+        <svg width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.5" stroke-linecap="round"><polyline points="1 1 8 7.5 1 14"/></svg>
+      </a>
+    </div>
+
+    <!-- Info -->
+    <div style="padding:0 16px;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Über PREXIA</div>
+    <div style="background:var(--card);border-radius:var(--r);margin:0 16px;overflow:hidden;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:.5px solid var(--sep)">
+        <div style="font-size:22px;width:36px;text-align:center">📍</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">Kassel & Nordhessen</div><div style="font-size:13px;color:var(--text3)">Einsatzgebiet Region Nordhessen</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:.5px solid var(--sep)">
+        <div style="font-size:22px;width:36px;text-align:center">🕐</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">Mo–So, 24 Stunden</div><div style="font-size:13px;color:var(--text3)">Auch am Wochenende erreichbar</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:.5px solid var(--sep)">
+        <div style="font-size:22px;width:36px;text-align:center">🌐</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">www.prexia24.de</div><div style="font-size:13px;color:var(--text3)">Mehr Infos auf unserer Website</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px">
+        <div style="font-size:22px;width:36px;text-align:center">✉️</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">info@prexia24.de</div><div style="font-size:13px;color:var(--text3)">Für allgemeine Anfragen</div></div>
+      </div>
+    </div>
+
+    <!-- Leistungen -->
+    <div style="padding:0 16px;margin-bottom:8px;font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Unsere Leistungen</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;margin-bottom:24px">
+      <div style="background:var(--card);border-radius:var(--r);padding:14px;text-align:center"><div style="font-size:24px;margin-bottom:6px">🔍</div><div style="font-size:13px;font-weight:600;color:var(--text)">Leckortung</div></div>
+      <div style="background:var(--card);border-radius:var(--r);padding:14px;text-align:center"><div style="font-size:24px;margin-bottom:6px">💨</div><div style="font-size:13px;font-weight:600;color:var(--text)">Trocknung</div></div>
+      <div style="background:var(--card);border-radius:var(--r);padding:14px;text-align:center"><div style="font-size:24px;margin-bottom:6px">🏗️</div><div style="font-size:13px;font-weight:600;color:var(--text)">Sanierung</div></div>
+      <div style="background:var(--card);border-radius:var(--r);padding:14px;text-align:center"><div style="font-size:24px;margin-bottom:6px">📋</div><div style="font-size:13px;font-weight:600;color:var(--text)">Protokolle</div></div>
+    </div>
+    <div class="gap"></div>
+  </div>
+    <nav class="tabbar" id="tabbar-4">
+    <button class="tab-item" onclick="homeTab('home')" id="tab4-home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
+    <button class="tab-item" onclick="homeTab('ablauf')" id="tab4-ablauf"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span>Ablauf</span></button>
+    <button class="tab-item" onclick="homeTab('ratgeber')" id="tab4-ratgeber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Ratgeber</span></button>
+    <button class="tab-item on" onclick="homeTab('kontakt')" id="tab4-kontakt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><span style="color:var(--blue)">Kontakt</span></button>
   </nav>
 </div>
 
@@ -520,7 +669,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
 </div>
 <script>
 var cur='s-home', cat='', ico='', zeitLabel='So bald wie möglich';
-var ALL=['s-home','s-auftraege','s-ratgeber','s-kat','s-kontakt','s-ruf','s-confirm','s-notruf','s-info','s-admin-login','s-admin'];
+var ALL=['s-home','s-ablauf','s-ratgeber','s-kontakt-tab','s-kat','s-kontakt','s-ruf','s-confirm','s-notruf','s-info','s-admin-login','s-admin'];
 var SUPABASE_URL='https://lsjbsduebavpawejlpnq.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzamJzZHVlYmF2cGF3ZWpscG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyODU0NjQsImV4cCI6MjA4OTg2MTQ2NH0.k5PD8tmv_JJ0ismrO2k7cebrqHTVJW8tz9TCkP4RvLQ';
 var adminData=[], adminFilter='';
@@ -748,7 +897,7 @@ tick();setInterval(tick,1000);
 // ── TAB BAR NAVIGATION ──
 function homeTab(section) {
   // Navigate to correct screen
-  var screenMap = {home:'s-home', auftraege:'s-auftraege', ratgeber:'s-ratgeber', notruf:'s-notruf'};
+  var screenMap = {home:'s-home', ablauf:'s-ablauf', ratgeber:'s-ratgeber', kontakt:'s-kontakt-tab', notruf:'s-notruf'};
   var targetId = screenMap[section];
   if(!targetId) return;
 
@@ -762,12 +911,9 @@ function homeTab(section) {
   document.getElementById(targetId).classList.remove('hidden');
   cur = targetId;
 
-  // Load data when needed
-  if(section==='auftraege') ladeAuftraege();
-
   // Update all tab bars
-  ['','2','3'].forEach(function(prefix){
-    ['home','auftraege','notruf','ratgeber'].forEach(function(t){
+  ['','2','3','4'].forEach(function(prefix){
+    ['home','ablauf','ratgeber','kontakt'].forEach(function(t){
       var btn=document.getElementById('tab'+prefix+'-'+t);
       if(!btn) return;
       btn.classList.toggle('on', t===section);
@@ -779,7 +925,12 @@ function homeTab(section) {
   });
 }
 
-// ── ANFRAGEN FÜR AUFTRÄGE-SCREEN ──
+function toggleFaq(el){
+  var wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(function(f){f.classList.remove('open');});
+  if(!wasOpen) el.classList.add('open');
+}
+
 var aufData=[], aufFilter='';
 async function ladeAuftraege(){
   try{
