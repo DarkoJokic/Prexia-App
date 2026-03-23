@@ -154,6 +154,19 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
 .auth-switch b{color:var(--blue);font-weight:600;cursor:pointer}
 .auth-err{background:#fff0ef;border:1px solid rgba(217,48,37,.2);border-radius:var(--r-sm);padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:12px;display:none;line-height:1.5}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.admin-chip{background:var(--card);border:1.5px solid var(--sep2);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text2);font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
+.admin-chip.sel{background:var(--blue);border-color:var(--blue);color:#fff}
+.admin-card{background:var(--card);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.admin-card-top{display:flex;align-items:center;gap:10px}
+.admin-card-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.admin-card-title{font-size:15px;font-weight:600;color:var(--text)}
+.admin-card-ref{font-size:11px;font-family:monospace;color:var(--blue);margin-top:1px}
+.admin-card-rows{display:flex;flex-direction:column;gap:6px;padding-top:4px;border-top:.5px solid var(--sep)}
+.admin-card-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.admin-card-lbl{color:var(--text3);min-width:60px;font-size:12px}
+.call-btn{display:flex;align-items:center;gap:6px;background:var(--green);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;margin-top:4px;justify-content:center;transition:opacity .15s}
+.call-btn:active{opacity:.85}
+.admin-time{font-size:11px;color:var(--text3);margin-left:auto;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -395,6 +408,38 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
   <div class="tabs"><button class="tab" onclick="tab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button><button class="tab" onclick="tab('auftraege')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Aufträge</span></button><button class="tab on" onclick="tab('profil')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span style="color:var(--blue)">Profil</span></button></div>
 </div>
 
+<!-- ADMIN DASHBOARD -->
+<div class="screen hidden" id="s-admin">
+  <div class="sb"><span id="clk-admin">9:41</span><div class="sb-icons"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity=".4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="white" opacity=".6"/><rect x="9" y="0" width="3" height="12" rx="1" fill="white" opacity=".8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg></div></div>
+  <div style="background:var(--blue);padding:10px 20px 18px;flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:17px;font-weight:700;color:#fff;letter-spacing:-.2px">⚙️ Admin</div>
+      <button onclick="doLogout()" style="background:rgba(255,255,255,.15);border:none;border-radius:20px;padding:5px 12px;color:#fff;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">Abmelden</button>
+    </div>
+    <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px">Alle Anfragen</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:3px">Echtzeit · <span id="admin-count">wird geladen…</span></div>
+  </div>
+  <!-- Neu-Anfrage Banner -->
+  <div id="admin-banner" style="display:none;background:var(--green);padding:12px 16px;flex-shrink:0;flex-direction:row;align-items:center;gap:10px">
+    <div style="font-size:20px">🔔</div>
+    <div style="flex:1"><div id="admin-banner-title" style="font-size:14px;font-weight:700;color:#fff">Neue Anfrage!</div><div id="admin-banner-sub" style="font-size:12px;color:rgba(255,255,255,.8)">—</div></div>
+    <button onclick="document.getElementById('admin-banner').style.display='none'" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0;line-height:1">✕</button>
+  </div>
+  <!-- Filter Chips -->
+  <div style="padding:12px 16px 4px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0" id="admin-filter">
+    <button class="admin-chip sel" onclick="filterAdmin(this,'')">Alle</button>
+    <button class="admin-chip" onclick="filterAdmin(this,'Wasserschaden')">💧 Wasser</button>
+    <button class="admin-chip" onclick="filterAdmin(this,'Heizung defekt')">🔥 Heizung</button>
+    <button class="admin-chip" onclick="filterAdmin(this,'Rohrbruch')">🔧 Rohrbruch</button>
+    <button class="admin-chip" onclick="filterAdmin(this,'Feuchte / Schimmel')">🌫️ Schimmel</button>
+  </div>
+  <div class="scroll" style="padding:10px 16px 20px">
+    <div id="admin-list" style="display:flex;flex-direction:column;gap:10px">
+      <div style="text-align:center;padding:40px 20px;color:var(--text3);font-size:14px">Lade Anfragen…</div>
+    </div>
+  </div>
+</div>
+
 </div>
 <script>
 var cur='s-login',cat='',ico='',zeitLabel='So bald wie möglich';
@@ -416,9 +461,23 @@ function showRegister(){
 }
 function showApp(user){
   currentUser = user;
-  // Profil befüllen
   var meta = user.user_metadata || {};
-  var name = (meta.vorname||'') + (meta.nachname?' '+meta.nachname:'') || user.email;
+  var isAdmin = meta.role === 'admin' || user.email === 'info@prexia24.de';
+
+  if(isAdmin){
+    // Admin-Ansicht
+    document.getElementById('s-login').classList.add('hidden');
+    document.getElementById('s-register').classList.add('hidden');
+    ALL.forEach(function(s){document.getElementById(s).classList.add('hidden');});
+    document.getElementById('s-admin').classList.remove('hidden');
+    cur='s-admin';
+    ladeAlleAnfragen();
+    startRealtimeAdmin();
+    return;
+  }
+
+  // Normaler Kunde
+  var name = ((meta.vorname||'') + (meta.nachname?' '+meta.nachname:'')).trim() || user.email;
   var initials = name.split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2) || 'ME';
   document.getElementById('prof-av').textContent = initials;
   document.getElementById('prof-name').textContent = name || '—';
@@ -426,14 +485,11 @@ function showApp(user){
   document.getElementById('prof-email').textContent = user.email || '—';
   document.getElementById('prof-tel').textContent = meta.telefon || '—';
   document.getElementById('prof-adr').textContent = meta.adresse || '—';
-  // Rückruf-Pill
   document.getElementById('ruf-av').textContent = initials;
   document.getElementById('ruf-name').textContent = name || user.email;
-  // Begrüßung
   var h = new Date().getHours();
   var gruss = h<12 ? 'Guten Morgen' : (h<18 ? 'Guten Tag' : 'Guten Abend');
   document.getElementById('home-gruss').textContent = gruss + (meta.vorname?' '+meta.vorname:'') + ' 👋';
-  // Auth-Screens verstecken, App zeigen
   document.getElementById('s-login').classList.add('hidden');
   document.getElementById('s-register').classList.add('hidden');
   ALL.forEach(function(s){document.getElementById(s).classList.add('hidden');});
@@ -511,6 +567,7 @@ function doLogout(){
   localStorage.removeItem('prexia_user');
   currentUser=null;
   ALL.forEach(function(s){document.getElementById(s).classList.add('hidden');});
+  document.getElementById('s-admin').classList.add('hidden');
   document.getElementById('s-login').classList.remove('hidden');
   cur='s-login';
 }
@@ -637,7 +694,91 @@ async function ladeAuftraege() {
   }
 }
 
-// Auftraege werden nach Login via showApp() geladen
+// ═══════════════════════════════════════════════════════
+// ADMIN – alle Anfragen laden & Echtzeit
+// ═══════════════════════════════════════════════════════
+var adminFilter = '';
+var adminData = [];
+var realtimeChannel = null;
+
+async function ladeAlleAnfragen(){
+  try{
+    var res = await fetch(SUPABASE_URL+'/rest/v1/anfragen?select=*&order=created_at.desc', {
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    if(!res.ok) return;
+    adminData = await res.json();
+    renderAdminList();
+  }catch(e){ console.error(e); }
+}
+
+function renderAdminList(){
+  var data = adminFilter ? adminData.filter(function(a){return a.schadenart===adminFilter;}) : adminData;
+  var count = adminData.length;
+  document.getElementById('admin-count').textContent = count + ' Anfrage' + (count!==1?'n':'');
+  var list = document.getElementById('admin-list');
+  if(!data.length){
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text3);font-size:14px">📋 Keine Anfragen vorhanden</div>';
+    return;
+  }
+  var ICO_BG = {'Wasserschaden':'#ddeefa','Heizung defekt':'#fde8e6','Rohrbruch':'#e6f4ea','Feuchte / Schimmel':'#fef9e0','Sonstiges':'#f2f2f7'};
+  list.innerHTML = data.map(function(a){
+    var d = new Date(a.created_at);
+    var heute = new Date();
+    var gestern = new Date(heute); gestern.setDate(gestern.getDate()-1);
+    var datumStr;
+    if(d.toDateString()===heute.toDateString()) datumStr='Heute '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+    else if(d.toDateString()===gestern.toDateString()) datumStr='Gestern '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+    else datumStr=d.toLocaleDateString('de-DE')+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+    var bg = ICO_BG[a.schadenart]||'#f2f2f7';
+    var telClean = (a.telefon||'').replace(/\s/g,'');
+    var telHtml = a.telefon && a.telefon!=='—'
+      ? '<a href="tel:'+telClean+'" class="call-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> '+a.telefon+' anrufen</a>'
+      : '<div style="font-size:13px;color:var(--text3)">Keine Nummer</div>';
+    return '<div class="admin-card">'+
+      '<div class="admin-card-top">'+
+        '<div class="admin-card-ico" style="background:'+bg+'">'+a.ico+'</div>'+
+        '<div style="flex:1"><div class="admin-card-title">'+a.schadenart+'</div><div class="admin-card-ref">'+a.referenz+'</div></div>'+
+        '<div class="admin-time">'+datumStr+'</div>'+
+      '</div>'+
+      '<div class="admin-card-rows">'+
+        '<div class="admin-card-row"><span class="admin-card-lbl">Kunde</span><span>'+a.name+'</span></div>'+
+        '<div class="admin-card-row"><span class="admin-card-lbl">Rückruf</span><span>'+a.rueckruf+'</span></div>'+
+        '<div class="admin-card-row"><span class="admin-card-lbl">Adresse</span><span style="font-size:12px">'+a.adresse+'</span></div>'+
+        (a.notiz?'<div class="admin-card-row"><span class="admin-card-lbl">Notiz</span><span style="font-style:italic;font-size:12px">'+a.notiz+'</span></div>':'')+
+      '</div>'+
+      telHtml+
+    '</div>';
+  }).join('');
+}
+
+function filterAdmin(el, val){
+  adminFilter = val;
+  document.querySelectorAll('.admin-chip').forEach(function(c){c.classList.remove('sel');});
+  el.classList.add('sel');
+  renderAdminList();
+}
+
+function startRealtimeAdmin(){
+  // Polling alle 30 Sekunden als einfaches Realtime
+  setInterval(async function(){
+    var vorher = adminData.length;
+    await ladeAlleAnfragen();
+    var jetzt = adminData.length;
+    if(jetzt > vorher && adminData[0]){
+      var neu = adminData[0];
+      var banner = document.getElementById('admin-banner');
+      document.getElementById('admin-banner-title').textContent = '🔔 Neue Anfrage: ' + neu.schadenart;
+      document.getElementById('admin-banner-sub').textContent = neu.name + ' · ' + neu.rueckruf;
+      banner.style.display = 'flex';
+      // Vibration auf iPhone
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+      // Auto-hide nach 8 Sekunden
+      setTimeout(function(){ banner.style.display='none'; }, 8000);
+    }
+  }, 30000);
+}
+
 
 // ═══════════════════════════════════════════════════════
 // ANFRAGE SENDEN – via Supabase
