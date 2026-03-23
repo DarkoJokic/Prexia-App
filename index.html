@@ -157,6 +157,14 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
 .has-tabs .scroll{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
 
 .gap{height:20px}.gap-sm{height:10px}
+.rat-card{background:var(--card);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;border:none;font-family:inherit;width:100%;transition:transform .12s;text-align:left}
+.rat-card:active{transform:scale(.98)}
+.auf-chip{background:var(--card);border:1.5px solid var(--sep2);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text3);font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.auf-chip.sel{background:var(--blue);border-color:var(--blue);color:#fff}
+.auf-item{background:var(--card);border-radius:var(--r);padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
+.auf-status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.auf-status-offen{background:var(--amber)}
+.auf-status-erledigt{background:var(--green)}
 @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fu{animation:fu .28s ease both}
 @keyframes scin{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
@@ -222,6 +230,117 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span>Ratgeber</span>
     </button>
+  </nav>
+</div>
+
+<!-- AUFTRÄGE SCREEN -->
+<div class="screen hidden" id="s-auftraege">
+  <div class="sb"><span id="clk-auf">9:41</span><div class="sb-icons"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity=".4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="white" opacity=".6"/><rect x="9" y="0" width="3" height="12" rx="1" fill="white" opacity=".8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg></div></div>
+  <div style="background:var(--blue);padding:12px 20px 20px;flex-shrink:0">
+    <div style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-.4px">Meine Anfragen</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:3px" id="auf-count">Wird geladen…</div>
+  </div>
+  <!-- Filter Chips -->
+  <div style="background:var(--card);border-bottom:.5px solid var(--sep);padding:10px 16px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0">
+    <button class="auf-chip sel" id="auf-chip-alle" onclick="filterAuf(this,'')">Alle</button>
+    <button class="auf-chip" id="auf-chip-offen" onclick="filterAuf(this,'offen')">⏳ Offen</button>
+    <button class="auf-chip" id="auf-chip-erledigt" onclick="filterAuf(this,'erledigt')">✅ Erledigt</button>
+  </div>
+  <div class="scroll has-tabs" style="padding-top:10px">
+    <div id="auf-list" style="padding:0 16px;display:flex;flex-direction:column;gap:10px">
+      <div style="text-align:center;padding:48px 20px">
+        <div style="font-size:40px;margin-bottom:12px">📋</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px">Noch keine Anfragen</div>
+        <div style="font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:20px">Wenn Sie einen Schaden melden, erscheint er hier mit aktuellem Status.</div>
+        <button onclick="homeTab('home')" style="background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:12px 24px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">Jetzt Schaden melden</button>
+      </div>
+    </div>
+    <div class="gap"></div>
+  </div>
+  <nav class="tabbar" id="tabbar-auf">
+    <button class="tab-item" onclick="homeTab('home')" id="tab2-home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
+    <button class="tab-item on" onclick="homeTab('auftraege')" id="tab2-auftraege"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span style="color:var(--blue)">Aufträge</span></button>
+    <button class="tab-item" onclick="homeTab('notruf')" id="tab2-notruf"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><span>Notruf</span></button>
+    <button class="tab-item" onclick="homeTab('ratgeber')" id="tab2-ratgeber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Ratgeber</span></button>
+  </nav>
+</div>
+
+<!-- RATGEBER SCREEN -->
+<div class="screen hidden" id="s-ratgeber">
+  <div class="sb"><span id="clk-rat">9:41</span><div class="sb-icons"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity=".4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="white" opacity=".6"/><rect x="9" y="0" width="3" height="12" rx="1" fill="white" opacity=".8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg></div></div>
+  <div style="background:var(--blue);padding:12px 20px 20px;flex-shrink:0">
+    <div style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-.4px">Ratgeber</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:3px">Tipps & Erste Hilfe bei Schäden</div>
+  </div>
+  <div class="scroll has-tabs" style="padding-top:16px">
+
+    <!-- Schnell-CTA -->
+    <div style="margin:0 16px 20px;background:var(--blue-l);border-radius:var(--r);padding:16px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:32px">🚨</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700;color:var(--blue);margin-bottom:2px">Akuter Schaden?</div>
+        <div style="font-size:13px;color:var(--text3)">Direkt Rückruf anfordern – wir helfen sofort</div>
+      </div>
+      <button onclick="homeTab('home')" style="background:var(--blue);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">Melden</button>
+    </div>
+
+    <!-- Themen -->
+    <div style="padding:0 16px;margin-bottom:6px;font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Themen</div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:0 16px;margin-bottom:20px">
+      <button class="rat-card" onclick="showInfo('wasser')">
+        <div style="font-size:28px;flex-shrink:0">💧</div>
+        <div style="flex:1;text-align:left"><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px">Wasserschaden – was tun?</div><div style="font-size:13px;color:var(--text3)">Die ersten Minuten entscheiden</div></div>
+        <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" opacity=".4"><polyline points="1 1 7 6.5 1 12"/></svg>
+      </button>
+      <button class="rat-card" onclick="showInfo('schimmel')">
+        <div style="font-size:28px;flex-shrink:0">🌫️</div>
+        <div style="flex:1;text-align:left"><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px">Schimmel – was beachten?</div><div style="font-size:13px;color:var(--text3)">Warnsignale & richtiges Verhalten</div></div>
+        <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" opacity=".4"><polyline points="1 1 7 6.5 1 12"/></svg>
+      </button>
+      <button class="rat-card" onclick="showInfo('heizung')">
+        <div style="font-size:28px;flex-shrink:0">🔥</div>
+        <div style="flex:1;text-align:left"><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px">Heizung defekt – Checklist</div><div style="font-size:13px;color:var(--text3)">Vor dem Anruf selbst prüfen</div></div>
+        <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" opacity=".4"><polyline points="1 1 7 6.5 1 12"/></svg>
+      </button>
+      <button class="rat-card" onclick="showInfo('versicherung')">
+        <div style="font-size:28px;flex-shrink:0">🛡️</div>
+        <div style="flex:1;text-align:left"><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px">Versicherung & Schaden</div><div style="font-size:13px;color:var(--text3)">Was Sie unbedingt wissen sollten</div></div>
+        <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" opacity=".4"><polyline points="1 1 7 6.5 1 12"/></svg>
+      </button>
+      <button class="rat-card" onclick="showInfo('rohr')">
+        <div style="font-size:28px;flex-shrink:0">🔧</div>
+        <div style="flex:1;text-align:left"><div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px">Rohrbruch – Sofortmaßnahmen</div><div style="font-size:13px;color:var(--text3)">Was jetzt zählt</div></div>
+        <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" opacity=".4"><polyline points="1 1 7 6.5 1 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Über PREXIA -->
+    <div style="padding:0 16px;margin-bottom:6px;font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Über PREXIA</div>
+    <div style="background:var(--card);border-radius:var(--r);margin:0 16px;overflow:hidden;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:.5px solid var(--sep)">
+        <div style="font-size:20px">📍</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">Region Kassel & Nordhessen</div><div style="font-size:13px;color:var(--text3)">Vor-Ort-Service im Einsatzgebiet</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:.5px solid var(--sep)">
+        <div style="font-size:20px">⏱️</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">Rückruf in unter 2 Stunden</div><div style="font-size:13px;color:var(--text3)">Mo–So, auch am Wochenende</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:.5px solid var(--sep)">
+        <div style="font-size:20px">🔬</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">Leckortung · Trocknung · Sanierung</div><div style="font-size:13px;color:var(--text3)">Professionelle Bauwerksdiagnostik</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px">
+        <div style="font-size:20px">🛡️</div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text)">Versicherungskonform dokumentiert</div><div style="font-size:13px;color:var(--text3)">Protokolle für Ihre Versicherung</div></div>
+      </div>
+    </div>
+    <div class="gap"></div>
+  </div>
+  <nav class="tabbar" id="tabbar-rat">
+    <button class="tab-item" onclick="homeTab('home')" id="tab3-home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
+    <button class="tab-item" onclick="homeTab('auftraege')" id="tab3-auftraege"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Aufträge</span></button>
+    <button class="tab-item" onclick="homeTab('notruf')" id="tab3-notruf"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><span>Notruf</span></button>
+    <button class="tab-item on" onclick="homeTab('ratgeber')" id="tab3-ratgeber"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span style="color:var(--blue)">Ratgeber</span></button>
   </nav>
 </div>
 
@@ -341,7 +460,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
 
 <!-- INFO DETAIL -->
 <div class="screen hidden" id="s-info">
-  <div class="nav"><button class="back-btn" onclick="back('s-home')"><svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="7 1 1 7 7 13"/></svg> Zurück</button><div class="nav-title" id="info-nav">Ratgeber</div><button class="home-btn" onclick="goHome()">🏠</button></div>
+  <div class="nav"><button class="back-btn" onclick="back(infoFrom)"><svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="7 1 1 7 7 13"/></svg> Zurück</button><div class="nav-title" id="info-nav">Ratgeber</div><button class="home-btn" onclick="goHome()">🏠</button></div>
   <div class="scroll" style="padding-top:20px">
     <div style="padding:0 20px 20px"><div id="info-ico" style="font-size:48px;margin-bottom:12px">💧</div><div id="info-title" style="font-size:24px;font-weight:700;color:var(--text);letter-spacing:-.4px;margin-bottom:6px">Titel</div><div id="info-sub" style="font-size:15px;color:var(--text3);line-height:1.5">Sub</div></div>
     <div class="sec"><div class="card" id="info-tips"></div></div>
@@ -401,7 +520,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:v
 </div>
 <script>
 var cur='s-home', cat='', ico='', zeitLabel='So bald wie möglich';
-var ALL=['s-home','s-kat','s-kontakt','s-ruf','s-confirm','s-notruf','s-info','s-admin-login','s-admin'];
+var ALL=['s-home','s-auftraege','s-ratgeber','s-kat','s-kontakt','s-ruf','s-confirm','s-notruf','s-info','s-admin-login','s-admin'];
 var SUPABASE_URL='https://lsjbsduebavpawejlpnq.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzamJzZHVlYmF2cGF3ZWpscG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyODU0NjQsImV4cCI6MjA4OTg2MTQ2NH0.k5PD8tmv_JJ0ismrO2k7cebrqHTVJW8tz9TCkP4RvLQ';
 var adminData=[], adminFilter='';
@@ -448,8 +567,10 @@ var INFO={
   wasser:{ico:'💧',t:'Wasserschaden – was tun?',s:'Die ersten Minuten entscheiden',tips:[{t:'Haupthahn sofort abdrehen',tx:'Jede Minute zählt. Wasserversorgung am Haupthahn abstellen – meist im Keller oder Hausanschlussraum.'},{t:'Strom sichern',tx:'Befindet sich Wasser in der Nähe von Steckdosen oder Elektrik, sofort die Sicherung abschalten.'},{t:'Alles fotografieren',tx:'Vor dem Aufwischen alles dokumentieren – Datum & Uhrzeit für die Versicherung wichtig.'},{t:'Versicherung informieren',tx:'Gebäude- oder Hausratversicherung melden. Manche haben 24/7-Hotlines.'},{t:'Keine Eigenreparaturen',tx:'Nicht versuchen selbst zu dichten – falsches Abdichten kann Schimmel fördern.'}]},
   schimmel:{ico:'🌫️',t:'Schimmel – was beachten?',s:'Warnsignale & richtiges Verhalten',tips:[{t:'Schimmel nicht selbst entfernen',tx:'Schimmelpilzsporen sind gesundheitsschädlich. Kein Abwischen ohne Schutz – Profis beauftragen.'},{t:'Ursache klären',tx:'Schimmel ist immer Symptom – Feuchtigkeit muss gefunden werden. Ohne Ursachenbeseitigung kommt er zurück.'},{t:'Gut lüften',tx:'Stoßlüften 3× täglich. Luftfeuchtigkeit unter 60% halten.'},{t:'Möbel von Wänden abrücken',tx:'Mindestens 5–10 cm Abstand zu Außenwänden – so kann Luft zirkulieren.'},{t:'Früh handeln',tx:'Bei mehr als 0,5 m² unbedingt Fachbetrieb beauftragen.'}]},
   heizung:{ico:'🔥',t:'Heizung defekt – Checklist',s:'Vor dem Anruf selbst prüfen',tips:[{t:'Systemdruck prüfen',tx:'Normaldruck ist 1,5–2 bar. Zeigt das Manometer weniger als 1 bar, Druck nachfüllen.'},{t:'Thermostate prüfen',tx:'Sind alle Thermostate aufgedreht? Manchmal ist ein einzelner Heizkörper die Ursache.'},{t:'Fehlermeldung notieren',tx:'Zeigt die Therme einen Fehlercode? Diesen notieren und beim Anruf mitteilen.'},{t:'Sicherungsautomat prüfen',tx:'Ist die Sicherung der Therme ausgelöst? Im Sicherungskasten kontrollieren.'},{t:'Nicht selbst öffnen',tx:'Heizungsanlagen stehen unter Druck – bitte nie selbst öffnen oder Leitungen lösen.'}]},
-  versicherung:{ico:'🛡️',t:'Versicherung & Schaden',s:'Was Sie wissen sollten',tips:[{t:'⚠️ Erst PREXIA – dann Versicherung',tx:'Melden Sie sich zuerst bei uns – damit wir sofort Maßnahmen ergreifen und den Schaden so gering wie möglich halten können. Jede Stunde zählt. Danach unterstützen wir Sie bei der Versicherungsmeldung mit vollständiger Dokumentation.'},{t:'Dokumentation vor der Meldung',tx:'Lassen Sie uns den Schaden zuerst fachgerecht dokumentieren – Fotos, Messprotokolle, Ortungsbericht.'},{t:'Nichts voreilig wegwerfen',tx:'Beschädigte Gegenstände erst nach Freigabe durch die Versicherung entsorgen.'},{t:'Gebäude- vs. Hausrat',tx:'Gebäudeversicherung: Schaden am Haus. Hausratversicherung: Möbel & Geräte. Beide prüfen!'},{t:'PREXIA-Protokoll als Nachweis',tx:'Unser Ortungsprotokoll mit Messwerten und Fotos ist ein professioneller Nachweis – von Versicherungen anerkannt.'}]}
+  versicherung:{ico:'🛡️',t:'Versicherung & Schaden',s:'Was Sie wissen sollten',tips:[{t:'⚠️ Erst PREXIA – dann Versicherung',tx:'Melden Sie sich zuerst bei uns – damit wir sofort Maßnahmen ergreifen und den Schaden so gering wie möglich halten können. Jede Stunde zählt. Danach unterstützen wir Sie bei der Versicherungsmeldung mit vollständiger Dokumentation.'},{t:'Dokumentation vor der Meldung',tx:'Lassen Sie uns den Schaden zuerst fachgerecht dokumentieren – Fotos, Messprotokolle, Ortungsbericht.'},{t:'Nichts voreilig wegwerfen',tx:'Beschädigte Gegenstände erst nach Freigabe durch die Versicherung entsorgen.'},{t:'Gebäude- vs. Hausrat',tx:'Gebäudeversicherung: Schaden am Haus. Hausratversicherung: Möbel & Geräte. Beide prüfen!'},{t:'PREXIA-Protokoll als Nachweis',tx:'Unser Ortungsprotokoll mit Messwerten und Fotos ist ein professioneller Nachweis – von Versicherungen anerkannt.'}]},
+  rohr:{ico:'🔧',t:'Rohrbruch – Sofortmaßnahmen',s:'Was jetzt zählt',tips:[{t:'Haupthahn sofort schließen',tx:'Den Hauptabsperrhahn des Hauses sofort zudrehen – meist im Keller oder Hausanschlussraum.'},{t:'Strom sichern',tx:'Falls Wasser in der Nähe von Elektrik austritt, sofort die entsprechenden Sicherungen abschalten.'},{t:'Wasser ableiten',tx:'Handtücher, Eimer oder Wannen aufstellen um weiteren Schaden zu minimieren. Fotos machen!'},{t:'Nicht reparieren',tx:'Keine Eigenreparaturen versuchen – ein falsch abgedichtetes Rohr kann noch mehr Schaden anrichten.'},{t:'PREXIA kontaktieren',tx:'Wir lokalisieren die Leckage professionell und koordinieren die Reparatur – kostenloser Rückruf.'}]}
 };
+var infoFrom='s-home';
 function showInfo(key){
   var d=INFO[key];
   document.getElementById('info-ico').textContent=d.ico;
@@ -458,6 +579,8 @@ function showInfo(key){
   document.getElementById('info-tips').innerHTML=d.tips.map(function(tp,i){
     return '<div class="tip-row"><div class="tip-num">'+(i+1)+'</div><div><div class="tip-title">'+tp.t+'</div><div class="tip-text">'+tp.tx+'</div></div></div>';
   }).join('');
+  // Track where we came from for back button
+  infoFrom = cur;
   go('s-info');
 }
 function resetAndHome(){
@@ -623,27 +746,99 @@ function tick(){
 tick();setInterval(tick,1000);
 
 // ── TAB BAR NAVIGATION ──
-var homeSection = 'home';
 function homeTab(section) {
-  homeSection = section;
-  ['home','auftraege','notruf','ratgeber'].forEach(function(t) {
-    var btn = document.getElementById('tab-'+t);
-    if(btn) {
-      btn.classList.toggle('on', t===section);
-      var svg = btn.querySelector('svg');
-      var span = btn.querySelector('span');
-      if(svg) svg.setAttribute('stroke', t===section ? 'var(--blue)' : 'var(--text3)');
-    }
+  // Navigate to correct screen
+  var screenMap = {home:'s-home', auftraege:'s-auftraege', ratgeber:'s-ratgeber', notruf:'s-notruf'};
+  var targetId = screenMap[section];
+  if(!targetId) return;
+
+  // Hide all screens, show target
+  ALL.forEach(function(s){
+    var el=document.getElementById(s);
+    el.classList.add('hidden');
+    el.classList.remove('pushed');
+    el.style.cssText='';
   });
-  // Show/hide home content sections
-  var homeSec = document.getElementById('home-main');
-  var auftraegeSec = document.getElementById('home-auftraege');
-  var notrufSec = document.getElementById('home-notruf-section');
-  var ratgeberSec = document.getElementById('home-ratgeber-section');
-  if(section==='notruf'){ go('s-notruf'); return; }
-  // Scroll to relevant section in home
-  var el = document.getElementById('home-section-'+section);
-  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  document.getElementById(targetId).classList.remove('hidden');
+  cur = targetId;
+
+  // Load data when needed
+  if(section==='auftraege') ladeAuftraege();
+
+  // Update all tab bars
+  ['','2','3'].forEach(function(prefix){
+    ['home','auftraege','notruf','ratgeber'].forEach(function(t){
+      var btn=document.getElementById('tab'+prefix+'-'+t);
+      if(!btn) return;
+      btn.classList.toggle('on', t===section);
+      var svg=btn.querySelector('svg');
+      var span=btn.querySelector('span');
+      if(svg) svg.setAttribute('stroke', t===section?'var(--blue)':'var(--text3)');
+      if(span) span.style.color = t===section?'var(--blue)':'';
+    });
+  });
+}
+
+// ── ANFRAGEN FÜR AUFTRÄGE-SCREEN ──
+var aufData=[], aufFilter='';
+async function ladeAuftraege(){
+  try{
+    var res=await fetch(SUPABASE_URL+'/rest/v1/anfragen?select=*&order=created_at.desc',{
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    if(!res.ok) return;
+    aufData=await res.json();
+    renderAuftraege();
+  }catch(e){}
+}
+function renderAuftraege(){
+  var data=aufFilter==='offen'?aufData.filter(function(a){return a.status!=='erledigt';}):
+           aufFilter==='erledigt'?aufData.filter(function(a){return a.status==='erledigt';}):aufData;
+  var count=aufData.length;
+  document.getElementById('auf-count').textContent=count+' Anfrage'+(count!==1?'n':'');
+  var list=document.getElementById('auf-list');
+  if(!data.length){
+    list.innerHTML='<div style="text-align:center;padding:48px 20px">'
+      +'<div style="font-size:40px;margin-bottom:12px">📋</div>'
+      +'<div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px">Noch keine Anfragen</div>'
+      +'<div style="font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:20px">Wenn Sie einen Schaden melden, erscheint er hier.</div>'
+      +'<button onclick="homeTab(\'home\')" style="background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:12px 24px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">Jetzt Schaden melden</button>'
+      +'</div>';
+    return;
+  }
+  var ICO_BG={'Wasserschaden':'#ddeefa','Heizung defekt':'#fde8e6','Rohrbruch':'#e6f4ea','Feuchte / Schimmel':'#fef9e0','Sonstiges':'#f2f2f7'};
+  list.innerHTML=data.map(function(a){
+    var d=new Date(a.created_at);
+    var heute=new Date(),gestern=new Date(heute);gestern.setDate(gestern.getDate()-1);
+    var ds;
+    if(d.toDateString()===heute.toDateString()) ds='Heute '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+    else if(d.toDateString()===gestern.toDateString()) ds='Gestern';
+    else ds=d.toLocaleDateString('de-DE');
+    var bg=ICO_BG[a.schadenart]||'#f2f2f7';
+    var erledigt=a.status==='erledigt';
+    return '<div class="auf-item">'
+      +'<div style="width:40px;height:40px;border-radius:10px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+a.ico+'</div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+          +'<div style="font-size:15px;font-weight:600;color:var(--text)">'+a.schadenart+'</div>'
+          +'<div style="font-size:11px;color:var(--text3)">'+ds+'</div>'
+        +'</div>'
+        +'<div style="font-size:12px;font-family:monospace;color:var(--blue);margin-bottom:6px">'+a.referenz+'</div>'
+        +'<div style="display:flex;align-items:center;gap:6px">'
+          +'<div class="auf-status-dot '+(erledigt?'auf-status-erledigt':'auf-status-offen')+'"></div>'
+          +'<div style="font-size:12px;font-weight:500;color:'+(erledigt?'var(--green)':'var(--amber)')+'">'+( erledigt?'Erledigt':'Rückruf folgt')+'</div>'
+        +'</div>'
+        +'<div style="font-size:13px;color:var(--text3);margin-top:4px">Rückruf: '+a.rueckruf+'</div>'
+        +(a.notiz&&a.notiz!==''?'<div style="font-size:12px;color:var(--text3);font-style:italic;margin-top:4px;border-top:.5px solid var(--sep);padding-top:6px">'+a.notiz+'</div>':'')
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+function filterAuf(el,val){
+  aufFilter=val;
+  document.querySelectorAll('.auf-chip').forEach(function(c){c.classList.remove('sel');});
+  el.classList.add('sel');
+  renderAuftraege();
 }
 
 </script>
