@@ -4,1097 +4,395 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="PREXIA Ortung">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PREXIA">
 <meta name="theme-color" content="#0e5fa3">
-<title>PREXIA – Leckageortung</title>
+<title>PREXIA</title>
 <style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
 :root{
-  --blue:#0e5fa3;--blue-l:#e4f0fb;
-  --green:#1a8c5e;--green-l:#e2f4ec;
-  --amber:#c47a00;--amber-l:#fdf2dc;
-  --red:#b83232;--red-l:#fbeaea;
-  --purple:#5b4fcf;--purple-l:#eeecfc;
-  --text:#1a1a1a;--text2:#555;--text3:#888;
-  --bg:#eeecea;--card:#fff;
-  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.18);
-  --input:#f5f4f1;--r:12px;--rs:8px;
+  --blue:#0e5fa3;--blue-d:#0a4a80;--blue-l:#e8f2fc;
+  --red:#d93025;
+  --bg:#f2f2f7;--card:#fff;
+  --text:#000;--text2:#3c3c43;--text3:#8e8e93;
+  --sep:rgba(60,60,67,0.11);--sep2:rgba(60,60,67,0.22);
+  --green:#28a745;--green-l:#eaf7ee;
+  --amber:#e6820a;--amber-l:#fff4e0;
+  --r:16px;--r-lg:22px;
 }
 @media(prefers-color-scheme:dark){:root{
-  --text:#ede9e2;--text2:#a09a90;--text3:#6a6460;
-  --bg:#1c1a18;--card:#252220;
-  --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.18);
-  --input:#2e2b28;--blue-l:#0c2b4a;--green-l:#082b1c;
-  --amber-l:#2a1c04;--red-l:#2d0c0c;--purple-l:#1a1740;
+  --bg:#1c1c1e;--card:#2c2c2e;--text:#fff;--text2:#ebebf5;--text3:#8e8e93;
+  --sep:rgba(84,84,88,0.55);--sep2:rgba(84,84,88,0.8);
+  --blue-l:#0a2a45;--green-l:#0c2a16;--amber-l:#2a1c00;
 }}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:calc(32px + env(safe-area-inset-bottom))}
-.top{background:var(--blue);padding:12px 16px 10px;padding-top:calc(12px + env(safe-area-inset-top));position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px}
-.top-ico{width:34px;height:34px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.top h1{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px}
-.top p{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px}
-.top-step{margin-left:auto;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
-.prog{height:3px;background:rgba(255,255,255,.25)}
-.prog-fill{height:100%;background:#fff;transition:width .4s ease}
-.body{padding:12px 14px;max-width:660px;margin:0 auto}
-.card{background:var(--card);border-radius:var(--r);border:.5px solid var(--border);padding:14px;margin-bottom:10px}
-.ch{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.ch-ico{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ch h2{font-size:14px;font-weight:700;color:var(--text)}
-.ch p{font-size:11px;color:var(--text3);margin-top:1px}
-.f{margin-bottom:11px}.f:last-child{margin-bottom:0}
-.f>label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
-.f>label .s{font-weight:400;color:var(--text3);font-size:11px;margin-left:4px}
-select,input[type=number],input[type=text],textarea{width:100%;padding:10px 12px;background:var(--input);border:.5px solid var(--border);border-radius:var(--rs);font-size:15px;color:var(--text);font-family:inherit;appearance:none;-webkit-appearance:none;outline:none}
-select:focus,input:focus,textarea:focus{border-color:var(--blue)}
-textarea{resize:none;line-height:1.45}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.info{background:var(--blue-l);border:.5px solid var(--blue);border-radius:var(--rs);padding:9px 12px;font-size:12px;color:var(--blue);line-height:1.5;margin-bottom:10px}
-.info strong{display:block;font-size:12px;margin-bottom:2px}
-.warn{background:var(--amber-l);border:.5px solid var(--amber);border-radius:var(--rs);padding:9px 12px;font-size:12px;color:var(--amber);line-height:1.5;margin-bottom:10px}
-.warn strong{display:block;font-size:12px;margin-bottom:2px}
-.hz-box,.risk-box-show{border-radius:0 var(--rs) var(--rs) 0;padding:10px 12px;margin-top:8px;border-left:3px solid;display:none}
-.hz-box.show,.risk-box-show.show{display:block}
-.hz-title{font-size:12px;font-weight:700;margin-bottom:2px}
-.hz-sub{font-size:12px;line-height:1.5;color:var(--text);margin-bottom:7px}
-.hz-prob-item{font-size:11px;color:var(--text2);padding:3px 0;border-bottom:.5px solid var(--border);display:flex;gap:6px;line-height:1.4}
-.hz-prob-item:last-child{border-bottom:none}
-.hz-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
-.hz-source{font-size:10px;margin-top:5px;color:var(--text3)}
-.rbadge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle}
-.dg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}
-.db{background:var(--input);border-radius:var(--rs);padding:9px 10px;border:.5px solid var(--border)}
-.db label{font-size:10px;font-weight:700;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
-.mm{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.mm span{font-size:10px;color:var(--text3);display:block;margin-bottom:2px}
-.mm input{padding:7px 8px;font-size:14px}
-.dref{border-radius:var(--rs);padding:10px 12px;margin-top:8px;border:.5px solid var(--border);background:var(--input)}
-.drt{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
-.dr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:.5px solid var(--border);font-size:12px}
-.dr:last-child{border-bottom:none}
-.dr .mat{color:var(--text2);flex:1}
-.dr .vals{display:flex;gap:5px}
-.dry{background:var(--green-l);color:var(--green);font-weight:700;padding:1px 6px;border-radius:4px;font-size:11px}
-.mid{background:var(--amber-l);color:var(--amber);font-weight:700;padding:1px 6px;border-radius:4px;font-size:11px}
-.wet{background:var(--red-l);color:var(--red);font-weight:700;padding:1px 6px;border-radius:4px;font-size:11px}
-.dhint{font-size:10px;color:var(--text3);font-style:italic;line-height:1.4;margin-top:6px}
-.dt{width:100%;border-collapse:collapse;font-size:13px}
-.dt th{font-size:10px;font-weight:700;color:var(--text3);text-align:center;padding:4px 4px 6px;border-bottom:.5px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
-.dt td{padding:4px 3px}
-.dt td input{padding:8px 6px;font-size:14px;text-align:center}
-.dt .sl{font-size:12px;font-weight:600;color:var(--text2);padding:5px 0;white-space:nowrap}
-.trow{display:flex;gap:6px;flex-wrap:wrap}
-.tb{padding:8px 14px;background:var(--input);border:.5px solid var(--border);border-radius:var(--rs);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;user-select:none}
-.tb.ay{background:var(--green-l);border-color:var(--green);color:var(--green)}
-.tb.an{background:var(--red-l);border-color:var(--red);color:var(--red)}
-.tb.au{background:var(--amber-l);border-color:var(--amber);color:var(--amber)}
-.cg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.ci{display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--input);border-radius:var(--rs);cursor:pointer;border:.5px solid var(--border);transition:border-color .15s}
-.ci.on{border-color:var(--blue);background:var(--blue-l)}
-.ci input{width:16px;height:16px;accent-color:var(--blue);flex-shrink:0}
-.ci span{font-size:13px;line-height:1.3}
-.uz{border:1.5px dashed var(--border2);border-radius:var(--rs);padding:16px;text-align:center;cursor:pointer;background:var(--input)}
-.uz:active{opacity:.7}
-.uz input{display:none}
-.uz-ico{width:26px;height:26px;margin:0 auto 7px;color:var(--text3)}
-.uz-t{font-size:14px;font-weight:500;color:var(--text2)}
-.uz-s{font-size:11px;color:var(--text3);margin-top:2px}
-.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-.pi{position:relative}
-.pt{aspect-ratio:1;border-radius:var(--rs);overflow:hidden;border:.5px solid var(--border)}
-.pt img{width:100%;height:100%;object-fit:cover;display:block}
-.pd{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(0,0,0,.6);border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;color:#fff;font-size:12px;cursor:pointer}
-.pn{font-size:10px;color:var(--text3);text-align:center;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pbadge{display:inline-block;background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px}
-.nav{display:flex;gap:8px;margin-top:8px}
-.bback{flex:1;padding:13px;background:transparent;border:.5px solid var(--border2);border-radius:var(--r);font-size:15px;font-weight:600;color:var(--text2);font-family:inherit;cursor:pointer}
-.bnext{flex:2;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:inherit;cursor:pointer}
-.bnext:active,.bfull:active{opacity:.85;transform:scale(.99)}
-.bnext:disabled{background:var(--input);color:var(--text3)}
-.bfull{width:100%;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px}
-.breset{width:100%;padding:12px;background:transparent;border:.5px solid var(--border2);border-radius:var(--rs);font-size:14px;color:var(--text3);font-family:inherit;cursor:pointer;margin-top:8px}
-.rh{display:none}.rv{display:block}
-.big{text-align:center;padding:18px 0 14px}
-.big .bl{font-size:13px;color:var(--text3);margin-bottom:5px}
-.big .bn{font-size:54px;font-weight:800;letter-spacing:-2px;line-height:1}
-.big .bs{font-size:12px;color:var(--text3);margin-top:4px;line-height:1.4;max-width:260px;margin-left:auto;margin-right:auto}
-.pbb{height:10px;background:var(--input);border-radius:5px;overflow:hidden;margin:0 0 4px}
-.pbf{height:100%;border-radius:5px;transition:width .8s cubic-bezier(.4,0,.2,1)}
-.li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--border)}
-.li:last-child{border-bottom:none}
-.lrank{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
-.linfo{flex:1;min-width:0}
-.lname{font-size:14px;font-weight:600;color:var(--text)}
-.lmbar{height:4px;border-radius:2px;margin-top:4px}
-.lpct{font-size:16px;font-weight:800;min-width:46px;text-align:right}
-.mc{border-radius:0 var(--rs) var(--rs) 0;padding:10px 12px;margin-bottom:8px;border-left:3px solid}
-.mc:last-child{margin-bottom:0}
-.mct{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
-.mctx{font-size:13px;color:var(--text);line-height:1.5}
-.af{border-radius:0 var(--rs) var(--rs) 0;padding:10px 12px;margin-bottom:8px;border-left:3px solid}
-.af:last-child{margin-bottom:0}
-.aft{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
-.aftx{font-size:13px;color:var(--text);line-height:1.55}
-.slbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.disc{background:var(--input);border-radius:var(--rs);padding:10px 12px;font-size:11px;color:var(--text3);line-height:1.55;margin-top:8px;border:.5px solid var(--border)}
-.disc strong{color:var(--text2)}
-.spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading-row{display:flex;align-items:center;gap:10px;padding:12px 0;color:var(--text2);font-size:13px}
-.tool-btn{padding:7px 11px;background:var(--input);border:.5px solid var(--border2);border-radius:var(--rs);font-size:12px;font-weight:500;color:var(--text2);font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
-.tool-btn:active{transform:scale(.97)}
-.add-raum-btn{width:100%;padding:10px;background:transparent;border:.5px solid var(--blue);border-radius:var(--rs);font-size:13px;font-weight:600;color:var(--blue);font-family:inherit;cursor:pointer;margin-top:2px}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;color:var(--text)}
+.device{max-width:393px;height:100vh;margin:0 auto;position:relative;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
+.sb{background:var(--blue);height:calc(env(safe-area-inset-top,44px));min-height:50px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 10px;flex-shrink:0}
+.sb span{font-size:15px;font-weight:600;color:#fff;letter-spacing:-.2px}
+.sb-icons{display:flex;align-items:center;gap:6px}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .32s;will-change:transform}
+.screen.hidden{transform:translateX(100%);pointer-events:none}
+.screen.pushed{transform:translateX(-26%);opacity:.55;pointer-events:none}
+.nav{background:var(--blue);padding:10px 16px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;position:relative}
+.nav.red{background:var(--red)}
+.nav-title{font-size:17px;font-weight:600;color:#fff;position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap}
+.back-btn{background:none;border:none;color:rgba(255,255,255,.9);font-size:16px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;padding:0;z-index:1}
+.home-btn{background:none;border:none;color:rgba(255,255,255,.7);font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:3px;padding:0;z-index:1}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(70px + env(safe-area-inset-bottom,16px))}
+.scroll::-webkit-scrollbar{display:none}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:calc(52px + env(safe-area-inset-bottom,16px));background:rgba(248,248,248,.93);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-top:.5px solid var(--sep2);display:flex;align-items:flex-start;padding-top:8px;z-index:100}
+@media(prefers-color-scheme:dark){.tabs{background:rgba(28,28,30,.93)}}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0;border:none;background:none;font-family:inherit;outline:none}
+.tab span{font-size:10px;font-weight:500;color:var(--text3)}
+.tab.on span{color:var(--blue)}
+.tab svg{opacity:.38}
+.tab.on svg{opacity:1}
+
+/* HOME */
+.home-hdr{background:var(--blue);padding:10px 20px 20px;flex-shrink:0}
+.home-hdr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-ico{width:32px;height:32px;background:rgba(255,255,255,.2);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.logo-name{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.greeting{font-size:26px;font-weight:700;color:#fff;letter-spacing:-.5px;margin-bottom:3px}
+.greeting-sub{font-size:14px;color:rgba(255,255,255,.62)}
+.actions{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.action-blue{background:var(--blue);border-radius:var(--r-lg);padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer;border:none;font-family:inherit;text-align:left;width:100%;box-shadow:0 6px 24px rgba(14,95,163,.36);transition:transform .14s,opacity .14s}
+.action-blue:active{transform:scale(.98);opacity:.9}
+.action-red{background:var(--red);border-radius:var(--r-lg);padding:18px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;border:none;font-family:inherit;text-align:left;width:100%;box-shadow:0 4px 18px rgba(217,48,37,.3);transition:transform .14s,opacity .14s}
+.action-red:active{transform:scale(.98);opacity:.9}
+.action-ico{border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.action-title{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.action-sub{font-size:13px;color:rgba(255,255,255,.68);margin-top:2px}
+.sec{padding:0 16px;margin-bottom:16px}
+.sec-hdr{font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;padding:0 2px}
+.card{background:var(--card);border-radius:var(--r);overflow:hidden}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;margin-bottom:16px}
+.info-tile{background:var(--card);border-radius:var(--r);padding:16px 14px;cursor:pointer;border:none;font-family:inherit;text-align:left;width:100%;transition:transform .13s;display:flex;flex-direction:column;gap:8px}
+.info-tile:active{transform:scale(.97)}
+.it-ico{font-size:26px;line-height:1}
+.it-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
+.it-sub{font-size:11px;color:var(--text3);line-height:1.35}
+.list-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:.5px solid var(--sep)}
+.list-row:last-child{border-bottom:none}
+.lico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.lbody{flex:1;min-width:0}
+.ltitle{font-size:15px;color:var(--text)}
+.lsub{font-size:13px;color:var(--text3);margin-top:1px}
+.lright{display:flex;align-items:center;gap:6px}
+.pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.pill-g{background:var(--green-l);color:#1a7a35}
+.pill-a{background:var(--amber-l);color:var(--amber)}
+.chev{opacity:.28;flex-shrink:0}
+
+/* FUNNEL */
+.prog-bar{background:var(--blue);padding:0 20px 14px;flex-shrink:0;display:flex;align-items:center;gap:8px}
+.prog-seg{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.3);transition:background .3s}
+.prog-seg.done{background:#fff}
+.prog-num{font-size:12px;color:rgba(255,255,255,.65);margin-left:4px;white-space:nowrap}
+.options{display:flex;flex-direction:column;gap:10px;padding:0 16px}
+.opt{background:var(--card);border:2px solid var(--sep2);border-radius:var(--r);padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:border-color .15s,background .15s,transform .1s;font-family:inherit;width:100%;text-align:left}
+.opt:active{transform:scale(.98)}
+.opt.sel{border-color:var(--blue);background:var(--blue-l)}
+.opt-ico{font-size:28px;line-height:1;width:42px;text-align:center;flex-shrink:0}
+.opt-body{flex:1}
+.opt-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:1px}
+.opt-sub{font-size:12px;color:var(--text3);line-height:1.35}
+.opt-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--sep2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;background:var(--card)}
+.opt.sel .opt-check{background:var(--blue);border-color:var(--blue)}
+.opt.sel .opt-check::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff;display:block}
+.zeit-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 16px;margin-bottom:4px}
+.zeit-opt{background:var(--card);border:2px solid var(--sep2);border-radius:var(--r);padding:14px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;width:100%;text-align:left;transition:all .15s}
+.zeit-opt.sel{border-color:var(--blue);background:var(--blue-l)}
+.zeit-opt:active{transform:scale(.97)}
+.zeit-ico{font-size:22px;flex-shrink:0}
+.zeit-lbl{font-size:13px;font-weight:600;color:var(--text);line-height:1.25}
+.opt-ta{width:calc(100% - 32px);margin:0 16px;display:block;padding:14px 16px;background:var(--card);border:2px solid var(--sep2);border-radius:var(--r);font-size:15px;color:var(--text);font-family:inherit;resize:none;outline:none;line-height:1.5;min-height:82px;transition:border-color .15s}
+.opt-ta:focus{border-color:var(--blue)}
+.opt-ta::placeholder{color:var(--text3)}
+.acct-pill{display:inline-flex;align-items:center;gap:8px;background:var(--blue-l);border:1.5px solid rgba(14,95,163,.2);border-radius:40px;padding:8px 14px 8px 8px;margin:0 16px 16px}
+.acct-av{width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.acct-name{font-size:14px;font-weight:600;color:var(--blue)}
+.acct-ok{font-size:12px;color:rgba(14,95,163,.55)}
+.cat-chip{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:12px;padding:10px 14px;margin:0 16px 16px}
+.cat-chip-change{margin-left:auto;font-size:13px;font-weight:600;color:var(--blue);background:none;border:none;cursor:pointer;font-family:inherit}
+.lbl{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:0 16px;margin-bottom:8px;display:block}
+.conf-card{background:var(--card);border-radius:var(--r);margin:0 16px 12px;overflow:hidden}
+.conf-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:.5px solid var(--sep)}
+.conf-row:last-child{border-bottom:none}
+.conf-key{font-size:14px;color:var(--text3)}
+.conf-val{font-size:14px;font-weight:600;color:var(--text);text-align:right;max-width:55%}
+.conf-ico{width:76px;height:76px;border-radius:50%;background:var(--green-l);display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.tip-row{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:.5px solid var(--sep)}
+.tip-row:last-child{border-bottom:none}
+.tip-num{width:24px;height:24px;border-radius:50%;background:var(--blue-l);color:var(--blue);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.tip-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
+.tip-text{font-size:13px;color:var(--text3);line-height:1.5}
+.prof-hdr{background:var(--blue);padding:20px 20px 24px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.big-av{width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,.25);border:2.5px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff}
+.gap{height:20px}.gap-sm{height:10px}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fu .28s ease both}
+@keyframes scin{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+.scin{animation:scin .35s cubic-bezier(.34,1.56,.64,1) both}
 </style>
 </head>
 <body>
+<div class="device">
+<div class="sb"><span id="clk">9:41</span><div class="sb-icons"><svg width="17" height="12" viewBox="0 0 17 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="white" opacity=".4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="white" opacity=".6"/><rect x="9" y="0" width="3" height="12" rx="1" fill="white" opacity=".8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="white"/></svg><svg width="16" height="12" viewBox="0 0 16 12" fill="white"><path d="M8 2.4C10.2 2.4 12.2 3.3 13.6 4.8L15 3.4C13.2 1.3 10.7 0 8 0C5.3 0 2.8 1.3 1 3.4L2.4 4.8C3.8 3.3 5.8 2.4 8 2.4Z"/><path d="M8 5.6C9.5 5.6 10.8 6.2 11.8 7.1L13.2 5.7C11.9 4.4 10 3.6 8 3.6C6 3.6 4.1 4.4 2.8 5.7L4.2 7.1C5.2 6.2 6.5 5.6 8 5.6Z"/><circle cx="8" cy="10" r="2"/></svg><svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.5" stroke="white" stroke-opacity=".35"/><rect x="1.5" y="1.5" width="18" height="9" rx="2.5" fill="white"/><path d="M23 4v4a2 2 0 000-4z" fill="white" opacity=".4"/></svg></div></div>
 
-<div class="top">
-  <div class="top-ico">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="12" r="3"/></svg>
+<!-- HOME -->
+<div class="screen" id="s-home">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <div class="logo"><div class="logo-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="12" r="3"/></svg></div><span class="logo-name">PREXIA</span></div>
+      <button style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="tab('profil')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+    </div>
+    <div class="greeting">Guten Morgen 👋</div>
+    <div class="greeting-sub">Wie können wir Ihnen helfen?</div>
   </div>
-  <div><h1>PREXIA Leckageortung</h1><p>Ortungshilfe vor Ort</p></div>
-  <div class="top-step" id="sp">Schritt 1 / 5</div>
-</div>
-<div class="prog"><div class="prog-fill" id="pf" style="width:20%"></div></div>
-
-<div class="body">
-
-<!-- S1 -->
-<div id="s1">
-  <div class="card">
-    <div class="ch"><div class="ch-ico" style="background:var(--blue-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div><div><h2>Anlage & System</h2></div></div>
-
-    <div class="g2">
-      <div class="f">
-        <label>Gebäudetyp</label>
-        <select id="gtyp">
-          <option value="">– wählen –</option>
-          <option value="efh">Einfamilienhaus</option>
-          <option value="mfh">Mehrfamilienhaus</option>
-          <option value="gwb">Gewerbe</option>
-          <option value="ind">Industrie</option>
-        </select>
-      </div>
-      <div class="f">
-        <label>Lage im Gebäude</label>
-        <select id="lage">
-          <option value="">– wählen –</option>
-          <option value="keller">Keller / UG</option>
-          <option value="eg">Erdgeschoss</option>
-          <option value="og">Obergeschoss</option>
-          <option value="dg">Dachgeschoss</option>
-          <option value="aussen">Außenbereich</option>
-        </select>
+  <div class="scroll">
+    <div class="actions">
+      <button class="action-blue" onclick="go('s-kat')">
+        <div class="action-ico" style="width:54px;height:54px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+        <div style="flex:1"><div class="action-title">Schaden melden</div><div class="action-sub">Rückruf in weniger als 2 Stunden</div></div>
+        <svg width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5" stroke-linecap="round"><polyline points="1 1 8 7.5 1 14"/></svg>
+      </button>
+      <button class="action-red" onclick="go('s-notruf')">
+        <div class="action-ico" style="width:46px;height:46px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div style="flex:1"><div class="action-title">Notruf 🚨</div><div class="action-sub">24/7 · Sofortige Verbindung</div></div>
+        <svg width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5" stroke-linecap="round"><polyline points="1 1 8 7.5 1 14"/></svg>
+      </button>
+    </div>
+    <div class="sec">
+      <div class="sec-hdr">Aktive Aufträge</div>
+      <div class="card">
+        <div class="list-row" style="cursor:pointer" onclick="go('s-detail')"><div class="lico" style="background:#ddeefa">💧</div><div class="lbody"><div class="ltitle">Wasserschaden · Bad</div><div class="lsub">PRX-A4F2B1 · Gestern 14:32</div></div><div class="lright"><span class="pill pill-a">Rückruf folgt</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><polyline points="1 1 7 6.5 1 12"/></svg></div></div>
+        <div class="list-row" style="cursor:pointer;border-bottom:none" onclick="go('s-detail')"><div class="lico" style="background:#e6f4ea">🔧</div><div class="lbody"><div class="ltitle">Rohrbruch · Küche</div><div class="lsub">PRX-C9E3D2 · 12.03.2026</div></div><div class="lright"><span class="pill pill-g">Erledigt</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><polyline points="1 1 7 6.5 1 12"/></svg></div></div>
       </div>
     </div>
-
-    <!-- MFH Felder -->
-    <div id="mfh-fields" style="display:none">
-      <div class="f">
-        <label>Betroffene Stockwerke</label>
-        <div class="cg" id="stockwerk-grid">
-          <label class="ci"><input type="checkbox" value="ug"> <span>Keller / UG</span></label>
-          <label class="ci"><input type="checkbox" value="eg"> <span>Erdgeschoss</span></label>
-          <label class="ci"><input type="checkbox" value="og1"> <span>1. Obergeschoss</span></label>
-          <label class="ci"><input type="checkbox" value="og2"> <span>2. Obergeschoss</span></label>
-          <label class="ci"><input type="checkbox" value="og3"> <span>3. Obergeschoss</span></label>
-          <label class="ci"><input type="checkbox" value="og4"> <span>4. OG oder höher</span></label>
-          <label class="ci"><input type="checkbox" value="dg"> <span>Dachgeschoss</span></label>
-          <label class="ci"><input type="checkbox" value="mehrere"> <span>Mehrere / unklar</span></label>
-        </div>
-      </div>
-      <div class="f">
-        <label>Lage der Wohnung</label>
-        <div class="cg" id="wohnung-grid">
-          <label class="ci"><input type="checkbox" value="links"> <span>Links</span></label>
-          <label class="ci"><input type="checkbox" value="mitte"> <span>Mitte</span></label>
-          <label class="ci"><input type="checkbox" value="rechts"> <span>Rechts</span></label>
-          <label class="ci"><input type="checkbox" value="vorne"> <span>Vorne / Straße</span></label>
-          <label class="ci"><input type="checkbox" value="hinten"> <span>Hinten / Hof</span></label>
-          <label class="ci"><input type="checkbox" value="alle"> <span>Ganzes Geschoss</span></label>
-        </div>
-      </div>
-      <div class="f"><label>Wohnungsnummer / Bezeichnung<span class="s">(optional)</span></label><input type="text" id="wohnungnr" placeholder="z.B. Whg. 3 links, 1. OG"></div>
+    <div style="font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:0 18px;margin-bottom:8px">Ratgeber</div>
+    <div class="info-grid">
+      <button class="info-tile" onclick="showInfo('wasser')"><div class="it-ico">💧</div><div class="it-title">Wasserschaden – was tun?</div><div class="it-sub">Erste Schritte richtig machen</div></button>
+      <button class="info-tile" onclick="showInfo('schimmel')"><div class="it-ico">🌫️</div><div class="it-title">Schimmel – was beachten?</div><div class="it-sub">Tipps & Warnsignale</div></button>
+      <button class="info-tile" onclick="showInfo('heizung')"><div class="it-ico">🔥</div><div class="it-title">Heizung defekt – Checklist</div><div class="it-sub">Vor dem Anruf prüfen</div></button>
+      <button class="info-tile" onclick="showInfo('versicherung')"><div class="it-ico">🛡️</div><div class="it-title">Versicherung & Schaden</div><div class="it-sub">Was Sie wissen sollten</div></button>
     </div>
-
-    <div class="f">
-      <label>Baujahr Gebäude<span class="s">(ca.)</span><span id="bj-badge" class="rbadge" style="display:none"></span></label>
-      <select id="baujahr">
-        <option value="">– wählen –</option>
-        <option value="vor1950">Vor 1950 (Gründerzeit / Wiederaufbau)</option>
-        <option value="1950-1969">1950 – 1969 (Wirtschaftswunder)</option>
-        <option value="1970-1989">1970 – 1989 (Höchstes Schadensrisiko)</option>
-        <option value="1990-2000">1990 – 2000 (Wendezeit / Sanierungsphase)</option>
-        <option value="2001-2010">2001 – 2010</option>
-        <option value="nach2010">Nach 2010 (Neubau)</option>
-      </select>
-      <div class="hz-box" id="bj-box"><div class="hz-title" id="bj-title"></div><div id="bj-text" class="hz-sub"></div><div id="bj-probs"></div><div class="hz-source" id="bj-source"></div></div>
-    </div>
-
-    <div class="f">
-      <label>Betroffenes System</label>
-      <select id="system">
-        <option value="">– wählen –</option>
-        <option value="kw">Kaltwasser</option>
-        <option value="ww">Warmwasser</option>
-        <option value="hz">Heizung</option>
-        <option value="fbh">Fußbodenheizung (FBH)</option>
-        <option value="zl">Zirkulationsleitung</option>
-        <option value="abwasser">Abwasser / Kanal</option>
-        <option value="regen">Regenwasser / Dach</option>
-        <option value="aussen-l">Außenleitung / Erdrohr</option>
-        <option value="unk">Unbekannt</option>
-      </select>
-    </div>
-
-    <div class="g2">
-      <div class="f">
-        <label>Leitungsmaterial</label>
-        <select id="mat">
-          <option value="">– wählen –</option>
-          <option value="kupfer">Kupfer</option>
-          <option value="stahl">Stahl / verzinkt</option>
-          <option value="kunststoff">Kunststoff (PE/PP)</option>
-          <option value="verbund">Mehrschichtverbund</option>
-          <option value="blei">Blei (Altbau)</option>
-          <option value="guss">Guss</option>
-          <option value="unk">Unbekannt</option>
-        </select>
-      </div>
-      <div class="f"><label>Leitungsalter<span class="s">(Jahre)</span></label><input type="number" id="alter" placeholder="z.B. 30" min="0" max="120" inputmode="numeric"></div>
-    </div>
-    <div class="hz-box" id="mat-box"></div>
-
-    <div class="f">
-      <label>FBH vorhanden?</label>
-      <div class="trow" id="fbh-t">
-        <div class="tb" id="fbh-ja">Ja</div>
-        <div class="tb" id="fbh-nein">Nein</div>
-        <div class="tb" id="fbh-unk">Unbekannt</div>
-      </div>
-      <input type="hidden" id="fbh" value="">
-    </div>
-
-    <div class="f">
-      <label>Heizungstyp<span id="hz-badge" class="rbadge" style="display:none"></span></label>
-      <select id="hztyp">
-        <option value="">– wählen / nicht betroffen –</option>
-        <option value="einrohr">Einrohrheizung (häufig 1950–1985)</option>
-        <option value="zweirohr">Zweirohrheizung</option>
-        <option value="fbh-wasser">Fußbodenheizung Wasser (FBH)</option>
-        <option value="fernwaerme">Fernwärme</option>
-        <option value="gasbrennwert">Gas-Brennwerttherme</option>
-        <option value="oelheizung">Ölheizung</option>
-        <option value="waermepumpe">Wärmepumpe</option>
-        <option value="unk">Unbekannt</option>
-      </select>
-      <div class="hz-box" id="hz-box"><div class="hz-title" id="hz-title"></div><div id="hz-sub" class="hz-sub"></div><div id="hz-probs"></div><div class="hz-source" id="hz-source"></div></div>
-    </div>
-
-    <div class="f"><label>Kurze Schadensbeschreibung</label><textarea id="beschr" placeholder="Was wurde bemerkt? Wann? Wo zuerst aufgefallen?" rows="3"></textarea></div>
+    <div class="gap"></div>
   </div>
-  <button class="bfull" id="btn-s1-next">Weiter →</button>
+  <div class="tabs">
+    <button class="tab on" onclick="tab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
+    <button class="tab" onclick="tab('auftraege')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Aufträge</span></button>
+    <button class="tab" onclick="tab('profil')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button>
+  </div>
 </div>
 
-<!-- S2 -->
-<div id="s2" style="display:none">
-  <div class="card">
-    <div class="ch"><div class="ch-ico" style="background:var(--blue-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg></div><div><h2>Kapazitive Messung<span class="s" style="font-size:11px;font-weight:400;color:var(--text3)">Digits (0–200)</span></h2><p>Dielektrisches Verfahren – raumweise erfassen</p></div></div>
-    <div class="info"><strong>Hinweis zur Methode</strong>Kapazitive Messung = Vergleichswerte, keine Absolutwerte. Gerätewerte verschiedener Hersteller nicht direkt vergleichbar. Trennung von kapazitiver und Widerstandsmessung zwingend.</div>
-    <div id="kap-liste"></div>
-    <button class="add-raum-btn" id="btn-add-kap">+ Raum hinzufügen</button>
-    <div class="dhint" style="margin-top:8px">Orientierung: unauffällig 11–16 · erhöht 17–21 · stark erhöht 22–30 · Leckstelle &gt;30 Digits</div>
+<!-- KATEGORIE -->
+<div class="screen hidden" id="s-kat">
+  <div class="nav"><button class="back-btn" onclick="back('s-home')"><svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="7 1 1 7 7 13"/></svg> Zurück</button><div class="nav-title">Schaden melden</div><button class="home-btn" onclick="tab('home')">🏠 Home</button></div>
+  <div class="prog-bar"><div class="prog-seg done"></div><div class="prog-seg"></div><div class="prog-num">1 / 2</div></div>
+  <div class="scroll" style="padding-top:20px">
+    <div style="padding:0 16px;margin-bottom:18px" class="fu"><div style="font-size:22px;font-weight:700;letter-spacing:-.4px">Was ist passiert?</div><div style="font-size:14px;color:var(--text3);margin-top:5px">Einfach antippen – direkt weiter</div></div>
+    <div class="options fu">
+      <button class="opt" onclick="pickCat(this,'Wasserschaden','💧')"><div class="opt-ico">💧</div><div class="opt-body"><div class="opt-title">Wasserschaden</div><div class="opt-sub">Leckage, nasse Wände, Wasseraustritt</div></div><div class="opt-check"></div></button>
+      <button class="opt" onclick="pickCat(this,'Heizung defekt','🔥')"><div class="opt-ico">🔥</div><div class="opt-body"><div class="opt-title">Heizung defekt</div><div class="opt-sub">Druckverlust, kein Warmwasser, Ausfall</div></div><div class="opt-check"></div></button>
+      <button class="opt" onclick="pickCat(this,'Rohrbruch','🔧')"><div class="opt-ico">🔧</div><div class="opt-body"><div class="opt-title">Rohrbruch</div><div class="opt-sub">Plötzlicher Wasseraustritt, Druckabfall</div></div><div class="opt-check"></div></button>
+      <button class="opt" onclick="pickCat(this,'Feuchte / Schimmel','🌫️')"><div class="opt-ico">🌫️</div><div class="opt-body"><div class="opt-title">Feuchte / Schimmel</div><div class="opt-sub">Verfärbungen, Flecken, Geruch</div></div><div class="opt-check"></div></button>
+      <button class="opt" onclick="pickCat(this,'Sonstiges','❓')"><div class="opt-ico">❓</div><div class="opt-body"><div class="opt-title">Sonstiges</div><div class="opt-sub">Anderes Problem beschreiben</div></div><div class="opt-check"></div></button>
+    </div>
+    <div class="gap"></div>
   </div>
-
-  <!-- Räumlicher Kontext -->
-  <div class="card">
-    <div class="ch"><div class="ch-ico" style="background:var(--amber-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div><div><h2>Räumlicher Kontext</h2><p>Hilft der KI bei der vertikalen & horizontalen Eingrenzung</p></div></div>
-    <div class="f">
-      <label>Grenzen die gemessenen Räume aneinander?</label>
-      <div class="trow" id="adjacent-t">
-        <div class="tb" id="adj-ja">Ja, direkt benachbart</div>
-        <div class="tb" id="adj-teilw">Teilweise</div>
-        <div class="tb" id="adj-nein">Nein, getrennt</div>
-        <div class="tb" id="adj-unk">Unklar</div>
-      </div>
-      <input type="hidden" id="adjacent" value="">
-    </div>
-    <div class="f">
-      <label>Liegt ein Raum direkt über / unter einem anderen feuchten Raum?</label>
-      <div class="trow" id="vertical-t">
-        <div class="tb" id="vert-ja">Ja</div>
-        <div class="tb" id="vert-nein">Nein</div>
-        <div class="tb" id="vert-unk">Unbekannt</div>
-      </div>
-      <input type="hidden" id="vertical" value="">
-    </div>
-    <div class="f">
-      <label>Muster der Feuchtigkeit<span class="s">(optional – hilft bei der Eingrenzung)</span></label>
-      <select id="feuchte-muster">
-        <option value="">– wählen –</option>
-        <option value="punkt">Punktuell (ein einzelner Bereich)</option>
-        <option value="linie">Linienförmig (z.B. entlang einer Wand)</option>
-        <option value="flaeche">Flächig (großer Bereich betroffen)</option>
-        <option value="mehrere-raeume">Mehrere Räume betroffen, ähnliche Werte</option>
-        <option value="zunehmend">Von einer Stelle ausgehend, nach außen abnehmend</option>
-        <option value="decke-boden">Decke oben feucht, Boden darunter auch</option>
-      </select>
-    </div>
-    <div class="f">
-      <label>Wann wurde die Feuchtigkeit zuerst bemerkt?</label>
-      <select id="zeitpunkt">
-        <option value="">– wählen –</option>
-        <option value="akut">Akut / plötzlich aufgetreten</option>
-        <option value="wochen">Vor einigen Wochen</option>
-        <option value="monate">Vor mehreren Monaten</option>
-        <option value="schleichend">Schleichend, langsam zunehmend</option>
-        <option value="saisonal">Saisonal / nur bei bestimmtem Wetter</option>
-        <option value="nach-arbeit">Nach Bauarbeiten / Renovierung</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="ch"><div class="ch-ico" style="background:var(--blue-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><h2>Widerstandsmessung<span class="s" style="font-size:11px;font-weight:400;color:var(--text3)">0–100 SKE</span></h2><p>Separat auswerten – nicht mit Kapazitiv mischen</p></div></div>
-    <div id="wid-liste"></div>
-    <button class="add-raum-btn" id="btn-add-wid">+ Raum hinzufügen</button>
-    <div class="dref" style="margin-top:10px">
-      <div class="drt">Richtwerte Widerstandsmessung (Hankammer/Resch 2023)</div>
-      <div class="dr"><span class="mat">Calciumsulfat- / Zementestrich</span><div class="vals"><span class="dry">&lt;35</span><span class="mid">36–45</span><span class="wet">&gt;46</span></div></div>
-      <div class="dr"><span class="mat">Gipsputz</span><div class="vals"><span class="dry">&lt;25</span><span class="mid">26–30</span><span class="wet">&gt;31</span></div></div>
-      <div class="dr"><span class="mat">Polystyrol / PU-Hartschaum</span><div class="vals"><span class="dry">&lt;35</span><span class="mid">36–50</span><span class="wet">&gt;51</span></div></div>
-      <div class="dr"><span class="mat">Mineral- / Glasfaserdämmung</span><div class="vals"><span class="dry">&lt;35</span><span class="mid">36–45</span><span class="wet">&gt;46</span></div></div>
-      <div class="dr"><span class="mat">Kork / Schaumglas</span><div class="vals"><span class="dry">&lt;30</span><span class="mid">31–40</span><span class="wet">&gt;41</span></div></div>
-      <div class="dr"><span class="mat">Steinholzestrich</span><div class="vals"><span class="dry">&lt;40</span><span class="mid">41–55</span><span class="wet">&gt;56</span></div></div>
-    </div>
-  </div>
-  <div class="nav"><button class="bback" id="btn-s2-back">← Zurück</button><button class="bnext" id="btn-s2-next">Weiter →</button></div>
 </div>
 
-<!-- S3 -->
-<div id="s3" style="display:none">
-  <div class="card">
-    <div class="ch"><div class="ch-ico" style="background:var(--blue-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><h2>Druckprobe</h2></div></div>
-    <div class="warn"><strong>Wichtig</strong>Druckabfall ≠ automatisch Leckage. Luftblasen können Fehlmessungen verursachen. Min. 30 Min. Prüfdauer.</div>
-    <table class="dt">
-      <tr><th style="text-align:left">System</th><th>Min</th><th>Anfang (bar)</th><th>Ende (bar)</th><th>Δ (bar)</th></tr>
-      <tr><td class="sl">KW</td><td><input type="number" id="pkw-d" placeholder="—" inputmode="numeric"></td><td><input type="number" id="pkw-a" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pkw-e" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pkw-diff" placeholder="—" step="0.01" inputmode="decimal"></td></tr>
-      <tr><td class="sl">WW</td><td><input type="number" id="pww-d" placeholder="—" inputmode="numeric"></td><td><input type="number" id="pww-a" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pww-e" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pww-diff" placeholder="—" step="0.01" inputmode="decimal"></td></tr>
-      <tr><td class="sl">HZ</td><td><input type="number" id="phz-d" placeholder="—" inputmode="numeric"></td><td><input type="number" id="phz-a" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="phz-e" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="phz-diff" placeholder="—" step="0.01" inputmode="decimal"></td></tr>
-      <tr><td class="sl">FBH</td><td><input type="number" id="pfbh-d" placeholder="—" inputmode="numeric"></td><td><input type="number" id="pfbh-a" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pfbh-e" placeholder="—" step="0.1" inputmode="decimal"></td><td><input type="number" id="pfbh-diff" placeholder="—" step="0.01" inputmode="decimal"></td></tr>
-    </table>
-    <div id="druck-live" style="margin-top:8px;font-size:12px;min-height:18px"></div>
-  </div>
-
-  <div class="card">
-    <div class="ch"><div class="ch-ico" style="background:var(--purple-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div><h2>Angewandte Messverfahren</h2><p>Bereits eingesetzte Verfahren</p></div></div>
-    <div class="cg" id="mv-grid">
-      <label class="ci"><input type="checkbox" value="thermografie"> <span>Thermografie</span></label>
-      <label class="ci"><input type="checkbox" value="elektroakustik"> <span>Elektroakustik</span></label>
-      <label class="ci"><input type="checkbox" value="leitungsortung"> <span>Leitungsortung</span></label>
-      <label class="ci"><input type="checkbox" value="endoskopie"> <span>Endoskopie / Video</span></label>
-      <label class="ci"><input type="checkbox" value="korrelator"> <span>Korrelator</span></label>
-      <label class="ci"><input type="checkbox" value="tracergas"> <span>Tracergas (H₂/N₂)</span></label>
-      <label class="ci"><input type="checkbox" value="gasdetektion"> <span>Gasdetektion</span></label>
-      <label class="ci"><input type="checkbox" value="faerbemittel"> <span>Färbemittel</span></label>
-      <label class="ci"><input type="checkbox" value="rohrkamera"> <span>Rohrkamera / Kanal TV</span></label>
-      <label class="ci"><input type="checkbox" value="frequenzanalyse"> <span>Frequenz-/Tonanalyse</span></label>
-      <label class="ci"><input type="checkbox" value="mikrowelle"> <span>Mikrowelle</span></label>
-      <label class="ci"><input type="checkbox" value="blowerdoor"> <span>Blower Door</span></label>
+<!-- RÜCKRUF -->
+<div class="screen hidden" id="s-ruf">
+  <div class="nav"><button class="back-btn" onclick="back('s-kat')"><svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="7 1 1 7 7 13"/></svg> Zurück</button><div class="nav-title">Rückruf anfordern</div><button class="home-btn" onclick="tab('home')">🏠 Home</button></div>
+  <div class="prog-bar"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-num">2 / 2</div></div>
+  <div class="scroll" style="padding-top:18px">
+    <div class="acct-pill fu"><div class="acct-av">VP</div><div class="acct-name">Vincent Prena</div><div class="acct-ok">· ✓ Verifiziert</div></div>
+    <div class="cat-chip fu" style="animation-delay:.04s"><div id="ruf-ico" style="font-size:22px">💧</div><div><div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em">Ihr Schaden</div><div id="ruf-cat" style="font-size:14px;font-weight:600;color:var(--text)">Wasserschaden</div></div><button class="cat-chip-change" onclick="back('s-kat')">Ändern</button></div>
+    <span class="lbl fu" style="animation-delay:.06s">Wann anrufen?</span>
+    <div class="zeit-grid fu" style="animation-delay:.08s">
+      <button class="zeit-opt sel" id="z-sofort" onclick="selZeit(this,'So bald wie möglich')"><div class="zeit-ico">⚡️</div><div class="zeit-lbl">So bald wie möglich</div></button>
+      <button class="zeit-opt" id="z-vm" onclick="selZeit(this,'Vormittag')"><div class="zeit-ico">🌅</div><div class="zeit-lbl">Vormittag</div></button>
+      <button class="zeit-opt" id="z-nm" onclick="selZeit(this,'Nachmittag')"><div class="zeit-ico">☀️</div><div class="zeit-lbl">Nachmittag</div></button>
+      <button class="zeit-opt" id="z-fl" onclick="selZeit(this,'Flexibel')"><div class="zeit-ico">🕐</div><div class="zeit-lbl">Flexibel</div></button>
     </div>
-    <div class="f" style="margin-top:12px"><label>Befunde aus Verfahren<span class="s">(stichpunktartig)</span></label><textarea id="mv-befund" placeholder="z.B. Thermografie: Wärmeauffälligkeit Wand Süd · Korrelator: Peak ~4,2 m" rows="3"></textarea></div>
+    <span class="lbl" style="margin-top:16px">Zusätzliche Infos <span style="font-weight:400;color:#bbb;text-transform:none;letter-spacing:0;font-size:11px">(optional)</span></span>
+    <textarea class="opt-ta" id="notiz" placeholder="z.B. Wasser läuft unter der Heizung aus seit heute früh…"></textarea>
+    <div class="gap-sm"></div>
+    <div style="padding:12px 16px">
+      <button style="width:100%;padding:17px;background:var(--green);color:#fff;border:none;border-radius:var(--r);font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 18px rgba(40,167,69,.3);transition:opacity .15s,transform .1s" onclick="go('s-confirm')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        Rückruf jetzt anfordern
+      </button>
+      <div style="text-align:center;font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6">Kostenlos · Unverbindlich · Antwort in &lt; 2 Std.</div>
+    </div>
+    <div class="gap"></div>
   </div>
-  <div class="nav"><button class="bback" id="btn-s3-back">← Zurück</button><button class="bnext" id="btn-s3-next">Weiter →</button></div>
 </div>
 
-<!-- S4 Skizze -->
-<div id="s4" style="display:none">
-  <div class="card">
-    <div class="ch"><div class="ch-ico" style="background:var(--purple-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><div><h2>Grundriss & Feuchtstellen</h2><p>MagicPlan hochladen oder leer lassen</p></div></div>
-    <div class="info" style="margin-bottom:10px"><strong>So nutzt du diese Funktion</strong>Lade deinen MagicPlan-Grundriss hoch oder lass das Feld leer. Tippe dann auf die Stelle auf dem Plan wo du Feuchtigkeit gemessen hast – jeder Tipp setzt einen nummerierten Feuchtepunkt. Beschrifte jeden Punkt unten.</div>
-    <div class="uz" id="skizze-uz"><input type="file" id="skizze-file" accept="image/*"><svg class="uz-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><div class="uz-t">MagicPlan-Grundriss hochladen</div><div class="uz-s">JPG · PNG · Screenshot – oder ohne Grundriss fortfahren</div></div>
-    <div style="display:flex;align-items:center;gap:8px;margin:10px 0 8px">
-      <div style="font-size:12px;color:var(--text3);flex:1"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0e5fa3;margin-right:5px;vertical-align:middle"></span>Auf Plan tippen = Feuchtestelle setzen</div>
-      <button class="tool-btn" id="btn-undo-skizze" title="Letzten Punkt entfernen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 101.85-4.36L1 10"/></svg></button>
-      <button class="tool-btn" id="btn-clear-skizze" style="color:var(--red)" title="Alle Punkte löschen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+<!-- BESTÄTIGUNG -->
+<div class="screen hidden" id="s-confirm">
+  <div class="nav"><div style="width:60px"></div><div class="nav-title">Bestätigung</div><button class="home-btn" onclick="resetAndHome()">🏠 Home</button></div>
+  <div class="scroll" style="padding-top:32px">
+    <div style="text-align:center;padding:0 20px;margin-bottom:24px" class="fu">
+      <div class="conf-ico scin"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#28a745" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div style="font-size:24px;font-weight:700;letter-spacing:-.4px;margin-bottom:8px">Rückruf angefordert!</div>
+      <div style="font-size:15px;color:var(--text3);line-height:1.6">Wir melden uns bei Ihnen.<br>Halten Sie Ihr Telefon bereit.</div>
     </div>
-    <div style="position:relative;border-radius:var(--rs);overflow:hidden;border:.5px solid var(--border2);touch-action:none"><canvas id="skizze-canvas" style="display:block;width:100%;cursor:crosshair"></canvas></div>
-    <div id="punkt-liste" style="margin-top:10px"></div>
+    <div class="conf-card">
+      <div class="conf-row"><span class="conf-key">Schadenart</span><span class="conf-val" id="cf-cat">—</span></div>
+      <div class="conf-row"><span class="conf-key">Name</span><span class="conf-val">Vincent Prena</span></div>
+      <div class="conf-row"><span class="conf-key">Telefon</span><span class="conf-val">+49 151 723 731 88</span></div>
+      <div class="conf-row"><span class="conf-key">Rückruf</span><span class="conf-val" id="cf-zeit">—</span></div>
+      <div class="conf-row"><span class="conf-key">Referenz</span><span class="conf-val" style="font-family:monospace;font-size:13px;color:var(--blue)" id="cf-ref">—</span></div>
+    </div>
+    <div style="padding:0 16px;margin-top:4px"><button style="width:100%;padding:14px;background:transparent;border:1.5px solid var(--sep2);border-radius:var(--r);font-size:15px;font-weight:500;color:var(--text3);font-family:inherit;cursor:pointer" onclick="resetAndHome()">Zurück zum Start</button></div>
+    <div class="gap"></div>
   </div>
-  <div class="nav"><button class="bback" id="btn-s4-back">← Zurück</button><button class="bnext" id="btn-s4-next">Weiter →</button></div>
 </div>
 
-<!-- S5 Fotos & Analyse -->
-<div id="s5" style="display:none">
-  <div class="card">
-    <div class="ch"><div class="ch-ico" style="background:var(--blue-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div><h2>Fotos<span id="pbadge"></span></h2><p>Heizung · Bad · Feuchtstellen · Leitungen</p></div></div>
-    <div class="uz" id="foto-uz"><input type="file" id="fi" accept="image/*" multiple><svg class="uz-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><div class="uz-t">Fotos aufnehmen oder aus Galerie</div><div class="uz-s">bis zu 8 Fotos</div></div>
-    <div class="pg" id="pg"></div>
+<!-- NOTRUF -->
+<div class="screen hidden" id="s-notruf">
+  <div class="nav red"><button class="back-btn" onclick="back('s-home')"><svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="7 1 1 7 7 13"/></svg> Zurück</button><div class="nav-title">Notruf</div><button class="home-btn" onclick="tab('home')">🏠 Home</button></div>
+  <div class="scroll" style="padding-top:28px">
+    <div style="text-align:center;padding:0 24px;margin-bottom:28px" class="fu"><div style="font-size:52px;margin-bottom:14px">🚨</div><div style="font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:8px">PREXIA Notfall-Hotline</div><div style="font-size:15px;color:var(--text3);line-height:1.6">Bei akutem Wasserschaden rund um die Uhr erreichbar.</div></div>
+    <div style="padding:0 16px;margin-bottom:12px"><button style="width:100%;padding:18px;background:var(--red);color:#fff;border:none;border-radius:var(--r-lg);font-size:18px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 4px 20px rgba(217,48,37,.35)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Jetzt anrufen</button></div>
+    <div style="text-align:center;font-size:13px;color:var(--text3);margin-bottom:24px">Mo–So · 24 Stunden · 7 Tage</div>
+    <div class="sec"><div class="sec-hdr">Sofortmaßnahmen</div><div class="card">
+      <div class="list-row"><div style="width:28px;height:28px;border-radius:50%;background:#fff0ef;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--red);flex-shrink:0">1</div><div class="lbody"><div class="ltitle" style="font-size:14px">Haupthahn zudrehen</div><div class="lsub">Wasserversorgung sofort abstellen</div></div></div>
+      <div class="list-row"><div style="width:28px;height:28px;border-radius:50%;background:#fff0ef;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--red);flex-shrink:0">2</div><div class="lbody"><div class="ltitle" style="font-size:14px">Strom absichern</div><div class="lsub">Bei Nähe zu Elektrik: Sicherung prüfen</div></div></div>
+      <div class="list-row"><div style="width:28px;height:28px;border-radius:50%;background:#fff0ef;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--red);flex-shrink:0">3</div><div class="lbody"><div class="ltitle" style="font-size:14px">Fotos machen</div><div class="lsub">Schaden dokumentieren für Versicherung</div></div></div>
+      <div class="list-row" style="border-bottom:none"><div style="width:28px;height:28px;border-radius:50%;background:#fff0ef;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--red);flex-shrink:0">4</div><div class="lbody"><div class="ltitle" style="font-size:14px">PREXIA anrufen</div><div class="lsub">Wir kommen so schnell wie möglich</div></div></div>
+    </div></div>
+    <div class="gap"></div>
   </div>
-  <div class="info">KI-Analyse wertet Fotos + Skizze + alle Messdaten + Baujahr-Risikoprofil aus. Ergebnis ist <strong>Entscheidungshilfe</strong> – kein Ersatz für Fachbeurteilung.</div>
-  <button class="bfull" id="abtn">Analyse starten</button>
-
-  <div id="res" class="rh">
-    <div class="card" style="margin-top:10px">
-      <div class="ch"><div class="ch-ico" style="background:var(--blue-l)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><h2>Analyseergebnis</h2></div></div>
-      <div class="big"><div class="bl">Leckagewahrscheinlichkeit</div><div class="bn" id="res-pct">—</div><div class="bs" id="res-sub">—</div></div>
-      <div class="pbb"><div class="pbf" id="res-bar" style="width:0%"></div></div>
-      <div class="disc"><strong>Zur Interpretation:</strong> Orientierungshilfe basierend auf eingegebenen Kriterien und Baujahr-Risikoprofil (GDV/IfS). Kapazitive und Widerstandsmessungen = qualitative Vergleichswerte, keine absoluten Feuchtegehalte.</div>
-    </div>
-    <div class="card" style="margin-top:10px"><div class="slbl">Wahrscheinlichste Leckagepositionen</div><div id="loc-list"></div><div class="disc" style="margin-top:10px">Tatsächliche Leckstelle kann außerhalb dieser Positionen liegen. Mehrere Leckstellen möglich.</div></div>
-    <div class="card" id="meth-card" style="margin-top:10px;display:none"><div class="slbl">Empfohlene weitere Verfahren</div><div id="meth-list"></div></div>
-    <div id="ai-sec"></div>
-    <div class="card" style="margin-top:10px"><div class="slbl">Handlungsempfehlung</div><div id="res-hand" style="font-size:13px;color:var(--text2);line-height:1.65;padding:2px 0"></div></div>
-    <button class="breset" id="btn-reset">Neue Analyse</button>
-  </div>
-  <div class="nav" style="margin-top:8px"><button class="bback" id="btn-s5-back">← Zurück</button></div>
 </div>
 
-</div><!-- /body -->
+<!-- INFO DETAIL -->
+<div class="screen hidden" id="s-info">
+  <div class="nav"><button class="back-btn" onclick="back('s-home')"><svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="7 1 1 7 7 13"/></svg> Zurück</button><div class="nav-title" id="info-nav">Ratgeber</div><button class="home-btn" onclick="tab('home')">🏠 Home</button></div>
+  <div class="scroll" style="padding-top:20px">
+    <div style="padding:0 20px 20px"><div id="info-ico" style="font-size:48px;margin-bottom:12px">💧</div><div id="info-title" style="font-size:24px;font-weight:700;color:var(--text);letter-spacing:-.4px;margin-bottom:6px">Titel</div><div id="info-sub" style="font-size:15px;color:var(--text3);line-height:1.5">Sub</div></div>
+    <div class="sec"><div class="card" id="info-tips"></div></div>
+    <div style="padding:0 16px"><button style="width:100%;padding:15px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" onclick="go('s-kat')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 1.18 2 2 0 012.09 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.45-.45a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Rückruf anfordern</button></div>
+    <div class="gap"></div>
+  </div>
+</div>
 
+<!-- AUFTRÄGE -->
+<div class="screen hidden" id="s-auftraege">
+  <div class="nav"><div class="nav-title">Meine Aufträge</div></div>
+  <div class="scroll" style="padding-top:20px">
+    <div class="sec"><div class="sec-hdr">Aktiv</div><div class="card"><div class="list-row" style="cursor:pointer;border-bottom:none" onclick="go('s-detail')"><div class="lico" style="background:#ddeefa">💧</div><div class="lbody"><div class="ltitle">Wasserschaden · Bad</div><div class="lsub">PRX-A4F2B1 · Gestern 14:32</div></div><div class="lright"><span class="pill pill-a">Rückruf folgt</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><polyline points="1 1 7 6.5 1 12"/></svg></div></div></div></div>
+    <div class="sec"><div class="sec-hdr">Abgeschlossen</div><div class="card">
+      <div class="list-row" style="cursor:pointer" onclick="go('s-detail')"><div class="lico" style="background:#e6f4ea">🔧</div><div class="lbody"><div class="ltitle">Rohrbruch · Küche</div><div class="lsub">PRX-C9E3D2 · 12.03.2026</div></div><div class="lright"><span class="pill pill-g">Erledigt</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><polyline points="1 1 7 6.5 1 12"/></svg></div></div>
+      <div class="list-row" style="cursor:pointer;border-bottom:none" onclick="go('s-detail')"><div class="lico" style="background:#fde8e6">🔥</div><div class="lbody"><div class="ltitle">Heizung defekt · Heizungsraum</div><div class="lsub">PRX-B2D1A0 · 05.01.2026</div></div><div class="lright"><span class="pill pill-g">Erledigt</span><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><polyline points="1 1 7 6.5 1 12"/></svg></div></div>
+    </div></div>
+  </div>
+  <div class="tabs"><button class="tab" onclick="tab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button><button class="tab on" onclick="tab('auftraege')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span style="color:var(--blue)">Aufträge</span></button><button class="tab" onclick="tab('profil')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></button></div>
+</div>
+
+<!-- DETAIL -->
+<div class="screen hidden" id="s-detail">
+  <div class="nav"><button class="back-btn" onclick="back('s-home')"><svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><polyline points="7 1 1 7 7 13"/></svg> Zurück</button><div class="nav-title">Auftrag</div><button class="home-btn" onclick="tab('home')">🏠 Home</button></div>
+  <div class="scroll" style="padding-top:16px">
+    <div style="background:var(--blue);margin:0 16px;border-radius:var(--r-lg);padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:20px"><div style="width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">💧</div><div><div style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-.2px">Wasserschaden</div><div style="font-size:13px;color:rgba(255,255,255,.65);margin-top:2px;font-family:monospace">PRX-A4F2B1</div></div><span class="pill pill-a" style="margin-left:auto">Rückruf folgt</span></div>
+    <div class="sec"><div class="sec-hdr">Details</div><div class="card">
+      <div class="conf-row"><span class="conf-key">Gemeldet</span><span class="conf-val">Gestern 14:32</span></div>
+      <div class="conf-row"><span class="conf-key">Adresse</span><span class="conf-val">Hauptstr. 12, Geiselbach</span></div>
+      <div class="conf-row"><span class="conf-key">Rückruf</span><span class="conf-val">So bald wie möglich</span></div>
+      <div class="conf-row" style="border-bottom:none"><span class="conf-key">Referenz</span><span class="conf-val" style="font-family:monospace;font-size:13px;color:var(--blue)">PRX-A4F2B1</span></div>
+    </div></div>
+    <div class="sec"><div class="sec-hdr">Verlauf</div><div class="card" style="padding:14px 16px">
+      <div style="display:flex;gap:12px;margin-bottom:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:10px;height:10px;border-radius:50%;background:var(--green);margin-top:2px;flex-shrink:0"></div><div style="width:1.5px;flex:1;background:var(--sep);margin-top:4px"></div></div><div style="flex:1;padding-bottom:14px;border-bottom:.5px solid var(--sep)"><div style="font-size:14px;font-weight:500">Schaden gemeldet</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Gestern 14:32</div></div></div>
+      <div style="display:flex;gap:12px"><div style="width:10px;height:10px;border-radius:50%;background:var(--amber);margin-top:2px;flex-shrink:0"></div><div><div style="font-size:14px;font-weight:500;color:var(--amber)">Rückruf ausstehend</div><div style="font-size:12px;color:var(--text3);margin-top:2px">PREXIA meldet sich in Kürze</div></div></div>
+    </div></div>
+    <div class="gap"></div>
+  </div>
+</div>
+
+<!-- PROFIL -->
+<div class="screen hidden" id="s-profil">
+  <div class="prof-hdr"><div class="big-av">VP</div><div style="text-align:center"><div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:-.2px">Vincent Prena</div><div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:2px">Kunde seit März 2026</div></div></div>
+  <div class="scroll" style="padding-top:20px">
+    <div class="sec"><div class="sec-hdr">Meine Daten</div><div class="card">
+      <div class="list-row"><div class="lbody"><div class="lsub">E-Mail</div><div class="ltitle">vincent@prexia.de</div></div><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><polyline points="1 1 7 6.5 1 12"/></svg></div>
+      <div class="list-row"><div class="lbody"><div class="lsub">Telefon</div><div class="ltitle">+49 151 723 731 88</div></div><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><polyline points="1 1 7 6.5 1 12"/></svg></div>
+      <div class="list-row" style="border-bottom:none"><div class="lbody"><div class="lsub">Adresse</div><div class="ltitle">Hauptstr. 12, 63776 Geiselbach</div></div><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><polyline points="1 1 7 6.5 1 12"/></svg></div>
+    </div></div>
+    <div class="sec"><div class="card">
+      <div class="list-row"><div class="lbody"><div class="ltitle">Benachrichtigungen</div></div><svg class="chev" width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round"><polyline points="1 1 7 6.5 1 12"/></svg></div>
+      <div class="list-row" style="border-bottom:none"><div class="lbody"><div class="ltitle" style="color:var(--red)">Abmelden</div></div></div>
+    </div></div>
+    <div style="text-align:center;padding:4px 0 16px;font-size:12px;color:var(--text3)">PREXIA v1.0.0</div>
+  </div>
+  <div class="tabs"><button class="tab" onclick="tab('home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button><button class="tab" onclick="tab('auftraege')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Aufträge</span></button><button class="tab on" onclick="tab('profil')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span style="color:var(--blue)">Profil</span></button></div>
+</div>
+
+</div>
 <script>
-// ===================== DATA =====================
+var cur='s-home',cat='',ico='',zeitLabel='So bald wie möglich';
+var ALL=['s-home','s-auftraege','s-profil','s-kat','s-ruf','s-confirm','s-notruf','s-detail','s-info'];
 
-const BAUJAHR_DATA = {
-  'vor1950':{risk:'sehr hoch',col:'#b83232',badge:'Sehr hohes Risiko',title:'Vor 1950 – Blei, Stahl, Guss dominieren',text:'Leitungen oft aus Blei (bis 1973 verbaut), Guss oder unverzinktem Stahl. Typische Probleme: Bleilötstellen, Muffenversatz bei Gussrohren, fortgeschrittene Außenkorrosion. Gewindeverbindungen mit Hanf-Dichtung oft porös. Schäden häufig durch langsames Durchrosten.',score:25,topUrsachen:['Korrosion / Lochfraß (Stahl/Guss)','Undichte Gewindeverbindungen','Bleirohre / Bleilötungen','Muffenversatz (Guss)','Erdkorrosion Außenleitung'],source:'Quellen: IfS Ursachenstatistik, Hankammer/Resch 2023'},
-  '1950-1969':{risk:'hoch',col:'#c47a00',badge:'Hohes Risiko',title:'1950–1969 – Verzinkter Stahl, erste Kupferinstallationen',text:'Leitungen überwiegend aus verzinktem Stahl (Gewindeverbindungen) und ersten Kupferrohren. Verzinkter Stahl nach 50+ Jahren oft stark korrodiert, Zinkschicht aufgebraucht – Lochfraß und Rohrbrüche typisch. Laut IfS nähern sich Rohrsysteme dieser Ära der technischen Lebensdauer von ~50 Jahren.',score:20,topUrsachen:['Lochfraß verzinkter Stahlrohre','Korrodierte Gewindeverbindungen','Kupferlochfraß (Typ I/II)','Poröse Flachdichtungen (Alter)','Inkrustationen / Verengungen'],source:'Quellen: GDV Schadenstatistik, IfS Ursachenstatistik, BundesBauBlatt 2022'},
-  '1970-1989':{risk:'höchstes Risiko',col:'#b83232',badge:'⚠ Höchstes Risiko',title:'1970–1989 – Höchste Schadenshäufigkeit laut GDV',text:'Laut GDV: In 40–45 Jahre alten Gebäuden platzen am häufigsten Rohre – 77 Schäden pro 1.000 Verträge. Jedes 4. Gebäude in Deutschland stammt aus den 70er/80er Jahren. Fast 40% aller Leitungswasserschäden entstehen durch Installations- und Montagefehler dieser Ära (IfS 2023).',score:30,topUrsachen:['Poröse Dichtungen / Verbindungsstücke (25%)','Defekte Geräte / Bauteile (24%)','Rohrbrüche durch Korrosion (21%)','Installationsfehler / Montagefehler (~40%)','Lochfraß verzinkter Stahl im WW-Bereich'],source:'Quellen: GDV (77 Schäden/1.000 Verträge), IfS Ursachenstatistik 2023, Hankammer/Resch 2023'},
-  '1990-2000':{risk:'mittel',col:'#c47a00',badge:'Mittleres Risiko',title:'1990–2000 – Übergangsphase, Verbundrohre & Kunststoff',text:'Erste Mehrschichtverbundrohre und PE-Rohre. Kupferinstallationen mit Pressfittings. In Ostdeutschland nach der Wiedervereinigung viele Sanierungen. Bekannte Schwachstelle: frühe Pressfittings und nicht korrekt verpresste Verbindungen.',score:12,topUrsachen:['Nicht korrekt verpresste Verbindungen','Installationsfehler (frühe Pressfitting-Ära)','Poröse Flexschläuche an Armaturen','Undichte Silikonfugen / Abdichtungen','Frühe Kunststoffrohre (Materialermüdung)'],source:'Quellen: GDV, IfS Ursachenstatistik 2023, Hankammer/Resch 2023'},
-  '2001-2010':{risk:'gering-mittel',col:'#1a8c5e',badge:'Geringes Risiko',title:'2001–2010 – Moderne Installation, Schäden oft durch Fehler',text:'Überwiegend Kunststoff und Verbundrohre, Pressverbindungen Standard. GDV: Häuser unter 15 Jahren haben nur ~15 Schäden pro 1.000 Verträge. Schäden häufig durch Planungs- oder Ausführungsfehler oder defekte Haustechnikgeräte.',score:6,topUrsachen:['Defekte Haushaltsgeräte (Spüler, Waschmaschine)','Installationsfehler Dritte / Heimwerker','Undichte Flexschläuche an Armaturen','Planungsfehler (Wasserdruck)','Nicht erkannte Baufeuchtigkeit'],source:'Quellen: GDV (15 Schäden/1.000 Verträge bei <15 Jahren), IfS 2023'},
-  'nach2010':{risk:'gering',col:'#1a8c5e',badge:'Geringes Risiko',title:'Nach 2010 – Neubau, geringste Materialermüdung',text:'Moderne Kunststoff- und Edelstahlsysteme, kaum Materialermüdung. Laut GDV nur ~15 Schäden pro 1.000 Verträge – allerdings bei Neubauschäden die höchste Schadenssumme je Fall. Schäden meist durch Baufehler oder Planungsmängel.',score:3,topUrsachen:['Baufehler / Erstinstallationsfehler','Undichte Anschlüsse Haustechnik','Baufeuchtigkeit (noch nicht abgetrocknet)','Druckstöße / Wasserhammer','Frostschäden (Erstbezug / Leerstand)'],source:'Quellen: GDV, IfS Ursachenstatistik 2023'}
+function go(id){
+  if(id==='s-ruf'){document.getElementById('ruf-ico').textContent=ico;document.getElementById('ruf-cat').textContent=cat;}
+  if(id==='s-confirm'){document.getElementById('cf-cat').textContent=ico+' '+cat;document.getElementById('cf-zeit').textContent=zeitLabel;document.getElementById('cf-ref').textContent='PRX-'+Math.random().toString(36).substr(2,6).toUpperCase();}
+  var c=document.getElementById(cur),nx=document.getElementById(id);
+  c.classList.add('pushed');
+  nx.classList.remove('hidden');
+  setTimeout(function(){c.classList.add('hidden');c.classList.remove('pushed');},320);
+  cur=id;window.scrollTo(0,0);
+}
+function back(id){
+  var c=document.getElementById(cur),pr=document.getElementById(id);
+  c.style.transition='transform .28s cubic-bezier(.4,0,.2,1)';c.style.transform='translateX(100%)';
+  pr.classList.remove('hidden','pushed');pr.style.cssText='';cur=id;
+  setTimeout(function(){c.classList.add('hidden');c.style.cssText='';},280);
+}
+function tab(t){
+  var m={home:'s-home',auftraege:'s-auftraege',profil:'s-profil'};
+  ALL.forEach(function(s){var el=document.getElementById(s);el.classList.toggle('hidden',s!==m[t]);el.classList.remove('pushed');el.style.cssText='';});
+  cur=m[t];
+}
+function pickCat(el,name,em){
+  cat=name;ico=em;
+  document.querySelectorAll('#s-kat .opt').forEach(function(o){o.classList.remove('sel');});
+  el.classList.add('sel');
+  setTimeout(function(){go('s-ruf');},200);
+}
+function selZeit(el,label){
+  zeitLabel=label;
+  document.querySelectorAll('.zeit-opt').forEach(function(z){z.classList.remove('sel');});
+  el.classList.add('sel');
+}
+var INFO={
+  wasser:{ico:'💧',t:'Wasserschaden – was tun?',s:'Die ersten Minuten entscheiden',tips:[{t:'Haupthahn sofort abdrehen',tx:'Jede Minute zählt. Wasserversorgung am Haupthahn abstellen – meist im Keller oder Hausanschlussraum.'},{t:'Strom sichern',tx:'Befindet sich Wasser in der Nähe von Steckdosen oder Elektrik, sofort die Sicherung abschalten.'},{t:'Alles fotografieren',tx:'Vor dem Aufwischen alles dokumentieren – Datum & Uhrzeit für die Versicherung wichtig.'},{t:'Versicherung informieren',tx:'Gebäude- oder Hausratversicherung melden. Manche haben 24/7-Hotlines.'},{t:'Keine Eigenreparaturen',tx:'Nicht versuchen selbst zu dichten – falsches Abdichten kann Schimmel fördern.'}]},
+  schimmel:{ico:'🌫️',t:'Schimmel – was beachten?',s:'Warnsignale & richtiges Verhalten',tips:[{t:'Schimmel nicht selbst entfernen',tx:'Schimmelpilzsporen sind gesundheitsschädlich. Kein Abwischen ohne Schutz – Profis beauftragen.'},{t:'Ursache klären',tx:'Schimmel ist immer Symptom – Feuchtigkeit muss gefunden werden. Ohne Ursachenbeseitigung kommt er zurück.'},{t:'Gut lüften',tx:'Stoßlüften 3× täglich. Luftfeuchtigkeit unter 60% halten.'},{t:'Möbel von Wänden abrücken',tx:'Mindestens 5–10 cm Abstand zu Außenwänden – so kann Luft zirkulieren.'},{t:'Früh handeln',tx:'Bei mehr als 0,5 m² unbedingt Fachbetrieb beauftragen.'}]},
+  heizung:{ico:'🔥',t:'Heizung defekt – Checklist',s:'Vor dem Anruf selbst prüfen',tips:[{t:'Systemdruck prüfen',tx:'Normaldruck ist 1,5–2 bar. Zeigt das Manometer weniger als 1 bar, Druck nachfüllen.'},{t:'Thermostate prüfen',tx:'Sind alle Thermostate aufgedreht? Manchmal ist ein einzelner Heizkörper die Ursache.'},{t:'Fehlermeldung notieren',tx:'Zeigt die Therme einen Fehlercode? Diesen notieren und beim Anruf mitteilen.'},{t:'Sicherungsautomat prüfen',tx:'Ist die Sicherung der Therme ausgelöst? Im Sicherungskasten kontrollieren.'},{t:'Nicht selbst öffnen',tx:'Heizungsanlagen stehen unter Druck – bitte nie selbst öffnen oder Leitungen lösen.'}]},
+  versicherung:{ico:'🛡️',t:'Versicherung & Schaden',s:'Was Sie wissen sollten',tips:[{t:'⚠️ Erst PREXIA – dann Versicherung',tx:'Melden Sie sich zuerst bei uns – damit wir sofort Maßnahmen ergreifen und den Schaden so gering wie möglich halten können. Jede Stunde zählt. Danach unterstützen wir Sie bei der Versicherungsmeldung mit vollständiger Dokumentation.'},{t:'Dokumentation vor der Meldung',tx:'Lassen Sie uns den Schaden zuerst fachgerecht dokumentieren – Fotos, Messprotokolle, Ortungsbericht. Das stärkt Ihren Fall gegenüber der Versicherung erheblich.'},{t:'Nichts voreilig wegwerfen',tx:'Beschädigte Gegenstände erst nach Freigabe durch die Versicherung entsorgen.'},{t:'Gebäude- vs. Hausrat',tx:'Gebäudeversicherung: Schaden am Haus. Hausratversicherung: Möbel & Geräte. Beide prüfen!'},{t:'PREXIA-Protokoll als Nachweis',tx:'Unser Ortungsprotokoll mit Messwerten und Fotos ist ein professioneller Nachweis – von Versicherungen anerkannt.'}]}
 };
-
-const MAT_DATA = {
-  'blei':{col:'#b83232',title:'Blei – Gesundheitsrisiko + Leckagegefahr',text:'Bleirohre wurden bis in die 1970er Jahre verbaut. Blei korrodiert selten durch Lochfraß, stellt aber ein erhebliches Gesundheitsrisiko dar. Undichtigkeiten oft an Verbindungsstellen. Austausch nach Trinkwasserverordnung Pflicht.'},
-  'stahl':{col:'#c47a00',title:'Verzinkter Stahl – Korrosionsanfällig',text:'Nach Aufbrauch der Zinkschicht (typisch nach 30–50 Jahren) beginnt Lochfraß. Im WW-Bereich durch Potenzialumkehr beschleunigte Korrosion. Nie mit Kupfer kombinieren – galvanische Korrosion. Typisch: Rostrotes Wasser, Druckverlust durch Inkrustationen.'},
-  'kupfer':{col:'#c47a00',title:'Kupfer – Lochfraß möglich',text:'Kupfer in der Regel langlebig (~50 Jahre). Kupferlochfraß Typ I (kalt) und Typ II (warm) möglich bei ungünstiger Wasserchemie. Erkennbar durch nadelstichgroße Löcher. An Gewindeverbindungen und Rohrbögen erhöhtes Risiko.'},
-  'verbund':{col:'#1a8c5e',title:'Mehrschichtverbund – Pressverbindungen prüfen',text:'Langlebig bei korrekter Installation. Hauptgefahr: nicht korrekt verpresste Verbindungen. Frühzeitig kaum erkennbar. Im Heizungsbereich auf korrekten Dehnungsausgleich achten.'}
-};
-
-const HZTYP_DATA = {
-  'einrohr':{badge:'Einrohr – Risikoreich',col:'#b83232',title:'Einrohrheizung (typisch 1950–1985)',text:'Bei der Einrohrheizung sind alle Heizkörper in Reihe an einen einzigen Rohrkreis angeschlossen. Das Heizungswasser fließt von Heizkörper zu Heizkörper und wird dabei kälter. Bei einem Leck ist das gesamte System betroffen, die Leckstelle schwer zu isolieren. Typische Rohrwerkstoffe: verzinkter Stahl, später Kupfer.',problems:[{dot:'#b83232',text:'Korrodierte Stahlrohre – Zinkschicht nach 40–60 Jahren aufgebraucht'},{dot:'#b83232',text:'Undichte Gewindeverbindungen durch Materialermüdung'},{dot:'#c47a00',text:'Defekte Heizkörperventile (Thermostatventile älterer Bauart)'},{dot:'#c47a00',text:'Leck schwer lokalisierbar – kann an jeder Reihenstation liegen'},{dot:'#1a8c5e',text:'Empfehlung: Korrelator bei Erdleitungen, Elektroakustik im Gebäude'}],source:'Quelle: IfS, Hankammer/Resch – Bauwerksdiagnostik 2023'},
-  'zweirohr':{badge:'Zweirohr',col:'#c47a00',title:'Zweirohrheizung (Standard ab ~1980)',text:'Die Zweirohrheizung hat getrennte Vor- und Rücklaufleitungen zu jedem Heizkörper. Jeder Heizkörper bekommt gleich warmes Wasser und kann einzeln abgesperrt werden. Leckortung deutlich einfacher als bei Einrohrheizungen, da Vor- und Rücklauf separat auf Druck geprüft werden können.',problems:[{dot:'#c47a00',text:'Undichte Pressverbindungen bei älteren Systemen (vor 1995)'},{dot:'#c47a00',text:'Korrosion an Stahl-Verteilleitungen im Keller'},{dot:'#1a8c5e',text:'Druckprobe: Vor- und Rücklauf getrennt testen – Leck gut eingrenzbar'},{dot:'#1a8c5e',text:'Thermostatventile und Rücklaufverschraubungen prüfen'}],source:'Quelle: IfS Ursachenstatistik 2023'},
-  'fbh-wasser':{badge:'⚠ FBH – Ortung komplex',col:'#b83232',title:'Fußbodenheizung Wasser (FBH)',text:'Wassergeführte Fußbodenheizungen verlegen Kunststoff- oder Verbundrohre in Schleifen im Estrich. Vorlauftemperaturen 35–45 °C. Bei Leckage: Leitungen liegen verdeckt im Estrich – Öffnung teuer und aufwändig. Thermografie ist das Mittel der Wahl zur Ortung.',problems:[{dot:'#b83232',text:'Leck im Estrich: schleichender Druckverlust, Feuchte unter Belag unsichtbar'},{dot:'#b83232',text:'Anbohrung durch spätere Kernbohrungen (häufigste FBH-Schadensursache!)'},{dot:'#c47a00',text:'Verbundrohr-Verbindungen am Verteiler undicht (Überwurfmuttern, Klemmringe)'},{dot:'#c47a00',text:'PE-Rohr-Ermüdung bei alten FBH-Systemen (vor 1990, Erstgeneration)'},{dot:'#1a8c5e',text:'Thermografie: System 12 Std. aus, Kreislauf für Kreislauf hochfahren (VaTh)'}],source:'Quelle: Hankammer/Resch 2023, IfS, VaTh-Richtlinie Bauthermografie'},
-  'fernwaerme':{badge:'Fernwärme',col:'#c47a00',title:'Fernwärme-Anschluss',text:'Bei Fernwärme liefert ein Versorger heißes Wasser über ein Leitungsnetz. Im Gebäude sitzt eine Übergabestation (Wärmetauscher), die den Primärkreis (Versorger) vom Sekundärkreis (Hausanlage) trennt. Leckagen in der Übergabestation oder im Sekundärkreis sind Sache des Hauseigentümers.',problems:[{dot:'#c47a00',text:'Undichte Wärmetauscher-Anschlüsse an der Übergabestation'},{dot:'#c47a00',text:'Korrodierte Sekundärleitungen (Stahl oder Kupfer) im Keller'},{dot:'#1a8c5e',text:'Druckprüfung Sekundärkreis getrennt vom Primärkreis durchführen'},{dot:'#1a8c5e',text:'Bei Verdacht auf Primärkreis-Leck: Versorger kontaktieren'}],source:'Quelle: IfS Ursachenstatistik 2023'},
-  'gasbrennwert':{badge:'Gas-Brennwert',col:'#c47a00',title:'Gas-Brennwerttherme',text:'Brennwertthermen nutzen auch die Kondensationswärme der Abgase. Das Gerät enthält Wärmetauscher, Pumpe, Ausdehnungsgefäß und Sicherheitsventil. Wasserführende Leckagen entstehen meist direkt am Gerät oder an den Flexschläuchen (Panzerschläuchen).',problems:[{dot:'#c47a00',text:'Panzerschläuche am Geräteanschluss porös – sehr häufig'},{dot:'#c47a00',text:'Undichter Wärmetauscher – Leckage erst durch Kondensatspuren sichtbar'},{dot:'#c47a00',text:'Sicherheitsventil tropft – Drucküberschreitung durch defektes Ausdehnungsgefäß'},{dot:'#1a8c5e',text:'Systemdruck prüfen: Richtwert 1,5–2,0 bar kalt. Ausdehnungsgefäß kontrollieren'}],source:'Quelle: IfS Ursachenstatistik 2023, DVGW'},
-  'oelheizung':{badge:'Ölheizung',col:'#c47a00',title:'Ölheizung',text:'Ölheizungen verbrennen Heizöl und übertragen die Wärme über einen Wärmetauscher. Der wasserführende Kreislauf ähnelt der Gasheizung. Ölleitungen vom Tank zum Brenner sind nicht Teil der Wasserortung, aber im Schadensfall meldepflichtig nach Wasserhaushaltsgesetz (WHG).',problems:[{dot:'#c47a00',text:'Korrodierte Stahlleitungen im Heizungsraum (Vor-/Rücklauf)'},{dot:'#c47a00',text:'Undichte Gewindeverbindungen durch Materialermüdung'},{dot:'#b83232',text:'Ölleitungs-Leckage: Sofortmaßnahme und Meldepflicht nach WHG'},{dot:'#1a8c5e',text:'Ausdehnungsgefäß und Sicherheitsventil regelmäßig prüfen'}],source:'Quelle: IfS, WHG (Wasserhaushaltsgesetz)'},
-  'waermepumpe':{badge:'Wärmepumpe',col:'#1a8c5e',title:'Wärmepumpe',text:'Wärmepumpen entziehen der Umgebung Wärme und heben diese auf ein nutzbares Temperaturniveau. Der Heizkreis funktioniert wie eine klassische Heizung. Zusätzlich gibt es einen Kältemittelkreislauf im Außengerät – der ist nicht wasserführend, bei Leckage Sache eines Kältemittel-Sachkundigen.',problems:[{dot:'#1a8c5e',text:'Pressverbindungen am Verteiler oder Pufferspeicher undicht'},{dot:'#c47a00',text:'Undichter Pufferspeicher-Flansch oder Anschluss'},{dot:'#c47a00',text:'Kältemittelleck im Außengerät – kein Wasserschaden, separater Sachkundiger nötig'},{dot:'#1a8c5e',text:'Systemdruck prüfen: Richtwert 1,5–2,5 bar je nach Anlage'}],source:'Quelle: IfS, BDH (Bundesindustrieverband Haus-, Energie- und Umwelttechnik)'},
-  'unk':{badge:'Unbekannt',col:'#6b6b6b',title:'Heizungstyp unbekannt',text:'Der Heizungstyp hat direkten Einfluss auf die Ortungsstrategie. Vor der Analyse sollte der Heizungstyp vor Ort geklärt werden – Typenschild an der Heizung oder Verteiler im Heizungsraum in Augenschein nehmen.',problems:[{dot:'#6b6b6b',text:'Typenschild an der Heizung / Therme prüfen'},{dot:'#6b6b6b',text:'Verteiler / Heizungsraum besichtigen und System identifizieren'}],source:''}
-};
-
-// ===================== HELPERS =====================
-const bgMap = {'#b83232':'var(--red-l)','#c47a00':'var(--amber-l)','#1a8c5e':'var(--green-l)','#6b6b6b':'var(--input)'};
-function getBg(col){ return bgMap[col]||'var(--blue-l)'; }
-
-function renderInfoBox(boxEl, titleEl, textEl, probsEl, sourceEl, badgeEl, d) {
-  if (!d) { boxEl.classList.remove('show'); if(badgeEl){badgeEl.style.display='none';} return; }
-  const bg = getBg(d.col);
-  boxEl.style.borderLeftColor = d.col;
-  boxEl.style.background = bg;
-  titleEl.textContent = d.title;
-  titleEl.style.color = d.col;
-  textEl.textContent = d.text;
-  probsEl.innerHTML = (d.problems||d.topUrsachen||[]).map(p => {
-    const dot = p.dot||d.col;
-    const txt = p.text||p;
-    return `<div class="hz-prob-item"><span class="hz-dot" style="background:${dot}"></span><span>${txt}</span></div>`;
+function showInfo(key){
+  var d=INFO[key];
+  document.getElementById('info-ico').textContent=d.ico;
+  document.getElementById('info-title').textContent=d.t;
+  document.getElementById('info-sub').textContent=d.s;
+  document.getElementById('info-tips').innerHTML=d.tips.map(function(tp,i){
+    return '<div class="tip-row"><div class="tip-num">'+(i+1)+'</div><div><div class="tip-title">'+tp.t+'</div><div class="tip-text">'+tp.tx+'</div></div></div>';
   }).join('');
-  sourceEl.textContent = d.source||'';
-  boxEl.classList.add('show');
-  if (badgeEl) {
-    badgeEl.style.display = 'inline-block';
-    badgeEl.textContent = d.badge;
-    badgeEl.style.color = d.col;
-    badgeEl.style.background = bg;
-  }
+  go('s-info');
 }
-
-// ===================== NAVIGATION =====================
-function go(n) {
-  for (var i = 1; i <= 5; i++) {
-    var el = document.getElementById('s'+i);
-    if (el) el.style.display = i===n ? 'block' : 'none';
-  }
-  document.getElementById('sp').textContent = 'Schritt '+n+' / 5';
-  document.getElementById('pf').style.width = (n*20)+'%';
-  if (n===4) setTimeout(initCanvas, 60);
-  window.scrollTo({top:0,behavior:'smooth'});
+function resetAndHome(){
+  cat='';ico='';zeitLabel='So bald wie möglich';
+  document.querySelectorAll('.opt,.zeit-opt').forEach(function(o){o.classList.remove('sel');});
+  document.getElementById('notiz').value='';
+  document.getElementById('z-sofort').classList.add('sel');
+  tab('home');
 }
-
-// ===================== TOGGLE BUTTONS =====================
-var toggleVals = {};
-function tog(id, val, el) {
-  toggleVals[id] = val;
-  document.getElementById(id).value = val;
-  document.getElementById(id+'-t').querySelectorAll('.tb').forEach(function(b){ b.classList.remove('ay','an','au'); });
-  el.classList.add(val==='ja'?'ay':val==='nein'?'an':'au');
-}
-
-// ===================== CHECKBOXES =====================
-function ci(cb) { cb.closest('.ci').classList.toggle('on', cb.checked); }
-
-// ===================== ROOMS – KAPAZITIV =====================
-var kapCount = 0;
-var widCount = 0;
-
-var ETAGEN = [
-  {v:'',l:'Etage – wählen –'},
-  {v:'ug',l:'Keller / UG'},
-  {v:'eg',l:'Erdgeschoss (EG)'},
-  {v:'og1',l:'1. Obergeschoss'},
-  {v:'og2',l:'2. Obergeschoss'},
-  {v:'og3',l:'3. Obergeschoss'},
-  {v:'og4',l:'4. OG oder höher'},
-  {v:'dg',l:'Dachgeschoss'}
-];
-
-function etagenSelect(id, style) {
-  return '<select id="'+id+'" style="'+style+'">'+
-    ETAGEN.map(function(e){return '<option value="'+e.v+'">'+e.l+'</option>';}).join('')+
-    '</select>';
-}
-
-function getEtageLabel(val) {
-  var e = ETAGEN.find(function(e){return e.v===val;});
-  return e && e.v ? e.l : '';
-}
-
-function roomRowHtml(prefix, idx, fields, isFirst) {
-  var delFn = prefix==='kap' ? 'removeKap' : 'removeWid';
-  var del = isFirst ? '' : '<button type="button" onclick="'+delFn+'('+idx+')" style="flex-shrink:0;width:32px;height:32px;background:var(--red-l);border:.5px solid var(--red);border-radius:var(--rs);color:var(--red);font-size:16px;cursor:pointer;font-family:inherit">×</button>';
-  var inputs = fields.map(function(f){
-    return '<div class="db"><label>'+f.label+'</label><div class="mm">'+
-      '<div><span>Min</span><input type="number" id="'+prefix+'-'+f.pre+'-'+idx+'-0" placeholder="—" min="0" max="'+f.max+'" inputmode="numeric"></div>'+
-      '<div><span>Max</span><input type="number" id="'+prefix+'-'+f.pre+'-'+idx+'-1" placeholder="—" min="0" max="'+f.max+'" inputmode="numeric"></div>'+
-      '</div></div>';
-  }).join('');
-  // Etagen-Select Optionen
-  var etOpts = ETAGEN.map(function(e){return '<option value="'+e.v+'">'+e.l+'</option>';}).join('');
-  return '<div id="'+prefix+'-block-'+idx+'" style="margin-bottom:16px;padding-bottom:16px;border-bottom:.5px solid var(--border)">'+
-    // Zeile 1: Name + Löschen
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
-    '<input type="text" id="'+prefix+'-name-'+idx+'" placeholder="Raumname (z.B. Badezimmer, Küche)" style="flex:1;min-width:0">'+
-    del+'</div>'+
-    // Zeile 2: Etage + Lage
-    '<div class="g2" style="margin-bottom:8px">'+
-    '<select id="'+prefix+'-etage-'+idx+'"><option value="">Etage wählen</option>'+etOpts+'</select>'+
-    '<select id="'+prefix+'-lage-'+idx+'">'+
-    '<option value="">Raumlage (opt.)</option>'+
-    '<option value="mitte">Mitte des Gebäudes</option>'+
-    '<option value="aussen-n">Außenwand Nord</option>'+
-    '<option value="aussen-s">Außenwand Süd</option>'+
-    '<option value="aussen-o">Außenwand Ost</option>'+
-    '<option value="aussen-w">Außenwand West</option>'+
-    '<option value="bad">Nassraum / Bad</option>'+
-    '<option value="kueche">Küche</option>'+
-    '</select>'+
-    '</div>'+
-    // Zeile 3: Messwerte
-    '<div class="dg">'+inputs+'</div>'+
-    '</div>';
-}
-
-function addKap() {
-  var i = kapCount;
-  document.getElementById('kap-liste').insertAdjacentHTML('beforeend',
-    roomRowHtml('kap', i, [
-      {label:'Wand',pre:'kw',max:200},
-      {label:'Boden',pre:'kb',max:200},
-      {label:'Decke',pre:'kd',max:200}
-    ], i===0));
-  kapCount++;
-}
-
-function removeKap(i) {
-  var b = document.getElementById('kap-block-'+i);
-  if(b) b.remove();
-}
-
-function addWid() {
-  var i = widCount;
-  document.getElementById('wid-liste').insertAdjacentHTML('beforeend',
-    roomRowHtml('wid', i, [
-      {label:'Wand',pre:'ww',max:100},
-      {label:'Boden',pre:'wb',max:100},
-      {label:'Decke',pre:'wd',max:100}
-    ], i===0));
-  widCount++;
-}
-
-function removeWid(i) {
-  var b = document.getElementById('wid-block-'+i);
-  if(b) b.remove();
-}
-
-// ===================== MAX DIGITS =====================
-function getMaxDigits(prefix) {
-  // prefix = 'kap-kw', 'kap-kb' etc. or 'wid-ww' etc.
-  var max = 0;
-  document.querySelectorAll('[id^="'+prefix+'-"][id$="-1"]').forEach(function(el){
-    var v = parseFloat(el.value)||0; if(v>max) max=v;
-  });
-  return max;
-}
-
-// Helper to read room data for prompt
-function readRooms(prefix, fields) {
-  var LAGE_MAP = {
-    'mitte':'Gebäudemitte','aussen-n':'Außenwand Nord','aussen-s':'Außenwand Süd',
-    'aussen-o':'Außenwand Ost','aussen-w':'Außenwand West','bad':'Nassraum/Bad','kueche':'Küche'
-  };
-  var blocks = document.querySelectorAll('[id^="'+prefix+'-block-"]');
-  if(!blocks.length) return 'nicht gemessen';
-  return Array.from(blocks).map(function(bl, n) {
-    var idx = bl.id.replace(prefix+'-block-','');
-    var nameEl = document.getElementById(prefix+'-name-'+idx);
-    var etageEl = document.getElementById(prefix+'-etage-'+idx);
-    var lageEl = document.getElementById(prefix+'-lage-'+idx);
-    var name = (nameEl && nameEl.value) ? nameEl.value : ('Raum '+(n+1));
-    var etage = etageEl ? getEtageLabel(etageEl.value) : '';
-    var lage = lageEl && lageEl.value ? (LAGE_MAP[lageEl.value]||lageEl.value) : '';
-    var loc = name + (etage?' ('+etage+')':'') + (lage?' ['+lage+']':'');
-    var vals = fields.map(function(f){
-      var v0 = document.getElementById(prefix+'-'+f.pre+'-'+idx+'-0');
-      var v1 = document.getElementById(prefix+'-'+f.pre+'-'+idx+'-1');
-      var min = v0&&v0.value ? v0.value : '—';
-      var max = v1&&v1.value ? v1.value : '—';
-      return f.label+' '+min+'–'+max;
-    }).join(' | ');
-    return loc+': '+vals;
-  }).join('\n');
-}
-
-// ===================== PHOTOS =====================
-var photos = [];
-function addP(f) {
-  if(photos.length>=8) return;
-  var r = new FileReader();
-  r.onload = function(e){ photos.push({file:f, dataUrl:e.target.result, name:f.name}); renderP(); };
-  r.readAsDataURL(f);
-}
-function removePhoto(i) { photos.splice(i,1); renderP(); }
-function renderP() {
-  document.getElementById('pg').innerHTML = photos.map(function(p,i){
-    return '<div class="pi"><div class="pt"><img src="'+p.dataUrl+'" alt=""></div>'+
-    '<button class="pd" onclick="removePhoto('+i+')">&#x2715;</button>'+
-    '<div class="pn">'+p.name.replace(/\.[^.]+$/,'')+'</div></div>';
-  }).join('');
-  var b = document.getElementById('pbadge');
-  if(photos.length>0){b.className='pbadge';b.textContent=photos.length+' Foto'+(photos.length>1?'s':'');}
-  else{b.className='';b.textContent='';}
-}
-
-// ===================== DRUCKPROBE LIVE =====================
-function druckFeed() {
-  var sys=[{id:'pkw',n:'KW'},{id:'pww',n:'WW'},{id:'phz',n:'HZ'},{id:'pfbh',n:'FBH'}];
-  var msgs=sys.map(function(s){
-    var a=parseFloat(document.getElementById(s.id+'-a').value)||0;
-    var e=parseFloat(document.getElementById(s.id+'-e').value)||0;
-    var d=parseFloat(document.getElementById(s.id+'-diff').value)||0;
-    var act=a>0&&e>0?parseFloat((a-e).toFixed(2)):d;
-    if(act>0.5) return '<span style="color:var(--red);font-weight:700">'+s.n+': Δ'+act.toFixed(2)+' bar – deutlich</span>';
-    if(act>0.1) return '<span style="color:var(--amber)">'+s.n+': Δ'+act.toFixed(2)+' bar – leicht</span>';
-    if(act>0) return '<span style="color:var(--text3)">'+s.n+': Δ'+act.toFixed(2)+' bar – Toleranz</span>';
-    return null;
-  }).filter(Boolean);
-  document.getElementById('druck-live').innerHTML = msgs.join('&nbsp;|&nbsp;');
-}
-
-// ===================== SKIZZE =====================
-var skizzePunkte = [];
-var skizzeHistory = [];
-var skizzeBaseImage = null;
-var skizzePunktNr = 0;
-
-function initCanvas() {
-  var canvas = document.getElementById('skizze-canvas');
-  if (!canvas) return;
-  var dpr = window.devicePixelRatio||1;
-  var w = canvas.parentElement.clientWidth;
-  var h = Math.round(w*0.62);
-  canvas.width = w*dpr; canvas.height = h*dpr;
-  canvas.style.width = w+'px'; canvas.style.height = h+'px';
-  canvas.getContext('2d').scale(dpr,dpr);
-  redrawCanvas();
-}
-
-function getPos(canvas, e) {
-  var rect = canvas.getBoundingClientRect();
-  var dpr = window.devicePixelRatio||1;
-  var sx = (canvas.width/dpr)/rect.width;
-  var sy = (canvas.height/dpr)/rect.height;
-  var src = e.touches ? e.touches[0] : e;
-  return {x:(src.clientX-rect.left)*sx, y:(src.clientY-rect.top)*sy};
-}
-
-function redrawCanvas() {
-  var canvas = document.getElementById('skizze-canvas');
-  if (!canvas) return;
-  var dpr = window.devicePixelRatio||1;
-  var W = canvas.width/dpr, H = canvas.height/dpr;
-  var ctx = canvas.getContext('2d');
-  var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle = isDark ? '#252220' : '#f8f7f5';
-  ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.055)';
-  ctx.lineWidth = 0.5;
-  for(var x=0;x<W;x+=28){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(var y=0;y<H;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  if(skizzeBaseImage){
-    var img=skizzeBaseImage;
-    var ratio=Math.min(W/img.width,H/img.height);
-    ctx.drawImage(img,(W-img.width*ratio)/2,(H-img.height*ratio)/2,img.width*ratio,img.height*ratio);
-  }
-  if(!skizzeBaseImage && skizzePunkte.length===0){
-    ctx.fillStyle = isDark?'rgba(255,255,255,0.14)':'rgba(0,0,0,0.14)';
-    ctx.font='13px -apple-system,sans-serif'; ctx.textAlign='center';
-    ctx.fillText('Grundriss hochladen oder direkt antippen',W/2,H/2-10);
-    ctx.font='11px -apple-system,sans-serif';
-    ctx.fillText('um Feuchtstellen zu markieren',W/2,H/2+10);
-    ctx.textAlign='left'; return;
-  }
-  skizzePunkte.forEach(function(p){
-    ctx.beginPath(); ctx.arc(p.x,p.y,16,0,Math.PI*2);
-    ctx.fillStyle='rgba(14,95,163,0.12)'; ctx.fill();
-    ctx.beginPath(); ctx.arc(p.x,p.y,10,0,Math.PI*2);
-    ctx.fillStyle='rgba(14,95,163,0.22)'; ctx.fill();
-    ctx.strokeStyle='#0e5fa3'; ctx.lineWidth=2; ctx.stroke();
-    ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2);
-    ctx.fillStyle='#0e5fa3'; ctx.fill();
-    ctx.beginPath(); ctx.arc(p.x+12,p.y-12,8,0,Math.PI*2);
-    ctx.fillStyle='#0e5fa3'; ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='bold 9px -apple-system,sans-serif';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(p.nr,p.x+12,p.y-12);
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-    if(p.label){ctx.fillStyle=isDark?'#b5d4f4':'#0c447c';ctx.font='11px -apple-system,sans-serif';ctx.fillText(p.label,p.x+22,p.y+4);}
-  });
-}
-
-function canvasTap(e) {
-  e.preventDefault();
-  var canvas = document.getElementById('skizze-canvas');
-  var pos = getPos(canvas, e);
-  skizzeHistory.push(JSON.parse(JSON.stringify(skizzePunkte)));
-  skizzePunktNr++;
-  skizzePunkte.push({x:pos.x, y:pos.y, label:'', nr:skizzePunktNr});
-  redrawCanvas();
-  renderPunktListe();
-}
-
-function renderPunktListe() {
-  var el = document.getElementById('punkt-liste');
-  if(!el) return;
-  if(skizzePunkte.length===0){el.innerHTML='';return;}
-  var html = '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">'+skizzePunkte.length+' Feuchtestelle'+(skizzePunkte.length>1?'n':'')+' markiert</div>';
-  skizzePunkte.forEach(function(p,i){
-    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:.5px solid var(--border)">'+
-      '<span style="width:20px;height:20px;border-radius:50%;background:#0e5fa3;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+p.nr+'</span>'+
-      '<input type="text" value="'+p.label+'" placeholder="Beschreibung (z.B. Bad Wand Süd)" style="flex:1;padding:5px 8px;font-size:13px" data-punkt-idx="'+i+'">'+
-      '<button onclick="removePunkt('+i+')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:16px">×</button>'+
-      '</div>';
-  });
-  el.innerHTML = html;
-  el.querySelectorAll('[data-punkt-idx]').forEach(function(inp){
-    inp.addEventListener('input', function(){
-      var idx = parseInt(this.getAttribute('data-punkt-idx'));
-      skizzePunkte[idx].label = this.value;
-      redrawCanvas();
-    });
-  });
-}
-
-function removePunkt(i) {
-  skizzeHistory.push(JSON.parse(JSON.stringify(skizzePunkte)));
-  skizzePunkte.splice(i,1);
-  skizzePunkte.forEach(function(p,j){p.nr=j+1;});
-  skizzePunktNr = skizzePunkte.length;
-  redrawCanvas(); renderPunktListe();
-}
-function undoSkizze() {
-  if(skizzeHistory.length>0){skizzePunkte=skizzeHistory.pop();skizzePunktNr=skizzePunkte.length;redrawCanvas();renderPunktListe();}
-}
-function clearSkizze() {
-  skizzeHistory.push(JSON.parse(JSON.stringify(skizzePunkte)));
-  skizzePunkte=[]; skizzePunktNr=0; skizzeBaseImage=null;
-  redrawCanvas(); renderPunktListe();
-}
-function getSkizzeB64() {
-  var c = document.getElementById('skizze-canvas');
-  return c ? c.toDataURL('image/jpeg',0.85) : null;
-}
-
-// ===================== SCORE =====================
-function calcScore() {
-  var v = function(id){return parseFloat(document.getElementById(id).value)||0;};
-  var sv = function(id){return document.getElementById(id).value||'';};
-  var s=0,m=0;
-  m+=30; var diffs=['pkw','pww','phz','pfbh'].map(function(p){var a=v(p+'-a'),e=v(p+'-e'),d=v(p+'-diff');return a>0&&e>0?Math.abs(a-e):Math.abs(d);}); var maxD=Math.max.apply(null,diffs);
-  if(maxD>0.5)s+=30;else if(maxD>0.2)s+=21;else if(maxD>0.05)s+=12;else if(maxD>0)s+=5;
-  m+=20; var km=Math.max(getMaxDigits('kap-kw'),getMaxDigits('kap-kb'),getMaxDigits('kap-kd'));
-  if(km>30)s+=20;else if(km>22)s+=14;else if(km>16)s+=8;else if(km>0)s+=3;
-  m+=15; var wm=Math.max(getMaxDigits('wid-ww'),getMaxDigits('wid-wb'),getMaxDigits('wid-wd'));
-  if(wm>46)s+=15;else if(wm>36)s+=9;else if(wm>25)s+=4;else if(wm>0)s+=1;
-  m+=8; var sys=sv('system');
-  if(sys==='hz'||sys==='fbh')s+=8;else if(sys==='kw'||sys==='ww')s+=6;else if(sys==='zl')s+=5;else if(sys==='abwasser'||sys==='aussen-l')s+=4;
-  m+=10; var bj=sv('baujahr'); if(BAUJAHR_DATA[bj])s+=Math.round(BAUJAHR_DATA[bj].score/3);
-  m+=7; var mat=sv('mat');
-  if(mat==='blei')s+=6;else if(mat==='stahl')s+=5;else if(mat==='kupfer')s+=3;else if(mat==='verbund')s+=2;
-  m+=5; var age=v('alter');
-  if(age>=50)s+=5;else if(age>=30)s+=3;else if(age>=20)s+=1;
-  m+=7; var anz=document.querySelectorAll('#mv-grid input:checked').length;
-  var bef=(document.getElementById('mv-befund').value||'').length;
-  s+=Math.min(5,anz); if(bef>20)s+=2;else if(bef>5)s+=1;
-  return Math.min(97,Math.max(3,Math.round((s/m)*100)));
-}
-
-function calcLocations() {
-  var sv=function(id){return document.getElementById(id).value||'';};
-  var v=function(id){return parseFloat(document.getElementById(id).value)||0;};
-  var sys=sv('system'),mat=sv('mat'),lage=sv('lage'),fbh=sv('fbh'),bj=sv('baujahr');
-  var age=v('alter');
-  var kapBMax=getMaxDigits('kap-kb'),kapWMax=getMaxDigits('kap-kw');
-  var pfbhDiff=Math.abs(v('pfbh-a')>0&&v('pfbh-e')>0?v('pfbh-a')-v('pfbh-e'):v('pfbh-diff'));
-  var phzDiff=Math.abs(v('phz-a')>0&&v('phz-e')>0?v('phz-a')-v('phz-e'):v('phz-diff'));
-  var thermo=!!document.querySelector('#mv-grid input[value="thermografie"]:checked');
-  var korr=!!document.querySelector('#mv-grid input[value="korrelator"]:checked');
-  var elektro=!!document.querySelector('#mv-grid input[value="elektroakustik"]:checked');
-  var befund=(document.getElementById('mv-befund').value||'').toLowerCase();
-  var w={'Fußbodenheizung / Estrich':5,'Kellerleitung / Fundament':5,'Außenleitung / Erdreich':5,'Sanitärbereich / Nasszone':5,'Wanddurchführung / Verteiler':5,'Technikraum / Heizungsanlage':5,'Dachbereich / Abdichtung':5,'Abwasserleitung / Kanal':5};
-  if(sys==='fbh'||fbh==='ja'){w['Fußbodenheizung / Estrich']+=40;}
-  if(pfbhDiff>0.05)w['Fußbodenheizung / Estrich']+=25;
-  if(kapBMax>18)w['Fußbodenheizung / Estrich']+=kapBMax>28?20:12;
-  if(thermo)w['Fußbodenheizung / Estrich']+=10;
-  if(sys==='hz'){w['Technikraum / Heizungsanlage']+=25;w['Fußbodenheizung / Estrich']+=10;}
-  if(phzDiff>0.05)w['Technikraum / Heizungsanlage']+=20;
-  if(sys==='kw'||sys==='ww'){w['Sanitärbereich / Nasszone']+=18;w['Wanddurchführung / Verteiler']+=12;}
-  if(lage==='keller'){w['Kellerleitung / Fundament']+=35;w['Außenleitung / Erdreich']+=15;}
-  if(lage==='aussen'||sys==='aussen-l'){w['Außenleitung / Erdreich']+=40;w['Kellerleitung / Fundament']+=15;}
-  if(mat==='blei'||mat==='stahl'||age>40){w['Kellerleitung / Fundament']+=15;w['Außenleitung / Erdreich']+=10;}
-  if(kapWMax>18)w['Wanddurchführung / Verteiler']+=kapWMax>28?18:10;
-  if(sys==='regen'||lage==='dg'){w['Dachbereich / Abdichtung']+=40;}
-  if(sys==='abwasser'){w['Abwasserleitung / Kanal']+=35;w['Kellerleitung / Fundament']+=10;}
-  if(korr)w['Außenleitung / Erdreich']+=12;
-  if(elektro)w['Wanddurchführung / Verteiler']+=8;
-  if(bj==='vor1950'||bj==='1950-1969'){w['Kellerleitung / Fundament']+=18;w['Außenleitung / Erdreich']+=12;w['Wanddurchführung / Verteiler']+=10;}
-  if(bj==='1970-1989'){w['Fußbodenheizung / Estrich']+=10;w['Sanitärbereich / Nasszone']+=10;w['Kellerleitung / Fundament']+=8;}
-  if(befund.indexOf('boden')>=0||befund.indexOf('estrich')>=0)w['Fußbodenheizung / Estrich']+=15;
-  if(befund.indexOf('wand')>=0)w['Wanddurchführung / Verteiler']+=12;
-  if(befund.indexOf('keller')>=0)w['Kellerleitung / Fundament']+=15;
-  if(befund.indexOf('außen')>=0||befund.indexOf('aussen')>=0)w['Außenleitung / Erdreich']+=15;
-  if(befund.indexOf('bad')>=0||befund.indexOf('fliese')>=0)w['Sanitärbereich / Nasszone']+=15;
-  var total=Object.values(w).reduce(function(a,b){return a+b;},0);
-  return Object.entries(w).map(function(e){return {name:e[0],pct:Math.round((e[1]/total)*100)};}).sort(function(a,b){return b.pct-a.pct;}).slice(0,5);
-}
-
-function getMethodRecs(prob) {
-  var sys=document.getElementById('system').value||'';
-  var fbh=document.getElementById('fbh').value||'';
-  var lage=document.getElementById('lage').value||'';
-  var checked=Array.from(document.querySelectorAll('#mv-grid input:checked')).map(function(c){return c.value;});
-  var recs=[];
-  if(checked.indexOf('thermografie')<0&&(sys==='fbh'||fbh==='ja'||sys==='hz'))recs.push({t:'Thermografie',tx:'FBH mind. 12 Std. ausschalten, dann Kreislauf für Kreislauf hochfahren. Temperaturdiff. >15 K nötig. Kamera nach VaTh-Richtlinie.',c:'var(--blue)'});
-  if(checked.indexOf('korrelator')<0&&(lage==='aussen'||sys==='aussen-l'||lage==='keller'))recs.push({t:'Korrelator',tx:'Für Erd- und Außenleitungen. Rohrlänge, Durchmesser und Material vorab erfassen. Bei Störgeräuschen Nachtmessung.',c:'var(--purple)'});
-  if(checked.indexOf('tracergas')<0&&prob>=55)recs.push({t:'Tracergas (H₂/N₂)',tx:'System komplett entleeren. Tracergas steigt auf. Systematische Absuche mit H₂-Sensor. Besonders bei verdeckten Leitungen.',c:'var(--amber)'});
-  if(checked.indexOf('endoskopie')<0&&(sys==='abwasser'||sys==='regen'))recs.push({t:'Endoskopie / Kanal TV',tx:'Für Abwasser- und Regenwasserleitungen. Starre oder flexible Sonde je nach Zugänglichkeit.',c:'var(--green)'});
-  if(checked.indexOf('elektroakustik')<0&&(sys==='kw'||sys==='ww'||sys==='hz')&&prob>=45)recs.push({t:'Elektroakustik',tx:'Geräuschortung für druckführende Rohre. Stille Umgebung wichtig.',c:'var(--red)'});
-  return recs.slice(0,4);
-}
-
-function buildPrompt() {
-  var g=function(id){return document.getElementById(id).value||'—';};
-  var v=function(id){return parseFloat(document.getElementById(id).value)||0;};
-  var bj=g('baujahr');
-  var bjD=BAUJAHR_DATA[bj];
-  var bjRisk=bjD?bjD.title+' | Typische Ursachen: '+bjD.topUrsachen.join(', '):'nicht angegeben';
-  var hzVal=g('hztyp'); var hzD=HZTYP_DATA[hzVal];
-  var hzInfo=hzD?hzD.title+' – '+hzD.text+' Probleme: '+hzD.problems.map(function(p){return p.text;}).join(' | '):'nicht angegeben';
-  var checked=Array.from(document.querySelectorAll('#mv-grid input:checked')).map(function(c){return c.value;}).join(', ')||'keine';
-  var dw=['KW','WW','HZ','FBH'].map(function(s,i){var p=['pkw','pww','phz','pfbh'][i];var a=v(p+'-a'),e=v(p+'-e'),d=v(p+'-diff');var diff=a>0&&e>0?(a-e):d;return diff!==0?s+': Anfang '+(a||'?')+' / Ende '+(e||'?')+' / Δ'+diff.toFixed(2)+' bar':null;}).filter(Boolean).join(' | ')||'keine';
-  var isMFH=g('gtyp')==='mfh';
-  var lageTxt=g('lage');
-  if(isMFH){var sw=Array.from(document.querySelectorAll('#stockwerk-grid input:checked')).map(function(c){return c.value;}).join(', ')||'—';var wh=Array.from(document.querySelectorAll('#wohnung-grid input:checked')).map(function(c){return c.value;}).join(', ')||'—';lageTxt='MFH | Stockwerke: '+sw+' | Lage: '+wh+(g('wohnungnr')!=='—'?' | Whg.: '+g('wohnungnr'):'');}
-  var adjMap={'ja':'Ja, direkt benachbart','teilw':'Teilweise benachbart','nein':'Nein, räumlich getrennt','unk':'Unbekannt'};
-  var vertMap={'ja':'Ja – Raum über/unter anderem Feuchtraum','nein':'Nein','unk':'Unbekannt'};
-  var musterMap={'punkt':'Punktuell','linie':'Linienförmig entlang Wand','flaeche':'Flächig','mehrere-raeume':'Mehrere Räume ähnliche Werte','zunehmend':'Von Stelle ausgehend abnehmend','decke-boden':'Decke oben + Boden darunter feucht'};
-  var zeitMap={'akut':'Akut / plötzlich','wochen':'Vor einigen Wochen','monate':'Vor mehreren Monaten','schleichend':'Schleichend zunehmend','saisonal':'Saisonal','nach-arbeit':'Nach Bauarbeiten'};
-  var adjVal=g('adjacent'); var vertVal=g('vertical');
-  var musterVal=g('feuchte-muster'); var zeitVal=g('zeitpunkt');
-  var kontextTxt='Räume benachbart: '+(adjMap[adjVal]||'—')+
-    ' | Vertikal (über/unter): '+(vertMap[vertVal]||'—')+
-    ' | Feuchtemuster: '+(musterMap[musterVal]||'—')+
-    ' | Zeitpunkt: '+(zeitMap[zeitVal]||'—');
-  var widTxt = readRooms('wid', [{label:'Wand',pre:'ww'},{label:'Boden',pre:'wb'},{label:'Decke',pre:'wd'}]);
-  var skizzeTxt=skizzePunkte.length>0?'\n\nFEUCHSTELLEN SKIZZE ('+skizzePunkte.length+' Punkt'+(skizzePunkte.length>1?'e':'')+'):\n'+skizzePunkte.map(function(p){return 'Punkt '+p.nr+': ('+Math.round(p.x)+','+Math.round(p.y)+')'+(p.label?' – '+p.label:'');}).join('\n')+'\nRäumliche Verteilung in Ortungseinschätzung einbeziehen.':'';
-  return 'Du bist erfahrener Leckortungsexperte. Analysiere Fotos und Daten zur Leckageortung.\n\nBAUJAHR-RISIKOPROFIL (GDV/IfS):\n'+bjRisk+'\n\nHEIZUNGSTYP:\n'+hzInfo+'\n\nANLAGE:\n- Gebäude: '+g('gtyp')+' | Lage: '+lageTxt+' | System: '+g('system')+'\n- Material: '+g('mat')+' | Alter: '+g('alter')+' J. | FBH: '+g('fbh')+'\n- Beschreibung: '+g('beschr')+'\n\nRÄUMLICHER KONTEXT:\n'+kontextTxt+'\n\nKAPAZITIVE MESSUNG (Digits) PRO RAUM:\n'+kapTxt+'\n\nWIDERSTANDSMESSUNG (SKE) PRO RAUM:\n'+widTxt+'\n\nDRUCKPROBE: '+dw+'\nMESSVERFAHREN: '+checked+'\nBEFUNDE: '+(g('mv-befund')||'keine')+skizzeTxt+'\n\nAntworte auf Deutsch, 3 Abschnitte:\n\nBILDBEFUND:\nWas ist konkret auf Fotos erkennbar?\n\nMESSAUSWERTUNG:\nWelche Räume/Etagen zeigen erhöhte Werte? Kapazitiv und Widerstand separat bewerten. Berücksichtige räumliche Nähe und vertikale Lage. Passt das Feuchtemuster zum Leckagetyp?\n\nORTUNGSEINSCHÄTZUNG:\nWo ist die Leckstelle am wahrscheinlichsten? Etage und Raumlage begründen. Was als nächstes prüfen?\n\nTrenne Tatsachen von Interpretation. Keine Spekulation ohne Datenbasis. Max. 220 Wörter.';
-}
-
-async function callClaude(prompt, imgUrls) {
-  var content=[];
-  imgUrls.forEach(function(url){var m=url.split(',');content.push({type:'image',source:{type:'base64',media_type:m[0].match(/:(.*?);/)[1],data:m[1]}});});
-  content.push({type:'text',text:prompt});
-  var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:content}]})});
-  var d=await resp.json();
-  return (d.content||[]).map(function(b){return b.text||'';}).join('');
-}
-
-function parseAI(text) {
-  var secs=[{k:'BILDBEFUND',c:'var(--blue)',b:'var(--blue-l)'},{k:'MESSAUSWERTUNG',c:'var(--purple)',b:'var(--purple-l)'},{k:'ORTUNGSEINSCHÄTZUNG',c:'var(--green)',b:'var(--green-l)'}];
-  var html='';
-  secs.forEach(function(s){
-    var rx=new RegExp(s.k+'[:\\s]*([\\s\\S]*?)(?=(?:BILDBEFUND|MESSAUSWERTUNG|ORTUNGSEINSCHÄTZUNG)|$)','i');
-    var m=text.match(rx);
-    if(m&&m[1].trim())html+='<div class="af" style="border-left-color:'+s.c+';background:'+s.b+';margin-bottom:8px"><div class="aft" style="color:'+s.c+'">'+s.k+'</div><div class="aftx">'+m[1].trim().replace(/\n+/g,'<br>')+'</div></div>';
-  });
-  return html||'<div class="af" style="border-left-color:var(--blue);background:var(--blue-l)"><div class="aftx">'+text.replace(/\n+/g,'<br>')+'</div></div>';
-}
-
-async function analyse() {
-  var btn=document.getElementById('abtn');
-  btn.disabled=true; btn.textContent='Analyse läuft…';
-  var prob=calcScore(); var locs=calcLocations();
-  var col=prob>=70?'#b83232':prob>=45?'#c47a00':'#1a8c5e';
-  document.getElementById('res').className='rv';
-  document.getElementById('res-pct').textContent=prob+'%';
-  document.getElementById('res-pct').style.color=col;
-  var bar=document.getElementById('res-bar'); bar.style.width=prob+'%'; bar.style.background=col;
-  var sub=prob>=70?'Hohe Wahrscheinlichkeit – aktive Leckage sehr wahrscheinlich':prob>=45?'Mittlere Wahrscheinlichkeit – weiterführende Ortung empfohlen':prob>=25?'Geringe bis moderate Wahrscheinlichkeit':'Kein eindeutiger Leckage-Hinweis';
-  document.getElementById('res-sub').textContent=sub;
-  var lc=['#0e5fa3','#1a8c5e','#c47a00','#b83232','#5b4fcf'];
-  var lb=['#e4f0fb','#e2f4ec','#fdf2dc','#fbeaea','#eeecfc'];
-  document.getElementById('loc-list').innerHTML=locs.map(function(l,i){return '<div class="li"><div class="lrank" style="background:'+lb[i]+';color:'+lc[i]+'">'+i+1+'</div><div class="linfo"><div class="lname">'+l.name+'</div><div class="lmbar" style="width:'+l.pct+'%;background:'+lc[i]+';opacity:.5"></div></div><div class="lpct" style="color:'+lc[i]+'">'+l.pct+'%</div></div>';}).join('');
-  var meths=getMethodRecs(prob); var mc=document.getElementById('meth-card');
-  if(meths.length>0){mc.style.display='block';document.getElementById('meth-list').innerHTML=meths.map(function(m){return '<div class="mc" style="border-left-color:'+m.c+';background:var(--input)"><div class="mct" style="color:'+m.c+'">'+m.t+'</div><div class="mctx">'+m.tx+'</div></div>';}).join('');}
-  else mc.style.display='none';
-  var top=locs[0]?locs[0].name:'dem Verdachtsbereich';
-  var bj=document.getElementById('baujahr').value||'';
-  var bjInfo=BAUJAHR_DATA[bj]?' (Baujahr-Risiko: '+BAUJAHR_DATA[bj].risk+')':'';
-  var hand='';
-  if(prob>=70)hand='Messwerte und Risikoprofil'+bjInfo+' sprechen deutlich für eine aktive Leckage ('+prob+'%). Schwerpunkt: „'+top+'". Druckprobe und gezielte Ortung priorisieren. Vor invasivem Eingriff weiteren Ortungsnachweis sichern.';
-  else if(prob>=45)hand='Mittlere Wahrscheinlichkeit ('+prob+'%)'+bjInfo+'. Hauptverdacht: „'+top+'". Nicht eingesetzte Verfahren (oben) vor invasivem Eingriff einsetzen.';
-  else hand='Geringe bis moderate Datenlage ('+prob+'%)'+bjInfo+'. Messwerte nicht ausreichend für eindeutigen Nachweis. Mögliche andere Ursachen: Kondensation, Baufeuchte, Wärmebrücken.';
-  document.getElementById('res-hand').textContent=hand;
-  document.getElementById('res').scrollIntoView({behavior:'smooth',block:'start'});
-  var aiSec=document.getElementById('ai-sec');
-  var skizzeImgs=(skizzePunkte.length>0&&getSkizzeB64())?[getSkizzeB64()]:[];
-  var allImgs=skizzeImgs.concat(photos.map(function(p){return p.dataUrl;}));
-  if(allImgs.length>0){
-    aiSec.innerHTML='<div class="card" style="margin-top:10px"><div class="loading-row"><div class="spinner"></div><span>KI analysiert '+(photos.length+(skizzeImgs.length>0?1:0))+' Bild'+(allImgs.length>1?'er':'')+' + alle Messdaten…</span></div></div>';
-    try{
-      var text=await callClaude(buildPrompt(),allImgs);
-      aiSec.innerHTML='<div class="card" style="margin-top:10px"><div class="slbl">KI-Analyse (Foto + Messdaten + Baujahr)</div>'+parseAI(text)+'<div class="disc" style="margin-top:8px"><strong>Hinweis:</strong> KI-Befund ist Entscheidungshilfe. Alle Aussagen durch Messtechniker vor Ort validieren.</div></div>';
-    }catch(e){aiSec.innerHTML='<div class="card" style="margin-top:10px"><div class="warn">KI-Analyse nicht verfügbar – Verbindung prüfen.</div></div>';}
-  }else aiSec.innerHTML='';
-  btn.disabled=false; btn.textContent='Analyse starten';
-}
-
-function reset() {
-  document.getElementById('res').className='rh';
-  photos=[]; renderP();
-  skizzePunkte=[]; skizzeHistory=[]; skizzeBaseImage=null; skizzePunktNr=0;
-  document.getElementById('kap-liste').innerHTML='';
-  document.getElementById('wid-liste').innerHTML='';
-  kapCount=0; widCount=0;
-  addKap(); addWid();
-  go(1);
-}
-
-// ===================== INIT =====================
-document.addEventListener('DOMContentLoaded', function() {
-
-  // Navigation buttons
-  document.getElementById('btn-s1-next').onclick=function(){go(2);};
-  document.getElementById('btn-s2-back').onclick=function(){go(1);};
-  document.getElementById('btn-s2-next').onclick=function(){go(3);};
-  document.getElementById('btn-s3-back').onclick=function(){go(2);};
-  document.getElementById('btn-s3-next').onclick=function(){go(4);};
-  document.getElementById('btn-s4-back').onclick=function(){go(3);};
-  document.getElementById('btn-s4-next').onclick=function(){go(5);};
-  document.getElementById('btn-s5-back').onclick=function(){go(4);};
-  document.getElementById('abtn').onclick=analyse;
-  document.getElementById('btn-reset').onclick=reset;
-  document.getElementById('btn-add-kap').onclick=addKap;
-  document.getElementById('btn-add-wid').onclick=addWid;
-  document.getElementById('adj-ja').onclick=function(){tog('adjacent','ja',this);};
-  document.getElementById('adj-teilw').onclick=function(){tog('adjacent','teilw',this);};
-  document.getElementById('adj-nein').onclick=function(){tog('adjacent','nein',this);};
-  document.getElementById('adj-unk').onclick=function(){tog('adjacent','unk',this);};
-  document.getElementById('vert-ja').onclick=function(){tog('vertical','ja',this);};
-  document.getElementById('vert-nein').onclick=function(){tog('vertical','nein',this);};
-  document.getElementById('vert-unk').onclick=function(){tog('vertical','unk',this);};
-  document.getElementById('btn-undo-skizze').onclick=undoSkizze;
-  document.getElementById('btn-clear-skizze').onclick=clearSkizze;
-
-  // MFH toggle
-  document.getElementById('gtyp').addEventListener('change', function(){
-    var isMFH = this.value==='mfh';
-    document.getElementById('mfh-fields').style.display = isMFH?'block':'none';
-    document.getElementById('lage').closest('.f').style.display = isMFH?'none':'block';
-  });
-
-  // Baujahr
-  document.getElementById('baujahr').addEventListener('change', function(){
-    var d=BAUJAHR_DATA[this.value];
-    renderInfoBox(document.getElementById('bj-box'),document.getElementById('bj-title'),document.getElementById('bj-text'),document.getElementById('bj-probs'),document.getElementById('bj-source'),document.getElementById('bj-badge'),d?{col:d.col,title:d.title,text:d.text,problems:d.topUrsachen.map(function(u){return {dot:d.col,text:u};}),source:d.source,badge:d.badge}:null);
-  });
-
-  // Material
-  document.getElementById('mat').addEventListener('change', function(){
-    var d=MAT_DATA[this.value];
-    var box=document.getElementById('mat-box');
-    if(!d){box.classList.remove('show');box.style.display='none';return;}
-    box.style.display='block'; box.classList.add('show');
-    box.style.borderLeftColor=d.col; box.style.background=getBg(d.col);
-    box.innerHTML='<div class="hz-title" style="color:'+d.col+'">'+d.title+'</div><div class="hz-sub">'+d.text+'</div>';
-  });
-
-  // Heizungstyp
-  document.getElementById('hztyp').addEventListener('change', function(){
-    var d=HZTYP_DATA[this.value];
-    renderInfoBox(document.getElementById('hz-box'),document.getElementById('hz-title'),document.getElementById('hz-sub'),document.getElementById('hz-probs'),document.getElementById('hz-source'),document.getElementById('hz-badge'),d||null);
-  });
-
-  // FBH toggles
-  document.getElementById('fbh-ja').onclick=function(){tog('fbh','ja',this);};
-  document.getElementById('fbh-nein').onclick=function(){tog('fbh','nein',this);};
-  document.getElementById('fbh-unk').onclick=function(){tog('fbh','unk',this);};
-
-  // Checkbox style
-  document.querySelectorAll('.ci input[type=checkbox]').forEach(function(cb){cb.addEventListener('change',function(){ci(this);});});
-  document.querySelectorAll('#stockwerk-grid input, #wohnung-grid input').forEach(function(cb){cb.addEventListener('change',function(){ci(this);});});
-
-  // Druckprobe live
-  ['pkw','pww','phz','pfbh'].forEach(function(p){
-    ['a','e','diff'].forEach(function(s){
-      var el=document.getElementById(p+'-'+s);
-      if(el) el.addEventListener('input',druckFeed);
-    });
-  });
-
-  // Photos
-  document.getElementById('foto-uz').addEventListener('click',function(){document.getElementById('fi').click();});
-  document.getElementById('fi').addEventListener('change',function(e){Array.from(e.target.files).forEach(function(f){addP(f);});this.value='';});
-
-  // Skizze upload
-  document.getElementById('skizze-uz').addEventListener('click',function(){document.getElementById('skizze-file').click();});
-  document.getElementById('skizze-file').addEventListener('change',function(e){
-    var file=e.target.files[0]; if(!file)return;
-    var reader=new FileReader();
-    reader.onload=function(ev){var img=new Image();img.onload=function(){skizzeBaseImage=img;redrawCanvas();};img.src=ev.target.result;};
-    reader.readAsDataURL(file); this.value='';
-  });
-
-  // Skizze canvas
-  var cv=document.getElementById('skizze-canvas');
-  if(cv){
-    cv.addEventListener('click',canvasTap);
-    cv.addEventListener('touchend',function(e){e.preventDefault();if(e.changedTouches&&e.changedTouches[0]){var fakeE={preventDefault:function(){},touches:e.changedTouches};canvasTap(fakeE);}},{passive:false});
-  }
-
-  // Init first rooms
-  addKap(); addWid();
-});
+function tick(){var n=new Date();document.getElementById('clk').textContent=n.getHours()+':'+String(n.getMinutes()).padStart(2,'0');}
+tick();setInterval(tick,1000);
 </script>
 </body>
 </html>
